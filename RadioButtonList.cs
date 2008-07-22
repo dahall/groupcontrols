@@ -456,7 +456,8 @@ namespace GroupControls
 		protected override void OnSet(int index, RadioButtonListItem oldValue, RadioButtonListItem newValue)
 		{
 			base.OnSet(index, oldValue, newValue);
-			parent.OnListChanged();
+			if (!oldValue.Equals(newValue))
+				parent.OnListChanged();
 		}
 
 		/// <summary>

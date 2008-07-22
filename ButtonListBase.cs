@@ -363,16 +363,10 @@ namespace GroupControls
 	/// <summary>
 	/// Base button item type.
 	/// </summary>
-	public class ButtonListItem
+	public class ButtonListItem : IEquatable<ButtonListItem>
 	{
-		#region Fields
-
 		internal Point GlyphPosition;
 		internal Rectangle TextRect, SubtextRect;
-
-		#endregion Fields
-
-		#region Constructors
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ButtonListItem"/> class.
@@ -380,6 +374,7 @@ namespace GroupControls
 		public ButtonListItem()
 		{
 			this.Enabled = true;
+			this.Checked = false;
 			this.Text = string.Empty;
 		}
 
@@ -397,17 +392,14 @@ namespace GroupControls
 			this.ToolTipText = tooltiptext;
 		}
 
-		#endregion Constructors
-
-		#region Public Properties
-
 		/// <summary>
 		/// Gets or sets a value indicating whether this <see cref="ButtonListItem"/> is checked.
 		/// </summary>
 		/// <value><c>true</c> if checked; otherwise, <c>false</c>.</value>
 		[DefaultValue(false),
+		Description("Indicates whether this item is checked."),
 		Category("Appearance")]
-		public bool Checked
+		public virtual bool Checked
 		{
 			get;
 			set;
@@ -473,15 +465,26 @@ namespace GroupControls
 			set;
 		}
 
-		#endregion Public Properties
-
 		internal void OffsetText(int x, int y)
 		{
 			this.TextRect.Offset(x, y);
 			this.SubtextRect.Offset(x, y);
 		}
 
-		#region Public Methods
+		/// <summary>
+		/// Determines whether the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>.
+		/// </summary>
+		/// <param name="obj">The <see cref="T:System.Object"/> to compare with the current <see cref="T:System.Object"/>.</param>
+		/// <returns>
+		/// true if the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>; otherwise, false.
+		/// </returns>
+		/// <exception cref="T:System.NullReferenceException">The <paramref name="obj"/> parameter is null.</exception>
+		public override bool Equals(object obj)
+		{
+			if (obj == null || !(obj is ButtonListItem))
+				return false;
+			return this.Equals(obj as ButtonListItem);
+		}
 
 		/// <summary>
 		/// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
@@ -494,6 +497,18 @@ namespace GroupControls
 			return System.Text.RegularExpressions.Regex.Replace(this.Text, @"\&([^\&])", "$1");
 		}
 
-		#endregion Public Methods
+		/// <summary>
+		/// Determines whether the specified <see cref="ButtonListItem"/> is equal to the current <see cref="ButtonListItem"/>.
+		/// </summary>
+		/// <param name="b2">The <see cref="ButtonListItem"/> to compare with the current <see cref="ButtonListItem"/>.</param>
+		/// <returns>
+		/// true if the specified <see cref="ButtonListItem"/> is equal to the current <see cref="ButtonListItem"/>; otherwise, false.
+		/// </returns>
+		public bool Equals(ButtonListItem b2)
+		{
+			if (b2 == null) return false;
+			return (this.Checked == b2.Checked) && (this.Enabled == b2.Enabled) &&
+				(this.Subtext == b2.Subtext) && (this.Text == b2.Text) && (this.ToolTipText == b2.ToolTipText);
+		}
 	}
 }

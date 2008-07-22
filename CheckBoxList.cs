@@ -82,6 +82,7 @@ namespace GroupControls
 					throw new IndexOutOfRangeException("Too many items to set");
 				for (int i = 0; i < items.Count; i++)
 					items[i].Checked = ((value & (1L << i)) > 0L);
+				Refresh();
 			}
 		}
 
@@ -328,6 +329,24 @@ namespace GroupControls
 		}
 
 		/// <summary>
+		/// Gets or sets a value indicating whether this <see cref="CheckBoxListItem"/> is checked.
+		/// </summary>
+		/// <value><c>true</c> if checked; otherwise, <c>false</c>.</value>
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+		public override bool Checked
+		{
+			get
+			{
+				return this.CheckState == CheckState.Checked;
+			}
+			set
+			{
+				this.CheckState = value ? CheckState.Checked : CheckState.Unchecked;
+				base.Checked = value;
+			}
+		}
+
+		/// <summary>
 		/// Gets or sets the state of the checkbox.
 		/// </summary>
 		[DefaultValue(typeof(CheckState), "Unchecked"),
@@ -337,6 +356,18 @@ namespace GroupControls
 		{
 			get;
 			set;
+		}
+
+		/// <summary>
+		/// Determines whether the specified <see cref="CheckBoxListItem"/> is equal to the current <see cref="CheckBoxListItem"/>.
+		/// </summary>
+		/// <param name="b2">The <see cref="CheckBoxListItem"/> to compare with the current <see cref="CheckBoxListItem"/>.</param>
+		/// <returns>
+		/// true if the specified <see cref="CheckBoxListItem"/> is equal to the current <see cref="CheckBoxListItem"/>; otherwise, false.
+		/// </returns>
+		public bool Equals(CheckBoxListItem cb2)
+		{
+			return base.Equals((ButtonListItem)cb2) && this.CheckState == cb2.CheckState;
 		}
 	}
 
@@ -393,7 +424,8 @@ namespace GroupControls
 		protected override void OnSet(int index, CheckBoxListItem oldValue, CheckBoxListItem newValue)
 		{
 			base.OnSet(index, oldValue, newValue);
-			parent.OnListChanged();
+			if (!oldValue.Equals(newValue))
+				parent.OnListChanged();
 		}
 
 		/// <summary>

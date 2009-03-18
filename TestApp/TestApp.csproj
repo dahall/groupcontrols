@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{AAC2B11F-A20C-48F7-A4FE-A402D6C235AE}</ProjectGuid>
     <OutputType>WinExe</OutputType>
@@ -84,7 +84,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\GroupControls.csproj">
+    <ProjectReference Include="..\GroupControls.csproj">
       <Project>{BDF6FC07-1F46-407A-9BCC-C61BF42F99E8}</Project>
       <Name>GroupControls</Name>
     </ProjectReference>

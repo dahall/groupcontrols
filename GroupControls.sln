@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupControls", "GroupControls.csproj", "{BDF6FC07-1F46-407A-9BCC-C61BF42F99E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "TestApp\TestApp\TestApp.csproj", "{AAC2B11F-A20C-48F7-A4FE-A402D6C235AE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "TestApp\TestApp.csproj", "{AAC2B11F-A20C-48F7-A4FE-A402D6C235AE}"
 EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
@@ -13,9 +13,9 @@ Global
 		SccLocalPath0 = .
 		SccProjectUniqueName1 = GroupControls.csproj
 		SccLocalPath1 = .
-		SccProjectUniqueName2 = TestApp\\TestApp\\TestApp.csproj
-		SccProjectName2 = TestApp/TestApp
-		SccLocalPath2 = TestApp\\TestApp
+		SccProjectUniqueName2 = TestApp\\TestApp.csproj
+		SccProjectName2 = TestApp
+		SccLocalPath2 = TestApp
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

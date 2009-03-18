@@ -23,6 +23,21 @@ namespace GroupControls
 		}
 
 		/// <summary>
+		/// Occurs when item check state changed.
+		/// </summary>
+		public event EventHandler ItemCheckStateChanged;
+
+		/// <summary>
+		/// Called when item check state changed.
+		/// </summary>
+		protected virtual void OnItemCheckStateChanged()
+		{
+			EventHandler h = this.ItemCheckStateChanged;
+			if (h != null)
+				h(this, EventArgs.Empty);
+		}
+
+		/// <summary>
 		/// Gets the base list of items.
 		/// </summary>
 		/// <value>
@@ -119,6 +134,7 @@ namespace GroupControls
 						break;
 				}
 				InvalidateItem(itemIndex);
+				OnItemCheckStateChanged();
 			}
 		}
 
@@ -300,12 +316,13 @@ namespace GroupControls
 	[DefaultProperty("Text")]
 	public class CheckBoxListItem : ButtonListItem
 	{
+		private CheckState checkState = CheckState.Unchecked;
+
 		/// <summary>
 		/// Creates a new instance of a <c>CheckBoxListItem</c>.
 		/// </summary>
 		public CheckBoxListItem()
 		{
-			this.CheckState = CheckState.Unchecked;
 		}
 
 		/// <summary>
@@ -325,7 +342,22 @@ namespace GroupControls
 		public CheckBoxListItem(string text, string subtext, string tooltiptext)
 			: base(text, subtext, tooltiptext)
 		{
-			this.CheckState = CheckState.Unchecked;
+		}
+
+		/// <summary>
+		/// Occurs when the CheckState value changes.
+		/// </summary>
+		public event EventHandler CheckStateChanged;
+
+		/// <summary>
+		/// Raises the <see cref="E:CheckStateChanged"/> event.
+		/// </summary>
+		/// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
+		protected virtual void OnCheckStateChanged(EventArgs e)
+		{
+			EventHandler handler1 = this.CheckStateChanged;
+			if (handler1 != null)
+				handler1(this, e);
 		}
 
 		/// <summary>
@@ -354,8 +386,15 @@ namespace GroupControls
 		Category("Appearance")]
 		public System.Windows.Forms.CheckState CheckState
 		{
-			get;
-			set;
+			get { return this.checkState; }
+			set
+			{
+				if (value != this.CheckState)
+				{
+					this.checkState = value;
+					OnCheckStateChanged(EventArgs.Empty);
+				}
+			}
 		}
 
 		/// <summary>

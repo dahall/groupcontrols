@@ -61,11 +61,12 @@
 			// checkBoxList1
 			// 
 			this.checkBoxList1.AutoScroll = true;
-			this.checkBoxList1.AutoScrollMinSize = new System.Drawing.Size(343, 259);
+			this.checkBoxList1.AutoScrollMinSize = new System.Drawing.Size(326, 272);
+			this.checkBoxList1.AutoSize = false;
 			this.checkBoxList1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			checkBoxListItem1.CheckState = System.Windows.Forms.CheckState.Checked;
 			checkBoxListItem1.Subtext = "Some very long text to test the subtext property and to ensure that it wraps as i" +
-				 "t should and is properly positioned, selected and displayed.";
+				"t should and is properly positioned, selected and displayed.";
 			checkBoxListItem1.Text = "&One";
 			checkBoxListItem1.ToolTipText = "1";
 			checkBoxListItem2.Subtext = "Shorter text";
@@ -80,7 +81,7 @@
 			this.checkBoxList1.Location = new System.Drawing.Point(0, 0);
 			this.checkBoxList1.Name = "checkBoxList1";
 			this.checkBoxList1.Padding = new System.Windows.Forms.Padding(12);
-			this.checkBoxList1.Size = new System.Drawing.Size(343, 259);
+			this.checkBoxList1.Size = new System.Drawing.Size(343, 200);
 			this.checkBoxList1.SubtextFont = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.checkBoxList1.TabIndex = 2;
 			this.checkBoxList1.Text = "checkBoxList1";

@@ -218,7 +218,10 @@ namespace GroupControls
         /// <param name="pe">An <see cref="PaintEventArgs"/> that contains the event data.</param>
         protected override void OnPaint(PaintEventArgs pe)
         {
-            RadioButtonRenderer.DrawParentBackground(pe.Graphics, pe.ClipRectangle, this);
+			if (Application.RenderWithVisualStyles)
+	            RadioButtonRenderer.DrawParentBackground(pe.Graphics, pe.ClipRectangle, this);
+			else
+				pe.Graphics.Clear(this.BackColor);
             base.OnPaint(pe);
         }
 

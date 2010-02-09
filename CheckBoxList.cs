@@ -198,7 +198,10 @@ namespace GroupControls
         /// <param name="pe">An <see cref="PaintEventArgs"/> that contains the event data.</param>
         protected override void OnPaint(PaintEventArgs pe)
         {
-            CheckBoxRenderer.DrawParentBackground(pe.Graphics, pe.ClipRectangle, this);
+			if (Application.RenderWithVisualStyles)
+				CheckBoxRenderer.DrawParentBackground(pe.Graphics, pe.ClipRectangle, this);
+			else
+				pe.Graphics.Clear(this.BackColor);
             base.OnPaint(pe);
         }
 

@@ -394,7 +394,7 @@ namespace GroupControls
         /// <summary>
         /// Determines whether the specified <see cref="CheckBoxListItem"/> is equal to the current <see cref="CheckBoxListItem"/>.
         /// </summary>
-        /// <param name="b2">The <see cref="CheckBoxListItem"/> to compare with the current <see cref="CheckBoxListItem"/>.</param>
+        /// <param name="cb2">The <see cref="CheckBoxListItem"/> to compare with the current <see cref="CheckBoxListItem"/>.</param>
         /// <returns>
         /// true if the specified <see cref="CheckBoxListItem"/> is equal to the current <see cref="CheckBoxListItem"/>; otherwise, false.
         /// </returns>
@@ -438,48 +438,47 @@ namespace GroupControls
             base.Add(new CheckBoxListItem(text, subtext));
         }
 
-        /// <summary>
-        /// Called when [clear].
-        /// </summary>
-        protected override void OnClear()
-        {
-            base.OnClear();
-            parent.OnListChanged();
-        }
+		/// <summary>
+		/// Called when [item added].
+		/// </summary>
+		/// <param name="index">The index.</param>
+		/// <param name="value">The value.</param>
+		protected override void OnItemAdded(int index, CheckBoxListItem value)
+		{
+			base.OnItemAdded(index, value);
+			parent.OnListChanged();
+		}
 
-        /// <summary>
-        /// Called when [insert].
-        /// </summary>
-        /// <param name="index">The index.</param>
-        /// <param name="value">The value.</param>
-        protected override void OnInsert(int index, CheckBoxListItem value)
-        {
-            base.OnInsert(index, value);
-            parent.OnListChanged();
-        }
+		/// <summary>
+		/// Called when [item changed].
+		/// </summary>
+		/// <param name="index">The index.</param>
+		/// <param name="oldValue">The old value.</param>
+		/// <param name="newValue">The new value.</param>
+		protected override void OnItemChanged(int index, CheckBoxListItem oldValue, CheckBoxListItem newValue)
+		{
+			base.OnItemChanged(index, oldValue, newValue);
+			if (!oldValue.Equals(newValue))
+				parent.OnListChanged();
+		}
 
-        /// <summary>
-        /// Called when [remove].
-        /// </summary>
-        /// <param name="index">The index.</param>
-        /// <param name="value">The value.</param>
-        protected override void OnRemove(int index, CheckBoxListItem value)
-        {
-            base.OnRemove(index, value);
-            parent.OnListChanged();
-        }
+		/// <summary>
+		/// Called when [item deleted].
+		/// </summary>
+		/// <param name="index">The index.</param>
+		/// <param name="value">The value.</param>
+		protected override void OnItemDeleted(int index, CheckBoxListItem value)
+		{
+			base.OnItemDeleted(index, value);
+			parent.OnListChanged();
+		}
 
-        /// <summary>
-        /// Called when [set].
-        /// </summary>
-        /// <param name="index">The index.</param>
-        /// <param name="oldValue">The old value.</param>
-        /// <param name="newValue">The new value.</param>
-        protected override void OnSet(int index, CheckBoxListItem oldValue, CheckBoxListItem newValue)
-        {
-            base.OnSet(index, oldValue, newValue);
-            if (!oldValue.Equals(newValue))
-                parent.OnListChanged();
-        }
-    }
+		/// <summary>
+		/// Called when [reset].
+		/// </summary>
+		protected override void OnReset()
+		{
+			base.OnReset();
+		}
+	}
 }

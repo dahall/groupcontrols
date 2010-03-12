@@ -518,6 +518,17 @@ namespace GroupControls
                 (this.Subtext == b2.Subtext) && (this.Text == b2.Text) && (this.ToolTipText == b2.ToolTipText);
         }
 
+		/// <summary>
+		/// Returns a hash code for this instance.
+		/// </summary>
+		/// <returns>
+		/// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
+		/// </returns>
+		public override int GetHashCode()
+		{
+			return this.Checked.GetHashCode() ^ this.Enabled.GetHashCode() ^ this.Subtext.GetHashCode() ^ this.Text.GetHashCode() ^ this.ToolTipText.GetHashCode();
+		}
+
         /// <summary>
         /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
         /// </summary>

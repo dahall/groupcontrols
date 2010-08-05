@@ -13,19 +13,14 @@ namespace GroupControls
     public abstract class ControlListBase : ScrollableControl
     {
         internal const int lrPadding = 3, tPadding = 2;
-
         internal static readonly ContentAlignment anyRightAlignment, anyCenterAlignment, anyBottomAlignment, anyMiddleAlignment;
-
         internal static ToolTip toolTip;
 
         private int columns = 1;
-        private int hoverItem = -1;
         private Timer hoverTimer;
         private int idealHeight = 100;
         private SparseArray<Rectangle> itemBounds = new SparseArray<Rectangle>();
         private bool mouseTracking = false;
-        private int pressingItem = -1;
-        private bool showToolTips = true;
         private bool spaceEvenly = false;
         private int timedHoverItem = -1;
 
@@ -45,6 +40,8 @@ namespace GroupControls
         {
             DoubleBuffered = true;
             ResizeRedraw = true;
+			HoverItem = PressingItem = -1;
+			ShowItemToolTip = true;
             base.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.StandardClick | ControlStyles.Opaque, true);
             base.AutoScroll = true;
             base.SuspendLayout();
@@ -60,10 +57,7 @@ namespace GroupControls
         /// Gets or sets a value that determines whether the control resizes based on its content.
         /// </summary>
         /// <value>true if enabled; otherwise, false.</value>
-        [DefaultValue(true),
-        Category("Layout"),
-        Browsable(true),
-        Description("Autosizes the control to fit the contents"),
+        [DefaultValue(true), Category("Layout"), Browsable(true), Description("Autosizes the control to fit the contents"),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public override bool AutoSize
         {
@@ -71,26 +65,36 @@ namespace GroupControls
             set { base.AutoSize = value; }
         }
 
+		/// <summary>
+		/// Gets or sets the number of columns to display in the control.
+		/// </summary>
+		/// <value>The repeat columns.</value>
+		[DefaultValue(0), Category("Layout"), Description("Number of columns to display")]
+		public virtual int RepeatColumns
+		{
+			get { return columns; }
+			set { columns = value; ResetListLayout(); Refresh(); }
+		}
+
+		/// <summary>
+		/// Gets or sets the direction in which the items within the group are displayed.
+		/// </summary>
+		/// <value>One of the <see cref="RepeatDirection"/> values. The default is <c>Vertical</c>.</value>
+		[DefaultValue((int)RepeatDirection.Vertical), Category("Layout"), Description("Direction items are displayed")]
+		public virtual RepeatDirection RepeatDirection { get; set; }
+
         /// <summary>
         /// Gets or sets a value that determines whether a tooltip is displayed for each item in the list.
         /// </summary>
         /// <value><c>true</c> if tooltips are shown; otherwise, <c>false</c>.</value>
-        [DefaultValue(true),
-        Description("Indicates whether to show the tooltip for each item."),
-        Category("Appearance")]
-        public bool ShowItemToolTip
-        {
-            get { return showToolTips; }
-            set { showToolTips = value; }
-        }
+		[DefaultValue(true), Category("Appearance"), Description("Indicates whether to show the tooltip for each item.")]
+        public bool ShowItemToolTip { get; set; }
 
         /// <summary>
         /// Gets or sets a value that determines if the items are spaced evenly based on the height of the largest item or if they are spaced according to the height of each item.
         /// </summary>
         /// <value><c>true</c> if items are spaced evenly; otherwise, <c>false</c>.</value>
-        [DefaultValue(false),
-        Description("Spaces items evenly."),
-        Category("Appearance")]
+        [DefaultValue(false), Description("Spaces items evenly."), Category("Appearance")]
         public bool SpaceEvenly
         {
             get { return spaceEvenly; }
@@ -110,20 +114,13 @@ namespace GroupControls
         /// Gets the hover item's index.
         /// </summary>
         /// <value>The hover item index.</value>
-        protected int HoverItem
-        {
-            get { return hoverItem; }
-        }
+        protected int HoverItem { get; private set; }
 
         /// <summary>
         /// Gets or sets the index of the item being pressing.
         /// </summary>
         /// <value>The pressed item index.</value>
-        protected int PressingItem
-        {
-            get { return pressingItem; }
-			set { pressingItem = value; }
-        }
+        protected int PressingItem { get; set; }
 
         /// <summary>
         /// Retrieves the size of a rectangular area into which a control can be fitted.
@@ -237,9 +234,9 @@ namespace GroupControls
             int i = GetItemAtLocation(OffsetForScroll(e.Location));
             if (i == -1 || !IsItemEnabled(i))
                 return;
-            pressingItem = i;
+            PressingItem = i;
             this.Focus();
-            InvalidateItem(pressingItem);
+            InvalidateItem(PressingItem);
             base.Update();
         }
 
@@ -281,10 +278,10 @@ namespace GroupControls
         /// <param name="e">An <see cref="MouseEventArgs"/> that contains the event data.</param>
         protected override void OnMouseUp(MouseEventArgs e)
         {
-            if (pressingItem != -1)
+            if (PressingItem != -1)
             {
-                int ci = pressingItem;
-                pressingItem = -1;
+                int ci = PressingItem;
+                PressingItem = -1;
                 InvalidateItem(ci);
             }
             base.OnMouseUp(e);
@@ -488,7 +485,7 @@ namespace GroupControls
         private void hoverTimer_Tick(object sender, EventArgs e)
         {
             hoverTimer.Stop();
-            if (mouseTracking && timedHoverItem == hoverItem)
+            if (mouseTracking && timedHoverItem == HoverItem)
             {
                 UpdateToolTip(GetItemToolTipText(timedHoverItem));
             }
@@ -496,22 +493,22 @@ namespace GroupControls
 
         private void SetHover(int itemIndex)
         {
-            if (itemIndex != hoverItem)
+            if (itemIndex != HoverItem)
             {
                 hoverTimer.Stop();
                 UpdateToolTip(null);
-                int oldHover = hoverItem;
-                hoverItem = itemIndex;
+                int oldHover = HoverItem;
+                HoverItem = itemIndex;
                 // clear hover item
                 if (oldHover != -1)
                     InvalidateItem(oldHover);
                 // Set hover item
                 if (itemIndex != -1 && IsItemEnabled(itemIndex))
                 {
-                    InvalidateItem(hoverItem);
-                    if (!string.IsNullOrEmpty(GetItemToolTipText(hoverItem)))
+                    InvalidateItem(HoverItem);
+                    if (!string.IsNullOrEmpty(GetItemToolTipText(HoverItem)))
                     {
-                        timedHoverItem = hoverItem;
+                        timedHoverItem = HoverItem;
                         hoverTimer.Start();
                     }
                 }
@@ -520,7 +517,7 @@ namespace GroupControls
 
         private void UpdateToolTip(string tiptext)
         {
-            if (showToolTips)
+            if (this.ShowItemToolTip)
             {
                 toolTip.Hide(this);
                 toolTip.Active = false;
@@ -535,4 +532,19 @@ namespace GroupControls
             }
         }
     }
+
+	/// <summary>
+	/// Specifies the direction in which items of a list control are displayed.
+	/// </summary>
+	public enum RepeatDirection
+	{
+		/// <summary>
+		/// Items of a list are displayed vertically in columns from top to bottom, and then left to right, until all items are rendered.
+		/// </summary>
+		Vertical,
+		/// <summary>
+		/// Items of a list are displayed horizontally in rows from left to right, then top to bottom, until all items are rendered.
+		/// </summary>
+		Horizontal
+	}
 }

@@ -42,7 +42,7 @@
 			// radioButtonList1
 			// 
 			this.radioButtonList1.AutoScroll = true;
-			this.radioButtonList1.AutoScrollMinSize = new System.Drawing.Size(186, 129);
+			this.radioButtonList1.AutoScrollMinSize = new System.Drawing.Size(106, 89);
 			radioButtonListItem1.Subtext = "A hip dude";
 			radioButtonListItem1.Text = "&Al";
 			radioButtonListItem1.ToolTipText = "No, really!";
@@ -51,18 +51,16 @@
 			this.radioButtonList1.Items.Add(radioButtonListItem1);
 			this.radioButtonList1.Items.Add(radioButtonListItem2);
 			this.radioButtonList1.Items.Add(radioButtonListItem3);
-			this.radioButtonList1.Location = new System.Drawing.Point(349, 0);
+			this.radioButtonList1.Location = new System.Drawing.Point(429, 0);
 			this.radioButtonList1.Name = "radioButtonList1";
-			this.radioButtonList1.Padding = new System.Windows.Forms.Padding(12);
-			this.radioButtonList1.Size = new System.Drawing.Size(186, 129);
-			this.radioButtonList1.SpaceEvenly = true;
+			this.radioButtonList1.Padding = new System.Windows.Forms.Padding(10);
+			this.radioButtonList1.Size = new System.Drawing.Size(106, 89);
 			this.radioButtonList1.TabIndex = 3;
 			// 
 			// checkBoxList1
 			// 
 			this.checkBoxList1.AutoScroll = true;
-			this.checkBoxList1.AutoScrollMinSize = new System.Drawing.Size(326, 272);
-			this.checkBoxList1.AutoSize = false;
+			this.checkBoxList1.AutoScrollMinSize = new System.Drawing.Size(423, 220);
 			this.checkBoxList1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			checkBoxListItem1.CheckState = System.Windows.Forms.CheckState.Checked;
 			checkBoxListItem1.Subtext = "Some very long text to test the subtext property and to ensure that it wraps as i" +
@@ -81,7 +79,7 @@
 			this.checkBoxList1.Location = new System.Drawing.Point(0, 0);
 			this.checkBoxList1.Name = "checkBoxList1";
 			this.checkBoxList1.Padding = new System.Windows.Forms.Padding(12);
-			this.checkBoxList1.Size = new System.Drawing.Size(343, 200);
+			this.checkBoxList1.Size = new System.Drawing.Size(423, 220);
 			this.checkBoxList1.SubtextFont = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.checkBoxList1.TabIndex = 2;
 			this.checkBoxList1.Text = "checkBoxList1";
@@ -90,7 +88,7 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(547, 274);
+			this.ClientSize = new System.Drawing.Size(547, 352);
 			this.Controls.Add(this.radioButtonList1);
 			this.Controls.Add(this.checkBoxList1);
 			this.Name = "Form1";

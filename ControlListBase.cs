@@ -21,6 +21,7 @@ namespace GroupControls
 		private int idealHeight = 100;
 		private SparseArray<Rectangle> itemBounds = new SparseArray<Rectangle>();
 		private bool mouseTracking = false;
+		private RepeatDirection repeatDirection = RepeatDirection.Vertical;
 		private bool spaceEvenly = false;
 		private int timedHoverItem = -1;
 
@@ -43,11 +44,12 @@ namespace GroupControls
 			HoverItem = PressingItem = -1;
 			ShowItemToolTip = true;
 			base.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.StandardClick | ControlStyles.Opaque, true);
+			this.SuspendLayout();
 			base.AutoScroll = true;
-			base.SuspendLayout();
 			base.Size = new System.Drawing.Size(100, 100);
 			base.AutoSize = true;
-			base.ResumeLayout(false);
+			this.ResumeLayout(false);
+			this.Layout += new LayoutEventHandler(LayoutControl);
 			hoverTimer = new Timer();
 			hoverTimer.Interval = SystemInformation.MouseHoverTime;
 			hoverTimer.Tick += new EventHandler(hoverTimer_Tick);
@@ -69,7 +71,7 @@ namespace GroupControls
 		/// Gets or sets the number of columns to display in the control.
 		/// </summary>
 		/// <value>The repeat columns.</value>
-		[DefaultValue(0), Category("Layout"), Description("Number of columns to display")]
+		[DefaultValue(1), Category("Layout"), Description("Number of columns to display")]
 		public virtual int RepeatColumns
 		{
 			get { return columns; }
@@ -80,8 +82,12 @@ namespace GroupControls
 		/// Gets or sets the direction in which the items within the group are displayed.
 		/// </summary>
 		/// <value>One of the <see cref="RepeatDirection"/> values. The default is <c>Vertical</c>.</value>
-		[DefaultValue((int)RepeatDirection.Vertical), Category("Layout"), Description("Direction items are displayed")]
-		public virtual RepeatDirection RepeatDirection { get; set; }
+		[DefaultValue(typeof(RepeatDirection), "Vertical"), Category("Layout"), Description("Direction items are displayed")]
+		public virtual RepeatDirection RepeatDirection
+		{
+			get { return repeatDirection; }
+			set { repeatDirection = value; ResetListLayout(); Refresh(); }
+		}
 
 		/// <summary>
 		/// Gets or sets a value that determines whether a tooltip is displayed for each item in the list.
@@ -430,6 +436,16 @@ namespace GroupControls
 		/// </summary>
 		protected virtual void ResetListLayout()
 		{
+			this.PerformLayout();
+		}
+
+		/// <summary>
+		/// Responds to the control's Layout event.
+		/// </summary>
+		/// <param name="sender">The sender.</param>
+		/// <param name="e">The <see cref="System.Windows.Forms.LayoutEventArgs"/> instance containing the event data.</param>
+		protected virtual void LayoutControl(object sender, LayoutEventArgs e)
+		{
 			if (this.BaseItems == null || this.BaseItems.Count == 0)
 				return;
 
@@ -450,21 +466,68 @@ namespace GroupControls
 					maxItemHeight = Math.Max(maxItemHeight, minHeight);
 					idealHeight += minHeight;
 				}
-				if (spaceEvenly) idealHeight = maxItemHeight * this.BaseItems.Count;
-				// Add in padding between items
-				idealHeight += ((this.BaseItems.Count - 1) * this.Margin.Vertical);
-				idealHeight += this.Padding.Vertical;
 
 				// Position the text and glyph of each item
-				Point loc = new Point(this.Padding.Left, this.Padding.Top);
+				int[] colHeight = new int[columns];
+				int[] colXPos = new int[columns];
+				int colWidth = (ClientSize.Width - Padding.Horizontal - ((columns - 1) * 2 * this.Margin.Horizontal)) / columns;
+				for (int x = 0; x < columns; x++)
+				{
+					colHeight[x] = this.Padding.Top + this.Margin.Top;
+					colXPos[x] = this.Padding.Left + this.Margin.Left + (x * (colWidth + Margin.Horizontal));
+				}
+
+				// Calculate the positions of each item
+				int curCol = 0;
 				for (int i = 0; i < this.BaseItems.Count; i++)
 				{
 					// Set bounds of the item
-					this.itemBounds[i] = new Rectangle(loc, this.itemBounds[i].Size);
-
+					this.itemBounds[i] = new Rectangle(colXPos[curCol], colHeight[curCol], this.itemBounds[i].Size.Width, this.itemBounds[i].Size.Height);
 					// Set top position of next item
-					loc.Y += (spaceEvenly ? maxItemHeight : this.itemBounds[i].Height) + this.Margin.Vertical;
+					colHeight[curCol] += (spaceEvenly ? maxItemHeight : this.itemBounds[i].Height) + this.Margin.Vertical;
+					if (RepeatDirection == GroupControls.RepeatDirection.Horizontal)
+						if (++curCol == columns) curCol = 0;
 				}
+
+				// Split vertical columns and reset positions of items
+				if (RepeatDirection == GroupControls.RepeatDirection.Vertical)
+				{
+					int idealColHeight = colHeight[0] / columns;
+					int thisColBottom = idealColHeight;
+					int y = this.Padding.Top + this.Margin.Top;
+					for (int i = 0; i < this.BaseItems.Count; i++)
+					{
+						Rectangle iBounds = this.itemBounds[i];
+						Rectangle nBounds = Rectangle.Empty;
+						if ((i + 1) < this.BaseItems.Count)
+							nBounds = this.itemBounds[i + 1];
+
+						if (curCol > 0)
+							this.itemBounds[i] = new Rectangle(new Point(colXPos[curCol], y), this.itemBounds[i].Size);
+						colHeight[curCol] = this.itemBounds[i].Bottom + this.Margin.Bottom;
+
+						if ((iBounds.Bottom > thisColBottom || nBounds.Bottom > thisColBottom) && (curCol + 1 < columns))
+						{
+							if (Math.Abs(iBounds.Bottom - idealColHeight) < Math.Abs(nBounds.Bottom - idealColHeight))
+							{
+								y = this.Padding.Top + this.Margin.Top;
+								curCol++;
+								thisColBottom = iBounds.Bottom + this.Margin.Bottom + idealColHeight;
+							}
+						}
+						else
+						{
+							y += (spaceEvenly ? maxItemHeight : this.itemBounds[i].Height) + this.Margin.Vertical;
+						}
+					}
+				}
+
+				// Set ideal height
+				idealHeight = 0;
+				for (int c = 0; c < columns; c++)
+					if (idealHeight < colHeight[c]) idealHeight = colHeight[c];
+				idealHeight -= this.Margin.Vertical;
+				idealHeight += this.Padding.Bottom;
 			}
 
 			// Set scroll height and autosize to ideal height

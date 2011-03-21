@@ -490,7 +490,7 @@ namespace GroupControls
 				}
 
 				// Split vertical columns and reset positions of items
-				if (RepeatDirection == GroupControls.RepeatDirection.Vertical)
+				if (RepeatDirection == GroupControls.RepeatDirection.Vertical && columns > 1)
 				{
 					int idealColHeight = colHeight[0] / columns;
 					int thisColBottom = idealColHeight;

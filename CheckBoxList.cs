@@ -26,6 +26,7 @@ namespace GroupControls
 		/// <summary>
 		/// Occurs when item check state changed.
 		/// </summary>
+		[Category("Behavior"), Description("Occurs when the value of any item's CheckState property changes.")]
 		public event EventHandler ItemCheckStateChanged;
 
 		/// <summary>
@@ -352,6 +353,7 @@ namespace GroupControls
 		/// <summary>
 		/// Occurs when the CheckState value changes.
 		/// </summary>
+		[Category("Behavior"), Description("Occurs when the value of the CheckState property changes.")]
 		public event EventHandler CheckStateChanged;
 
 		/// <summary>

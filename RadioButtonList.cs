@@ -27,6 +27,7 @@ namespace GroupControls
 		/// <summary>
 		/// Occurs when the selected index has changed.
 		/// </summary>
+		[Category("Behavior"), Description("Occurs when the value of the SelectedIndex property changes.")]
 		public event EventHandler SelectedIndexChanged;
 
 		/// <summary>

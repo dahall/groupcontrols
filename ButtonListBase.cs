@@ -31,11 +31,13 @@ namespace GroupControls
 		/// <summary>
 		/// Occurs when SubtextForeColor changed.
 		/// </summary>
+		[Category("Property Changed"), Description("Occurs when the value of the SubtextForeColor property changes.")]
 		public event PropertyChangedEventHandler SubtextForeColorChanged;
 
 		/// <summary>
 		/// Occurs when SubtextSeparatorHeight changed.
 		/// </summary>
+		[Category("Property Changed"), Description("Occurs when the value of the SubtextSeparatorHeight property changes.")]
 		public event PropertyChangedEventHandler SubtextSeparatorHeightChanged;
 
 		/// <summary>
@@ -423,6 +425,7 @@ namespace GroupControls
 		[DefaultValue(false),
 		Description("Indicates whether this item is checked."),
 		Category("Appearance")]
+		[BindableAttribute(true)]
 		public virtual bool Checked
 		{
 			get;
@@ -435,6 +438,7 @@ namespace GroupControls
 		/// <value><c>true</c> if enabled; otherwise, <c>false</c>.</value>
 		[DefaultValue(true),
 		Category("Behavior")]
+		[BindableAttribute(true)]
 		public bool Enabled
 		{
 			get;
@@ -447,6 +451,7 @@ namespace GroupControls
 		/// <value>The subtext.</value>
 		[DefaultValue((string)null),
 		Category("Appearance")]
+		[BindableAttribute(true)]
 		public string Subtext
 		{
 			get;
@@ -459,6 +464,8 @@ namespace GroupControls
 		/// <value>The tag.</value>
 		[DefaultValue((object)null),
 		Category("Data")]
+		[BindableAttribute(true)]
+		[TypeConverterAttribute(typeof(StringConverter))]
 		public object Tag
 		{
 			get;
@@ -471,6 +478,7 @@ namespace GroupControls
 		/// <value>The text.</value>
 		[DefaultValue(""),
 		Category("Appearance")]
+		[BindableAttribute(true)]
 		public string Text
 		{
 			get;
@@ -483,6 +491,7 @@ namespace GroupControls
 		/// <value>The tool tip text.</value>
 		[DefaultValue((string)null),
 		Category("Appearance")]
+		[BindableAttribute(true)]
 		public string ToolTipText
 		{
 			get;

@@ -77,6 +77,7 @@ namespace GroupControls
 						Items[selectedIndex].Checked = false;
 					selectedIndex = value;
 					Items[selectedIndex].Checked = true;
+					SetSelected(selectedIndex);
 					OnSelectedIndexChanged(EventArgs.Empty);
 				}
 			}

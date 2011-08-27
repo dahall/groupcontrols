@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>GroupControls</id>
-    <version>1.3.0</version>
+    <version>1.3.1</version>
     <title>WinForms Group Controls</title>
     <authors>David Hall</authors>
     <description>WinForms controls that display multiple sub-controls without creating a unique window handle for each child. Instead each child is drawn using the default renderers and its space and status are managed by the parent. Currently provided is a RadioButtonList (similar the ASP.NET control) and a CheckBoxList.</description>

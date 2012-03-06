@@ -73,10 +73,11 @@ namespace GroupControls
 				{
 					if (value < -1 || value >= items.Count)
 						throw new IndexOutOfRangeException();
-					if (selectedIndex > -1)
+					if (selectedIndex > -1 && selectedIndex < items.Count)
 						Items[selectedIndex].Checked = false;
 					selectedIndex = value;
-					Items[selectedIndex].Checked = true;
+					if (selectedIndex >= 0)
+						Items[selectedIndex].Checked = true;
 					SetSelected(selectedIndex);
 					OnSelectedIndexChanged(EventArgs.Empty);
 				}

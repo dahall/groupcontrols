@@ -18,8 +18,7 @@ namespace GroupControls
 		/// <summary>
 		/// Creates a new instance of a <see cref="RadioButtonList"/>.
 		/// </summary>
-		public RadioButtonList()
-			: base()
+		public RadioButtonList() : base()
 		{
 			items = new RadioButtonListItemCollection(this);
 		}
@@ -33,10 +32,8 @@ namespace GroupControls
 		/// <summary>
 		/// Gets or sets the alignment of the check box in relation to the text.
 		/// </summary>
-		[DefaultValue(typeof(ContentAlignment), "TopLeft"),
-		Description("Determines the location of the check box in relation to the text."),
-		Category("Appearance"),
-		Localizable(true)]
+		[DefaultValue(typeof(ContentAlignment), "TopLeft"), Category("Appearance"), Localizable(true),
+		Description("Determines the location of the check box in relation to the text.")]
 		public ContentAlignment CheckAlign
 		{
 			get { return ImageAlign; }
@@ -46,11 +43,9 @@ namespace GroupControls
 		/// <summary>
 		/// Gets the list of <see cref="RadioButtonListItem"/> associated with the control.
 		/// </summary>
-		[MergableProperty(false),
-		Category("Data"),
+		[MergableProperty(false), Category("Data"),
 		DesignerSerializationVisibility(DesignerSerializationVisibility.Content),
-		Localizable(true),
-		Description("List of radio buttons with optional subtext")]
+		Localizable(true), Description("List of radio buttons with optional subtext")]
 		public virtual RadioButtonListItemCollection Items
 		{
 			get { return items; }
@@ -60,9 +55,7 @@ namespace GroupControls
 		/// Gets or sets the index specifying the currently selected item.
 		/// </summary>
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-		Bindable(true),
-		DefaultValue(-1),
-		Category("Data"),
+		Bindable(true), DefaultValue(-1), Category("Data"),
 		Description("Gets or sets the index specifying the currently selected item.")]
 		public int SelectedIndex
 		{
@@ -105,20 +98,11 @@ namespace GroupControls
 		/// </summary>
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
 		Description("Gets or sets currently selected item in the list."),
-		Browsable(false),
-		Bindable(true),
-		DefaultValue((string)null),
-		Category("Data")]
+		Browsable(false), Bindable(true), DefaultValue((string)null), Category("Data")]
 		public RadioButtonListItem SelectedItem
 		{
-			get
-			{
-				return this.selectedIndex == -1 ? null : items[this.selectedIndex];
-			}
-			set
-			{
-				SelectedIndex = items.IndexOf(value);
-			}
+			get { return this.selectedIndex == -1 ? null : items[this.selectedIndex]; }
+			set { SelectedIndex = items.IndexOf(value); }
 		}
 
 		/// <summary>
@@ -172,9 +156,7 @@ namespace GroupControls
 			if (selectedIndex != -1)
 				InvalidateItem(selectedIndex);
 			else if (FocusedIndex == -1 && items.Count > 0)
-			{
-				SetFocused(0);
-			}
+				SetFocused(GetNextEnabledItemIndex(-1, true));
 		}
 
 		/// <summary>
@@ -313,21 +295,18 @@ namespace GroupControls
 					if (SelectNextItem(this.FocusedItem as RadioButtonListItem, true))
 						return true;
 					break;
-				case Keys.Enter:
-					break;
-				case Keys.Escape:
-					break;
 				case Keys.Up:
 				case Keys.Left:
 					if (SelectNextItem(this.FocusedItem as RadioButtonListItem, false))
 						return true;
 					break;
 				case Keys.Space:
-					if (!this.FocusedItem.Checked)
+					if (this.FocusedItem != null && !this.FocusedItem.Checked)
 						SetSelected(this.FocusedIndex);
 					break;
 				case Keys.Tab:
-					break;
+				case Keys.Enter:
+				case Keys.Escape:
 				default:
 					break;
 			}
@@ -348,25 +327,13 @@ namespace GroupControls
 		{
 			if (items.Count > 0)
 			{
-				if (i == null)
+				int idx = -1;
+				if (i != null && (idx = this.BaseItems.IndexOf(i)) == -1)
+					throw new IndexOutOfRangeException();
+				idx = GetNextEnabledItemIndex(idx, forward);
+				if (idx != -1)
 				{
-					if (forward)
-						SetSelected(0);
-					else
-						SetSelected(items.Count - 1);
-					return true;
-				}
-				else
-				{
-					int idx = items.IndexOf(i);
-					if (idx == -1)
-						throw new IndexOutOfRangeException();
-					if ((idx == 0 && !forward) || (idx == (items.Count - 1) && forward))
-						return false;
-					if (forward)
-						SetSelected(idx + 1);
-					else
-						SetSelected(idx - 1);
+					SetSelected(idx);
 					return true;
 				}
 			}
@@ -408,7 +375,7 @@ namespace GroupControls
 	}
 
 	/// <summary>
-	/// 
+	/// Collection of <see cref="RadioButtonListItem"/> items.
 	/// </summary>
 	[Editor(typeof(System.ComponentModel.Design.CollectionEditor), typeof(System.Drawing.Design.UITypeEditor))]
 	public class RadioButtonListItemCollection : EventedList<RadioButtonListItem>
@@ -468,14 +435,6 @@ namespace GroupControls
 		{
 			base.OnItemDeleted(index, value);
 			parent.OnListChanged();
-		}
-
-		/// <summary>
-		/// Called when [reset].
-		/// </summary>
-		protected override void OnReset()
-		{
-			base.OnReset();
 		}
 	}
 }

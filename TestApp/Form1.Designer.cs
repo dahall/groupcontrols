@@ -31,6 +31,7 @@
 			GroupControls.RadioButtonListItem radioButtonListItem1 = new GroupControls.RadioButtonListItem();
 			GroupControls.RadioButtonListItem radioButtonListItem2 = new GroupControls.RadioButtonListItem();
 			GroupControls.RadioButtonListItem radioButtonListItem3 = new GroupControls.RadioButtonListItem();
+			GroupControls.RadioButtonListItem radioButtonListItem4 = new GroupControls.RadioButtonListItem();
 			GroupControls.CheckBoxListItem checkBoxListItem1 = new GroupControls.CheckBoxListItem();
 			GroupControls.CheckBoxListItem checkBoxListItem2 = new GroupControls.CheckBoxListItem();
 			GroupControls.CheckBoxListItem checkBoxListItem3 = new GroupControls.CheckBoxListItem();
@@ -42,20 +43,25 @@
 			// radioButtonList1
 			// 
 			this.radioButtonList1.AutoScroll = true;
-			this.radioButtonList1.AutoScrollMinSize = new System.Drawing.Size(222, 128);
+			this.radioButtonList1.AutoScrollMinSize = new System.Drawing.Size(222, 70);
+			radioButtonListItem1.Enabled = false;
 			radioButtonListItem1.Subtext = "A hip dude";
 			radioButtonListItem1.Text = "&Al";
 			radioButtonListItem1.ToolTipText = "No, really!";
 			radioButtonListItem2.Text = "&Bob";
+			radioButtonListItem3.Enabled = false;
 			radioButtonListItem3.Text = "&Chuck";
+			radioButtonListItem4.Subtext = "Even hipper";
+			radioButtonListItem4.Text = "&Dave";
 			this.radioButtonList1.Items.Add(radioButtonListItem1);
 			this.radioButtonList1.Items.Add(radioButtonListItem2);
 			this.radioButtonList1.Items.Add(radioButtonListItem3);
+			this.radioButtonList1.Items.Add(radioButtonListItem4);
 			this.radioButtonList1.Location = new System.Drawing.Point(313, 0);
 			this.radioButtonList1.Name = "radioButtonList1";
 			this.radioButtonList1.Padding = new System.Windows.Forms.Padding(10);
-			this.radioButtonList1.Size = new System.Drawing.Size(222, 128);
-			this.radioButtonList1.SpaceEvenly = true;
+			this.radioButtonList1.RepeatColumns = 2;
+			this.radioButtonList1.Size = new System.Drawing.Size(222, 70);
 			this.radioButtonList1.TabIndex = 3;
 			// 
 			// checkBoxList1
@@ -65,9 +71,10 @@
 			this.checkBoxList1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			checkBoxListItem1.CheckState = System.Windows.Forms.CheckState.Checked;
 			checkBoxListItem1.Subtext = "Some very long text to test the subtext property and to ensure that it wraps as i" +
-				"t should and is properly positioned, selected and displayed.";
+    "t should and is properly positioned, selected and displayed.";
 			checkBoxListItem1.Text = "&One";
 			checkBoxListItem1.ToolTipText = "1";
+			checkBoxListItem2.Enabled = false;
 			checkBoxListItem2.Subtext = "Shorter text";
 			checkBoxListItem2.Text = "&Two";
 			checkBoxListItem2.ToolTipText = "2";

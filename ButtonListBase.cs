@@ -175,29 +175,34 @@ namespace GroupControls
 		{
 			if (this.BaseItems.Count > 0)
 			{
-				if (i == null)
+				int idx = -1;
+				if (i != null && (idx = this.BaseItems.IndexOf(i)) == -1)
+					throw new IndexOutOfRangeException();
+				idx = GetNextEnabledItemIndex(idx, forward);
+				if (idx != -1)
 				{
-					if (forward)
-						SetFocused(0);
-					else
-						SetFocused(this.BaseItems.Count - 1);
-					return true;
-				}
-				else
-				{
-					int idx = this.BaseItems.IndexOf(i);
-					if (idx == -1)
-						throw new IndexOutOfRangeException();
-					if ((idx == 0 && !forward) || (idx == (this.BaseItems.Count - 1) && forward))
-						return false;
-					if (forward)
-						SetFocused(idx + 1);
-					else
-						SetFocused(idx - 1);
+					SetFocused(idx);
 					return true;
 				}
 			}
 			return false;
+		}
+
+		/// <summary>
+		/// Gets the index of the next enabled item.
+		/// </summary>
+		/// <param name="startIndex">The start index.</param>
+		/// <param name="forward">if set to <c>true</c> find subsequent item, prior item if <c>false</c>.</param>
+		/// <returns>Index of next enabled item, or -1 if not found.</returns>
+		protected int GetNextEnabledItemIndex(int startIndex, bool forward)
+		{
+			int idx = startIndex == -1 && !forward ? this.BaseItems.Count : startIndex;
+			while ((forward && ++idx < this.BaseItems.Count) || (!forward && --idx >= 0))
+			{
+				if (((ButtonListItem)this.BaseItems[idx]).Enabled)
+					return idx;
+			}
+			return -1;
 		}
 
 		/// <summary>
@@ -410,7 +415,7 @@ namespace GroupControls
 		/// <param name="text">The text.</param>
 		/// <param name="subtext">The subtext.</param>
 		/// <param name="tooltiptext">The tooltip text.</param>
-		public ButtonListItem(string text, string subtext, string tooltiptext)
+		public ButtonListItem(string text, string subtext = null, string tooltiptext = null)
 			: this()
 		{
 			this.Text = text;
@@ -422,81 +427,50 @@ namespace GroupControls
 		/// Gets or sets a value indicating whether this <see cref="ButtonListItem"/> is checked.
 		/// </summary>
 		/// <value><c>true</c> if checked; otherwise, <c>false</c>.</value>
-		[DefaultValue(false),
-		Description("Indicates whether this item is checked."),
-		Category("Appearance")]
+		[DefaultValue(false), Description("Indicates whether this item is checked."), Category("Appearance")]
 		[BindableAttribute(true)]
-		public virtual bool Checked
-		{
-			get;
-			set;
-		}
+		public virtual bool Checked { get; set; }
 
 		/// <summary>
 		/// Gets or sets a value indicating whether this <see cref="ButtonListItem"/> is enabled.
 		/// </summary>
 		/// <value><c>true</c> if enabled; otherwise, <c>false</c>.</value>
-		[DefaultValue(true),
-		Category("Behavior")]
+		[DefaultValue(true), Category("Behavior")]
 		[BindableAttribute(true)]
-		public bool Enabled
-		{
-			get;
-			set;
-		}
+		public bool Enabled { get; set; }
 
 		/// <summary>
 		/// Gets or sets the subtext.
 		/// </summary>
 		/// <value>The subtext.</value>
-		[DefaultValue((string)null),
-		Category("Appearance")]
+		[DefaultValue((string)null), Category("Appearance")]
 		[BindableAttribute(true)]
-		public string Subtext
-		{
-			get;
-			set;
-		}
+		public string Subtext { get; set; }
 
 		/// <summary>
 		/// Gets or sets the tag.
 		/// </summary>
 		/// <value>The tag.</value>
-		[DefaultValue((object)null),
-		Category("Data")]
+		[DefaultValue((object)null), Category("Data")]
 		[BindableAttribute(true)]
 		[TypeConverterAttribute(typeof(StringConverter))]
-		public object Tag
-		{
-			get;
-			set;
-		}
+		public object Tag { get; set; }
 
 		/// <summary>
 		/// Gets or sets the text.
 		/// </summary>
 		/// <value>The text.</value>
-		[DefaultValue(""),
-		Category("Appearance")]
+		[DefaultValue(""), Category("Appearance")]
 		[BindableAttribute(true)]
-		public string Text
-		{
-			get;
-			set;
-		}
+		public string Text { get; set; }
 
 		/// <summary>
 		/// Gets or sets the tool tip text.
 		/// </summary>
 		/// <value>The tool tip text.</value>
-		[DefaultValue((string)null),
-		Category("Appearance")]
+		[DefaultValue((string)null), Category("Appearance")]
 		[BindableAttribute(true)]
-		public string ToolTipText
-		{
-			get;
-			set;
-		}
+		public string ToolTipText { get; set; }
 
 		/// <summary>
 		/// Determines whether the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>.

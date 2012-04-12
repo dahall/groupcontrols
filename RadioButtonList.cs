@@ -73,12 +73,28 @@ namespace GroupControls
 				{
 					if (value < -1 || value >= items.Count)
 						throw new IndexOutOfRangeException();
-					if (selectedIndex > -1 && selectedIndex < items.Count)
-						Items[selectedIndex].Checked = false;
+
+					// Clear old selected item
+					int oldSelect = selectedIndex;
+					if (oldSelect > -1 && oldSelect < items.Count)
+					{
+						Items[oldSelect].Checked = false;
+						InvalidateItem(oldSelect);
+						if (this.Focused)
+							Invalidate(Items[oldSelect].TextRect);
+					}
+
+					// Set new item
 					selectedIndex = value;
-					if (selectedIndex >= 0)
+					if (selectedIndex > -1)
+					{
 						Items[selectedIndex].Checked = true;
-					SetSelected(selectedIndex);
+						InvalidateItem(selectedIndex);
+						if (this.Focused)
+							Invalidate(Items[selectedIndex].TextRect);
+					}
+					SetFocused(selectedIndex);
+
 					OnSelectedIndexChanged(EventArgs.Empty);
 				}
 			}
@@ -318,6 +334,16 @@ namespace GroupControls
 			return false;
 		}
 
+		/// <summary>
+		/// Resets the list's layout.
+		/// </summary>
+		protected override void ResetListLayout()
+		{
+			base.ResetListLayout();
+			// Get the change to the selected index based on item Checked property
+			this.SelectedIndex = items.CheckedItemIndex;
+		}
+
 		private bool SelectNextItem(RadioButtonListItem i, bool forward)
 		{
 			if (items.Count > 0)
@@ -349,27 +375,10 @@ namespace GroupControls
 
 		private void SetSelected(int itemIndex)
 		{
+			// Ignore if item is disabled
 			if (itemIndex != -1 && !items[itemIndex].Enabled)
 				return;
-
-			int oldSelect = selectedIndex;
 			this.SelectedIndex = itemIndex;
-			// clear old selected item
-			if (oldSelect > -1)
-			{
-				InvalidateItem(oldSelect);
-				if (this.Focused)
-					Invalidate(Items[oldSelect].TextRect);
-			}
-			// Set new item
-			if (itemIndex > -1)
-			{
-				InvalidateItem(selectedIndex);
-				if (this.Focused)
-					Invalidate(Items[selectedIndex].TextRect);
-			}
-
-			SetFocused(itemIndex);
 		}
 	}
 
@@ -382,17 +391,7 @@ namespace GroupControls
 		/// <summary>
 		/// Initializes a new instance of the <see cref="RadioButtonListItem"/> class.
 		/// </summary>
-		public RadioButtonListItem()
-		{
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="RadioButtonListItem"/> class.
-		/// </summary>
-		/// <param name="text">Text displayed next to radio button.</param>
-		/// <param name="subtext">Subtext displayed under text.</param>
-		public RadioButtonListItem(string text, string subtext)
-			: base(text, subtext, null)
+		public RadioButtonListItem() : base()
 		{
 		}
 
@@ -402,7 +401,7 @@ namespace GroupControls
 		/// <param name="text">Text displayed next to radio button.</param>
 		/// <param name="subtext">Subtext displayed under text.</param>
 		/// <param name="tooltiptext">Tooltip displayed for the item.</param>
-		public RadioButtonListItem(string text, string subtext, string tooltiptext)
+		public RadioButtonListItem(string text, string subtext = null, string tooltiptext = null)
 			: base(text, subtext, tooltiptext)
 		{
 		}
@@ -419,6 +418,11 @@ namespace GroupControls
 		internal RadioButtonListItemCollection(RadioButtonList list)
 		{
 			parent = list;
+		}
+
+		internal int CheckedItemIndex
+		{
+			get { return base.FindIndex(delegate(RadioButtonListItem item) { return item.Checked; }); }
 		}
 
 		/// <summary>

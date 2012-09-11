@@ -49,10 +49,21 @@ namespace GroupControls
 			base.Size = new System.Drawing.Size(100, 100);
 			base.AutoSize = true;
 			this.ResumeLayout(false);
-			this.Layout += new LayoutEventHandler(LayoutControl);
-			hoverTimer = new Timer();
-			hoverTimer.Interval = SystemInformation.MouseHoverTime;
+			hoverTimer = new Timer() { Interval = SystemInformation.MouseHoverTime };
 			hoverTimer.Tick += new EventHandler(hoverTimer_Tick);
+		}
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the container enables the user to scroll to any controls placed outside of its visible boundaries.
+		/// </summary>
+		/// <returns>true if the container enables auto-scrolling; otherwise, false. The default value is false. </returns>
+		[DefaultValue(true), Category("Layout"), Browsable(true), 
+		Description("Indicates whether scroll bars automatically appear when the control contents are larger than its visible area."),
+		DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+		public override bool AutoScroll
+		{
+			get { return base.AutoScroll; }
+			set { base.AutoScroll = value; }
 		}
 
 		/// <summary>
@@ -127,18 +138,6 @@ namespace GroupControls
 		/// </summary>
 		/// <value>The pressed item index.</value>
 		protected int PressingItem { get; set; }
-
-		/// <summary>
-		/// Retrieves the size of a rectangular area into which a control can be fitted.
-		/// </summary>
-		/// <param name="proposedSize">The custom-sized area for a control.</param>
-		/// <returns>
-		/// An ordered pair of type <see cref="T:System.Drawing.Size"/> representing the width and height of a rectangle.
-		/// </returns>
-		public override Size GetPreferredSize(Size proposedSize)
-		{
-			return new Size(this.Width, idealHeight);
-		}
 
 		internal void OnListChanged()
 		{
@@ -226,8 +225,94 @@ namespace GroupControls
 		protected override void OnLayout(LayoutEventArgs e)
 		{
 			base.OnLayout(e);
-			ResetListLayout();
-			Refresh();
+
+			if (this.BaseItems == null || this.BaseItems.Count == 0)
+				return;
+
+			itemBounds.Clear();
+			using (Graphics g = this.CreateGraphics())
+			{
+				// First get the base height of all items and the max height
+				int maxItemHeight = 0;
+				idealHeight = 0;
+				Size maxSize = new Size((ClientSize.Width - (Padding.Horizontal * columns)) / columns, ClientSize.Height - Padding.Vertical);
+				for (int i = 0; i < this.BaseItems.Count; i++)
+				{
+					Size sz = this.MeasureItem(g, i, maxSize);
+					this.itemBounds[i] = new Rectangle(Point.Empty, sz);
+
+					// Calculate minimum item height
+					int minHeight = sz.Height;
+					maxItemHeight = Math.Max(maxItemHeight, minHeight);
+					idealHeight += minHeight;
+				}
+
+				// Determine the start coordinate of each column
+				int[] colHeight = new int[columns];
+				int[] colXPos = new int[columns];
+				int colWidth = (ClientSize.Width - Padding.Horizontal - ((columns - 1) * 2 * this.Margin.Horizontal)) / columns;
+				for (int x = 0; x < columns; x++)
+				{
+					colHeight[x] = this.Padding.Top + this.Margin.Top;
+					colXPos[x] = this.Padding.Left + this.Margin.Left + (x * (colWidth + Margin.Horizontal));
+				}
+
+				// Calculate the positions of each item
+				int curCol = 0;
+				for (int i = 0; i < this.BaseItems.Count; i++)
+				{
+					// Set bounds of the item
+					this.itemBounds[i] = new Rectangle(colXPos[curCol], colHeight[curCol], this.itemBounds[i].Size.Width, this.itemBounds[i].Size.Height);
+					// Set top position of next item
+					colHeight[curCol] += (spaceEvenly ? maxItemHeight : this.itemBounds[i].Height) + this.Margin.Vertical;
+					if (RepeatDirection == GroupControls.RepeatDirection.Horizontal)
+						if (++curCol == columns) curCol = 0;
+				}
+
+				// Split vertical columns and reset positions of items
+				if (RepeatDirection == GroupControls.RepeatDirection.Vertical && columns > 1)
+				{
+					int idealColHeight = colHeight[0] / columns;
+					int thisColBottom = idealColHeight;
+					int y = this.Padding.Top + this.Margin.Top;
+					for (int i = 0; i < this.BaseItems.Count; i++)
+					{
+						Rectangle iBounds = this.itemBounds[i];
+						Rectangle nBounds = Rectangle.Empty;
+						if ((i + 1) < this.BaseItems.Count)
+							nBounds = this.itemBounds[i + 1];
+
+						if (curCol > 0)
+							this.itemBounds[i] = new Rectangle(new Point(colXPos[curCol], y), this.itemBounds[i].Size);
+						colHeight[curCol] = this.itemBounds[i].Bottom + this.Margin.Bottom;
+
+						if ((iBounds.Bottom > thisColBottom || nBounds.Bottom > thisColBottom) && (curCol + 1 < columns))
+						{
+							if (Math.Abs(iBounds.Bottom - idealColHeight) < Math.Abs(nBounds.Bottom - idealColHeight))
+							{
+								y = this.Padding.Top + this.Margin.Top;
+								curCol++;
+								thisColBottom = iBounds.Bottom + this.Margin.Bottom + idealColHeight;
+							}
+						}
+						else
+						{
+							y += (spaceEvenly ? maxItemHeight : this.itemBounds[i].Height) + this.Margin.Vertical;
+						}
+					}
+				}
+
+				// Set ideal height
+				idealHeight = 0;
+				for (int c = 0; c < columns; c++)
+					if (idealHeight < colHeight[c]) idealHeight = colHeight[c];
+				idealHeight -= this.Margin.Vertical;
+				idealHeight += this.Padding.Bottom;
+			}
+
+			// Set scroll height and autosize to ideal height
+			this.AutoScrollMinSize = new Size(this.ClientRectangle.Width, idealHeight);
+			if (this.AutoSize) this.Height = idealHeight;
 		}
 
 		/// <summary>
@@ -306,7 +391,6 @@ namespace GroupControls
 			{
 				if (pe.ClipRectangle.IntersectsWith(OffsetForScroll(itemBounds[i])))
 				{
-					System.Diagnostics.Debug.WriteLine(string.Format("PaintItem({0}); Clip={1}; iRect={2}", i, pe.ClipRectangle, itemBounds[i]));
 					PaintItem(pe.Graphics, i, itemBounds[i]);
 				}
 			}
@@ -347,7 +431,6 @@ namespace GroupControls
 		/// <returns><c>true</c> if the key was processed by the control; otherwise, <c>false</c>.</returns>
 		protected override bool ProcessDialogKey(Keys keyData)
 		{
-			System.Diagnostics.Debug.WriteLine(string.Format("ProcessDialogKey: {0}, {1}", keyData, keyData & Keys.KeyCode));
 			switch ((keyData & Keys.KeyCode))
 			{
 				case Keys.Space:
@@ -388,7 +471,6 @@ namespace GroupControls
 			if (m.Msg == 0x100)
 			{
 				KeyEventArgs args1 = new KeyEventArgs(((Keys)((int)((long)m.WParam))) | Control.ModifierKeys);
-				System.Diagnostics.Debug.WriteLine(string.Format("ProcessKeyPreview 0x100: {0}", args1));
 				switch (args1.KeyCode)
 				{
 					case Keys.Space:
@@ -409,7 +491,6 @@ namespace GroupControls
 			else if (m.Msg == 0x101)
 			{
 				KeyEventArgs args2 = new KeyEventArgs(((Keys)((int)((long)m.WParam))) | Control.ModifierKeys);
-				System.Diagnostics.Debug.WriteLine(string.Format("ProcessKeyPreview 0x101: {0}", args2));
 				if (args2.KeyCode == Keys.Tab)
 				{
 					return this.ProcessKey(args2);
@@ -437,102 +518,6 @@ namespace GroupControls
 		protected virtual void ResetListLayout()
 		{
 			this.PerformLayout();
-		}
-
-		/// <summary>
-		/// Responds to the control's Layout event.
-		/// </summary>
-		/// <param name="sender">The sender.</param>
-		/// <param name="e">The <see cref="System.Windows.Forms.LayoutEventArgs"/> instance containing the event data.</param>
-		protected virtual void LayoutControl(object sender, LayoutEventArgs e)
-		{
-			if (this.BaseItems == null || this.BaseItems.Count == 0)
-				return;
-
-			itemBounds.Clear();
-			using (Graphics g = this.CreateGraphics())
-			{
-				// First get the base height of all items and the max height
-				int maxItemHeight = 0;
-				idealHeight = 0;
-				Size maxSize = new Size((ClientSize.Width - (Padding.Horizontal * columns)) / columns, ClientSize.Height - Padding.Vertical);
-				for (int i = 0; i < this.BaseItems.Count; i++)
-				{
-					Size sz = this.MeasureItem(g, i, maxSize);
-					this.itemBounds[i] = new Rectangle(Point.Empty, sz);
-
-					// Calculate minimum item height
-					int minHeight = sz.Height;
-					maxItemHeight = Math.Max(maxItemHeight, minHeight);
-					idealHeight += minHeight;
-				}
-
-				// Position the text and glyph of each item
-				int[] colHeight = new int[columns];
-				int[] colXPos = new int[columns];
-				int colWidth = (ClientSize.Width - Padding.Horizontal - ((columns - 1) * 2 * this.Margin.Horizontal)) / columns;
-				for (int x = 0; x < columns; x++)
-				{
-					colHeight[x] = this.Padding.Top + this.Margin.Top;
-					colXPos[x] = this.Padding.Left + this.Margin.Left + (x * (colWidth + Margin.Horizontal));
-				}
-
-				// Calculate the positions of each item
-				int curCol = 0;
-				for (int i = 0; i < this.BaseItems.Count; i++)
-				{
-					// Set bounds of the item
-					this.itemBounds[i] = new Rectangle(colXPos[curCol], colHeight[curCol], this.itemBounds[i].Size.Width, this.itemBounds[i].Size.Height);
-					// Set top position of next item
-					colHeight[curCol] += (spaceEvenly ? maxItemHeight : this.itemBounds[i].Height) + this.Margin.Vertical;
-					if (RepeatDirection == GroupControls.RepeatDirection.Horizontal)
-						if (++curCol == columns) curCol = 0;
-				}
-
-				// Split vertical columns and reset positions of items
-				if (RepeatDirection == GroupControls.RepeatDirection.Vertical && columns > 1)
-				{
-					int idealColHeight = colHeight[0] / columns;
-					int thisColBottom = idealColHeight;
-					int y = this.Padding.Top + this.Margin.Top;
-					for (int i = 0; i < this.BaseItems.Count; i++)
-					{
-						Rectangle iBounds = this.itemBounds[i];
-						Rectangle nBounds = Rectangle.Empty;
-						if ((i + 1) < this.BaseItems.Count)
-							nBounds = this.itemBounds[i + 1];
-
-						if (curCol > 0)
-							this.itemBounds[i] = new Rectangle(new Point(colXPos[curCol], y), this.itemBounds[i].Size);
-						colHeight[curCol] = this.itemBounds[i].Bottom + this.Margin.Bottom;
-
-						if ((iBounds.Bottom > thisColBottom || nBounds.Bottom > thisColBottom) && (curCol + 1 < columns))
-						{
-							if (Math.Abs(iBounds.Bottom - idealColHeight) < Math.Abs(nBounds.Bottom - idealColHeight))
-							{
-								y = this.Padding.Top + this.Margin.Top;
-								curCol++;
-								thisColBottom = iBounds.Bottom + this.Margin.Bottom + idealColHeight;
-							}
-						}
-						else
-						{
-							y += (spaceEvenly ? maxItemHeight : this.itemBounds[i].Height) + this.Margin.Vertical;
-						}
-					}
-				}
-
-				// Set ideal height
-				idealHeight = 0;
-				for (int c = 0; c < columns; c++)
-					if (idealHeight < colHeight[c]) idealHeight = colHeight[c];
-				idealHeight -= this.Margin.Vertical;
-				idealHeight += this.Padding.Bottom;
-			}
-
-			// Set scroll height and autosize to ideal height
-			this.AutoScrollMinSize = new Size(this.ClientRectangle.Width, idealHeight);
-			if (this.AutoSize) this.Height = idealHeight;
 		}
 
 		private int GetItemAtLocation(Point pt)

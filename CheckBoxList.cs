@@ -9,7 +9,8 @@ namespace GroupControls
 	/// <summary>
 	/// Represents a windows control that displays a list of checkbox items with optional subtext entries.
 	/// </summary>
-	[ToolboxBitmap(typeof(CheckBoxList)), DefaultProperty("Items"), DefaultEvent("ItemCheckStateChanged")]
+	[ToolboxItem(true), ToolboxBitmap(typeof(CheckBoxList)), DefaultProperty("Items"), DefaultEvent("ItemCheckStateChanged")]
+	[Description("Displays a list of checkbox items with optional subtext.")]
 	public class CheckBoxList : ButtonListBase
 	{
 		private CheckBoxListItemCollection items;

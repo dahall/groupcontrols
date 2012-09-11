@@ -9,7 +9,8 @@ namespace GroupControls
 	/// <summary>
 	/// Represents a windows control that displays a list of radio button items with optional subtext entries.
 	/// </summary>
-	[ToolboxBitmap(typeof(RadioButtonList)), DefaultProperty("Items"), DefaultEvent("SelectedIndexChanged")] 
+	[ToolboxItem(true), ToolboxBitmap(typeof(RadioButtonList)), DefaultProperty("Items"), DefaultEvent("SelectedIndexChanged")]
+	[Description("Displays a list of radio buttons with optional subtext.")]
 	public class RadioButtonList : ButtonListBase
 	{
 		private RadioButtonListItemCollection items;

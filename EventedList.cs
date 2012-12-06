@@ -244,18 +244,12 @@ namespace System.Collections.Generic
 		{
 			get
 			{
-				if (index >= this._size)
-				{
-					throw new ArgumentOutOfRangeException("index");
-				}
+				CheckIndex(index);
 				return this._items[index];
 			}
 			set
 			{
-				if (index >= this._size)
-				{
-					throw new ArgumentOutOfRangeException("index");
-				}
+				CheckIndex(index);
 				T oldValue = this._items[index];
 				this._items[index] = value;
 				this._version++;
@@ -304,7 +298,7 @@ namespace System.Collections.Generic
 		/// <returns></returns>
 		public int BinarySearch(T item)
 		{
-			return this.BinarySearch(0, this.Count, item, null);
+			return this.BinarySearch(0, this._size, item, null);
 		}
 
 		/// <summary>
@@ -315,7 +309,7 @@ namespace System.Collections.Generic
 		/// <returns></returns>
 		public int BinarySearch(T item, IComparer<T> comparer)
 		{
-			return this.BinarySearch(0, this.Count, item, comparer);
+			return this.BinarySearch(0, this._size, item, comparer);
 		}
 
 		/// <summary>
@@ -328,14 +322,7 @@ namespace System.Collections.Generic
 		/// <returns></returns>
 		public int BinarySearch(int index, int count, T item, IComparer<T> comparer)
 		{
-			if ((index < 0) || (count < 0))
-			{
-				throw new ArgumentOutOfRangeException((index < 0) ? "index" : "count");
-			}
-			if ((this._size - index) < count)
-			{
-				throw new ArgumentException();
-			}
+			CheckRange(index, count);
 			return Array.BinarySearch<T>(this._items, index, count, item, comparer);
 		}
 
@@ -527,14 +514,7 @@ namespace System.Collections.Generic
 		/// <returns></returns>
 		public int FindIndex(int startIndex, int count, Predicate<T> match)
 		{
-			if (startIndex > this._size)
-			{
-				throw new ArgumentOutOfRangeException("startIndex");
-			}
-			if ((count < 0) || (startIndex > (this._size - count)))
-			{
-				throw new ArgumentOutOfRangeException("count");
-			}
+			CheckRange(startIndex, count);
 			if (match == null)
 			{
 				throw new ArgumentNullException("match");
@@ -612,10 +592,7 @@ namespace System.Collections.Generic
 					throw new ArgumentOutOfRangeException("startIndex");
 				}
 			}
-			else if (startIndex >= this._size)
-			{
-				throw new ArgumentOutOfRangeException("startIndex");
-			}
+			CheckIndex(startIndex, "startIndex");
 			if ((count < 0) || (((startIndex - count) + 1) < 0))
 			{
 				throw new ArgumentOutOfRangeException("count");
@@ -664,14 +641,7 @@ namespace System.Collections.Generic
 		/// <returns>An <see cref="EventedList&lt;T&gt;"/> with the requested items.</returns>
 		public EventedList<T> GetRange(int index, int count)
 		{
-			if ((index < 0) || (count < 0))
-			{
-				throw new ArgumentOutOfRangeException((index < 0) ? "index" : "count");
-			}
-			if ((this._size - index) < count)
-			{
-				throw new ArgumentException();
-			}
+			CheckRange(index, count);
 			EventedList<T> list = new EventedList<T>(count);
 			Array.Copy(this._items, index, list._items, 0, count);
 			list._size = count;
@@ -730,7 +700,7 @@ namespace System.Collections.Generic
 		{
 			EventedList<T>.VerifyValueType(item);
 			this.Add((T)item);
-			return (this.Count - 1);
+			return (this._size - 1);
 		}
 
 		/// <summary>
@@ -802,10 +772,7 @@ namespace System.Collections.Generic
 		/// <returns></returns>
 		public int IndexOf(T item, int index)
 		{
-			if (index > this._size)
-			{
-				throw new ArgumentOutOfRangeException("index");
-			}
+			CheckIndex(index);
 			return Array.IndexOf<T>(this._items, item, index, this._size - index);
 		}
 
@@ -818,14 +785,7 @@ namespace System.Collections.Generic
 		/// <returns></returns>
 		public int IndexOf(T item, int index, int count)
 		{
-			if (index > this._size)
-			{
-				throw new ArgumentOutOfRangeException("index");
-			}
-			if ((count < 0) || (index > (this._size - count)))
-			{
-				throw new ArgumentOutOfRangeException("count");
-			}
+			CheckRange(index, count);
 			return Array.IndexOf<T>(this._items, item, index, count);
 		}
 
@@ -839,10 +799,7 @@ namespace System.Collections.Generic
 		/// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.IList`1"/> is read-only.</exception>
 		public void Insert(int index, T item)
 		{
-			if (index > this._size)
-			{
-				throw new ArgumentOutOfRangeException("index");
-			}
+			CheckIndex(index);
 			if (this._size == this._items.Length)
 			{
 				this.EnsureCapacity(this._size + 1);
@@ -868,10 +825,7 @@ namespace System.Collections.Generic
 			{
 				throw new ArgumentNullException("collection");
 			}
-			if (index > this._size)
-			{
-				throw new ArgumentOutOfRangeException("index");
-			}
+			CheckIndex(index);
 			ICollection<T> is2 = collection as ICollection<T>;
 			if (is2 != null)
 			{
@@ -930,10 +884,7 @@ namespace System.Collections.Generic
 		/// <returns></returns>
 		public int LastIndexOf(T item, int index)
 		{
-			if (index >= this._size)
-			{
-				throw new ArgumentOutOfRangeException("index");
-			}
+			CheckIndex(index);
 			return this.LastIndexOf(item, index, index + 1);
 		}
 
@@ -950,13 +901,10 @@ namespace System.Collections.Generic
 			{
 				return -1;
 			}
-			if ((index < 0) || (count < 0))
+			CheckIndex(index);
+			if (count < 0 || count > (index + 1))
 			{
-				throw new ArgumentOutOfRangeException((index < 0) ? "index" : "count");
-			}
-			if ((index >= this._size) || (count > (index + 1)))
-			{
-				throw new ArgumentOutOfRangeException((index >= this._size) ? "index" : "count");
+				throw new ArgumentOutOfRangeException("count");
 			}
 			return Array.LastIndexOf<T>(this._items, item, index, count);
 		}
@@ -1030,10 +978,7 @@ namespace System.Collections.Generic
 		/// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.IList`1"/> is read-only.</exception>
 		public void RemoveAt(int index)
 		{
-			if (index >= this._size)
-			{
-				throw new ArgumentOutOfRangeException("index");
-			}
+			CheckIndex(index);
 			this._size--;
 			T oldVal = this._items[index];
 			if (index < this._size)
@@ -1052,14 +997,7 @@ namespace System.Collections.Generic
 		/// <param name="count">The count.</param>
 		public void RemoveRange(int index, int count)
 		{
-			if ((index < 0) || (count < 0))
-			{
-				throw new ArgumentOutOfRangeException((index < 0) ? "index" : "count");
-			}
-			if ((this._size - index) < count)
-			{
-				throw new ArgumentException();
-			}
+			CheckRange(index, count);
 			if (count > 0)
 			{
 				this._size -= count;
@@ -1081,7 +1019,7 @@ namespace System.Collections.Generic
 		/// </summary>
 		public void Reverse()
 		{
-			this.Reverse(0, this.Count);
+			this.Reverse(0, this._size);
 		}
 
 		/// <summary>
@@ -1091,14 +1029,7 @@ namespace System.Collections.Generic
 		/// <param name="count">The count.</param>
 		public void Reverse(int index, int count)
 		{
-			if ((index < 0) || (count < 0))
-			{
-				throw new ArgumentOutOfRangeException((index < 0) ? "index" : "count");
-			}
-			if ((this._size - index) < count)
-			{
-				throw new ArgumentException();
-			}
+			CheckRange(index, count);
 			Array.Reverse(this._items, index, count);
 			this._version++;
 		}
@@ -1108,7 +1039,7 @@ namespace System.Collections.Generic
 		/// </summary>
 		public void Sort()
 		{
-			this.Sort(0, this.Count, null);
+			this.Sort(0, this._size, null);
 		}
 
 		/// <summary>
@@ -1117,7 +1048,7 @@ namespace System.Collections.Generic
 		/// <param name="comparer">The comparer.</param>
 		public void Sort(IComparer<T> comparer)
 		{
-			this.Sort(0, this.Count, comparer);
+			this.Sort(0, this._size, comparer);
 		}
 
 		/// <summary>
@@ -1128,14 +1059,7 @@ namespace System.Collections.Generic
 		/// <param name="comparer">The comparer.</param>
 		public void Sort(int index, int count, IComparer<T> comparer)
 		{
-			if ((index < 0) || (count < 0))
-			{
-				throw new ArgumentOutOfRangeException((index < 0) ? "index" : "count");
-			}
-			if ((this._size - index) < count)
-			{
-				throw new ArgumentException();
-			}
+			CheckRange(index, count);
 			Array.Sort<T>(this._items, index, count, comparer);
 			this._version++;
 		}
@@ -1259,7 +1183,31 @@ namespace System.Collections.Generic
 			}
 		}
 
-		// Methods
+		/// <summary>
+		/// Checks the index to ensure it is valid and in the list.
+		/// </summary>
+		/// <param name="idx">The index to validate.</param>
+		/// <param name="varName">Name of the variable this is being checked.</param>
+		/// <exception cref="ArgumentOutOfRangeException">Called with the index is out of range.</exception>
+		private void CheckIndex(int idx, string varName = "index")
+		{
+			if (idx >= this._size || idx < 0)
+				throw new ArgumentOutOfRangeException(varName);
+		}
+
+		/// <summary>
+		/// Checks the range.
+		/// </summary>
+		/// <param name="index">The index.</param>
+		/// <param name="count">The count.</param>
+		private void CheckRange(int index, int count)
+		{
+			if (index >= this._size || index < 0)
+				throw new ArgumentOutOfRangeException("index");
+			if (count < 0 || (this._size - index) < count)
+				throw new ArgumentOutOfRangeException("count");
+		}
+
 		/// <summary>
 		/// Ensures the capacity.
 		/// </summary>

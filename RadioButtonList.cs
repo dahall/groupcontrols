@@ -390,7 +390,7 @@ namespace GroupControls
 
 		internal int CheckedItemIndex
 		{
-			get { return base.FindIndex(delegate(RadioButtonListItem item) { return item.Checked; }); }
+			get { return base.Count > 0 ? base.FindIndex(delegate(RadioButtonListItem item) { return item.Checked; }) : -1; }
 		}
 
 		/// <summary>

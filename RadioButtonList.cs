@@ -157,7 +157,11 @@ namespace GroupControls
 			if (selectedIndex != -1)
 				InvalidateItem(selectedIndex);
 			else if (FocusedIndex == -1 && items.Count > 0)
+			{
 				SetFocused(GetNextEnabledItemIndex(-1, true));
+				if (FocusedIndex != -1)
+					EnsureVisible(FocusedIndex);
+			}
 		}
 
 		/// <summary>
@@ -294,16 +298,25 @@ namespace GroupControls
 				case Keys.Down:
 				case Keys.Right:
 					if (SelectNextItem(this.FocusedItem as RadioButtonListItem, true))
+					{
+						EnsureVisible(selectedIndex);
 						return true;
+					}
 					break;
 				case Keys.Up:
 				case Keys.Left:
 					if (SelectNextItem(this.FocusedItem as RadioButtonListItem, false))
+					{
+						EnsureVisible(selectedIndex);
 						return true;
+					}
 					break;
 				case Keys.Space:
 					if (this.FocusedItem != null && !this.FocusedItem.Checked)
+					{
+						EnsureVisible(selectedIndex);
 						SetSelected(this.FocusedIndex);
+					}
 					break;
 				case Keys.Tab:
 				case Keys.Enter:
@@ -334,6 +347,7 @@ namespace GroupControls
 				idx = GetNextEnabledItemIndex(idx, forward);
 				if (idx != -1)
 				{
+					EnsureVisible(idx);
 					SetSelected(idx);
 					return true;
 				}

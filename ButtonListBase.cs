@@ -150,6 +150,21 @@ namespace GroupControls
 			get; private set;
 		}
 
+		/// <summary>
+		/// Ensures that the specified item is visible within the control, scrolling the contents of the control if necessary.
+		/// </summary>
+		/// <param name="index">The zero-based index of the item to scroll into view.</param>
+		public override void EnsureVisible(int index)
+		{
+			Rectangle r = GetItemRect(index);
+			Rectangle scrollRect = new Rectangle(-this.AutoScrollPosition.X, -this.AutoScrollPosition.Y, this.ClientRectangle.Size.Width, this.ClientRectangle.Size.Height);
+			if (!scrollRect.Contains(r))
+			{
+				this.AutoScrollPosition = r.Location;
+				Refresh();
+			}
+		}
+
 		internal void ResetSubtextFont()
 		{
 			subtextFont = null;
@@ -329,7 +344,10 @@ namespace GroupControls
 		{
 			base.OnGotFocus(e);
 			if (focusedIndex != -1)
+			{
+				EnsureVisible(focusedIndex);
 				InvalidateItem(focusedIndex);
+			}
 		}
 
 		/// <summary>

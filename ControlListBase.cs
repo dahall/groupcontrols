@@ -16,6 +16,7 @@ namespace GroupControls
 		internal static readonly ContentAlignment anyRightAlignment, anyCenterAlignment, anyBottomAlignment, anyMiddleAlignment;
 		internal static ToolTip toolTip;
 
+		private BorderStyle borderStyle;
 		private int columns = 1;
 		private Timer hoverTimer;
 		private int idealHeight = 100;
@@ -43,7 +44,7 @@ namespace GroupControls
 			ResizeRedraw = true;
 			HoverItem = PressingItem = -1;
 			ShowItemToolTip = true;
-			base.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.StandardClick | ControlStyles.Opaque, true);
+			base.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.StandardClick | ControlStyles.OptimizedDoubleBuffer, true);
 			this.SuspendLayout();
 			base.AutoScroll = true;
 			base.Size = new System.Drawing.Size(100, 100);
@@ -76,6 +77,57 @@ namespace GroupControls
 		{
 			get { return base.AutoSize; }
 			set { base.AutoSize = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the border style of the list control.
+		/// </summary>
+		/// <value>
+		/// One of the <see cref="BorderStyle"/> values. The default is <c>BorderStyle:None</c>.
+		/// </value>
+		[DefaultValue(0), Description("Border style of the list control."), Category("Appearance")]
+		public BorderStyle BorderStyle
+		{
+			get
+			{
+				return this.borderStyle;
+			}
+			set
+			{
+				if (this.borderStyle != value)
+				{
+					this.borderStyle = value;
+					base.UpdateStyles();
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets the required creation parameters when the control handle is created.
+		/// </summary>
+		/// <returns>A <see cref="T:System.Windows.Forms.CreateParams"/> that contains the required creation parameters when the handle to the control is created.</returns>
+		protected override CreateParams CreateParams
+		{
+			get
+			{
+				const int WS_EX_CONTROLPARENT = 0x10000;
+				const int WS_EX_CLIENTEDGE = 0x200;
+				const int WS_BORDER = 0x800000;
+				CreateParams createParams = base.CreateParams;
+				createParams.ExStyle |= WS_EX_CONTROLPARENT;
+				createParams.ExStyle &= ~WS_EX_CLIENTEDGE;
+				createParams.Style &= ~WS_BORDER;
+				switch (this.borderStyle)
+				{
+					case BorderStyle.FixedSingle:
+						createParams.Style |= WS_BORDER;
+						return createParams;
+					case BorderStyle.Fixed3D:
+						createParams.ExStyle |= WS_EX_CLIENTEDGE;
+						return createParams;
+				}
+				return createParams;
+			}
 		}
 
 		/// <summary>
@@ -119,6 +171,17 @@ namespace GroupControls
 		}
 
 		/// <summary>
+		/// Gets or sets the text associated with this control.
+		/// </summary>
+		/// <returns>The text associated with this control.</returns>
+		[Browsable(false), EditorBrowsable(EditorBrowsableState.Never), Bindable(false)]
+		public override string Text
+		{
+			get { return base.Text; }
+			set { base.Text = value; }
+		}
+
+		/// <summary>
 		/// Gets the base list of items.
 		/// </summary>
 		/// <value>Any list supportting and <see cref="System.Collections.IList"/> interface.</value>
@@ -143,6 +206,24 @@ namespace GroupControls
 		{
 			ResetListLayout();
 			Refresh();
+		}
+
+		/// <summary>
+		/// Ensures that the specified item is visible within the control, scrolling the contents of the control if necessary.
+		/// </summary>
+		/// <param name="index">The zero-based index of the item to scroll into view.</param>
+		public abstract void EnsureVisible(int index);
+
+		/// <summary>
+		/// Retrieves the bounding rectangle for a specific item within the list control.
+		/// </summary>
+		/// <param name="index">The zero-based index of the item whose bounding rectangle you want to return.</param>
+		/// <returns>A <see cref="Rectangle"/> that represents the bounding rectangle of the specified item.</returns>
+		public Rectangle GetItemRect(int index)
+		{
+			if (index < 0 || index >= BaseItems.Count)
+				throw new ArgumentOutOfRangeException("index");
+			return itemBounds[index];
 		}
 
 		/// <summary>
@@ -520,7 +601,12 @@ namespace GroupControls
 			this.PerformLayout();
 		}
 
-		private int GetItemAtLocation(Point pt)
+		/// <summary>
+		/// Gets the item at location within the control.
+		/// </summary>
+		/// <param name="pt">The location.</param>
+		/// <returns></returns>
+		protected int GetItemAtLocation(Point pt)
 		{
 			for (int i = 0; i < itemBounds.Count; i++)
 			{

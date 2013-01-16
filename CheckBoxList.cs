@@ -264,7 +264,10 @@ namespace GroupControls
 				case Keys.Down:
 				case Keys.Right:
 					if (FocusNextItem(this.FocusedItem, true))
+					{
+						EnsureVisible(FocusedIndex);
 						ret = true;
+					}
 					break;
 				case Keys.Enter:
 					break;
@@ -273,14 +276,20 @@ namespace GroupControls
 				case Keys.Up:
 				case Keys.Left:
 					if (FocusNextItem(this.FocusedItem, false))
+					{
+						EnsureVisible(FocusedIndex);
 						ret = true;
+					}
 					break;
 				case Keys.Space:
 					ToggleItem(FocusedIndex);
 					break;
 				case Keys.Tab:
 					if (FocusNextItem(this.FocusedItem, !ke.Shift))
+					{
+						EnsureVisible(FocusedIndex);
 						ret = true;
+					}
 					break;
 				default:
 					break;

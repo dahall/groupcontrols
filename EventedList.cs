@@ -799,7 +799,8 @@ namespace System.Collections.Generic
 		/// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.IList`1"/> is read-only.</exception>
 		public void Insert(int index, T item)
 		{
-			CheckIndex(index);
+			if (index != this._size)
+				CheckIndex(index);
 			if (this._size == this._items.Length)
 			{
 				this.EnsureCapacity(this._size + 1);
@@ -825,7 +826,8 @@ namespace System.Collections.Generic
 			{
 				throw new ArgumentNullException("collection");
 			}
-			CheckIndex(index);
+			if (index != this._size)
+				CheckIndex(index);
 			ICollection<T> is2 = collection as ICollection<T>;
 			if (is2 != null)
 			{

@@ -11,6 +11,8 @@ namespace GroupControls
 	[DefaultProperty("Items")]
 	public abstract class ButtonListBase : ControlListBase
 	{
+		internal const int lrPadding = 3, tPadding = 2;
+
 		private int focusedIndex = -1;
 		private Size imageSize = Size.Empty;
 		private Font subtextFont;

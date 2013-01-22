@@ -12,7 +12,6 @@ namespace GroupControls
 	/// </summary>
 	public abstract class ControlListBase : ScrollableControl
 	{
-		internal const int lrPadding = 3, tPadding = 2;
 		internal static readonly ContentAlignment anyRightAlignment, anyCenterAlignment, anyBottomAlignment, anyMiddleAlignment;
 		internal static ToolTip toolTip;
 
@@ -24,6 +23,7 @@ namespace GroupControls
 		private bool mouseTracking = false;
 		private RepeatDirection repeatDirection = RepeatDirection.Vertical;
 		private bool spaceEvenly = false;
+		private Size spacing = new Size(0, 0);
 		private int timedHoverItem = -1;
 
 		static ControlListBase()
@@ -52,6 +52,8 @@ namespace GroupControls
 			this.ResumeLayout(false);
 			hoverTimer = new Timer() { Interval = SystemInformation.MouseHoverTime };
 			hoverTimer.Tick += new EventHandler(hoverTimer_Tick);
+			base.PaddingChanged += OnLayoutPropertyChanged;
+			base.SizeChanged += OnLayoutPropertyChanged;
 		}
 
 		/// <summary>
@@ -128,6 +130,17 @@ namespace GroupControls
 				}
 				return createParams;
 			}
+		}
+
+		/// <summary>
+		/// Gets the spacing in between items.
+		/// </summary>
+		/// <value>The <see cref="Size"/> representing the horizontal and vertical spacing between items.</value>
+		[DefaultValue(typeof(Size), "0,0"), Category("Layout"), Description("Spacing between items")]
+		public virtual Size ItemSpacing
+		{
+			get { return spacing; }
+			set { spacing = value; ResetListLayout(); Refresh(); }
 		}
 
 		/// <summary>
@@ -313,29 +326,23 @@ namespace GroupControls
 			itemBounds.Clear();
 			using (Graphics g = this.CreateGraphics())
 			{
-				// First get the base height of all items and the max height
+				// Determine the start coordinate of each column
+				int colWidth = (ClientSize.Width - Padding.Horizontal - ((columns - 1) * spacing.Width)) / columns;
+				Point[] colPos = new Point[columns];
+				for (int x = 0; x < columns; x++)
+					colPos[x] = new Point(this.Padding.Left + (x * (colWidth + spacing.Width)), this.Padding.Top);
+
+				// Get the base height of all items and the max height
 				int maxItemHeight = 0;
 				idealHeight = 0;
-				Size maxSize = new Size((ClientSize.Width - (Padding.Horizontal * columns)) / columns, ClientSize.Height - Padding.Vertical);
+				Size maxSize = new Size(colWidth, 0);
 				for (int i = 0; i < this.BaseItems.Count; i++)
 				{
 					Size sz = this.MeasureItem(g, i, maxSize);
 					this.itemBounds[i] = new Rectangle(Point.Empty, sz);
 
-					// Calculate minimum item height
-					int minHeight = sz.Height;
-					maxItemHeight = Math.Max(maxItemHeight, minHeight);
-					idealHeight += minHeight;
-				}
-
-				// Determine the start coordinate of each column
-				int[] colHeight = new int[columns];
-				int[] colXPos = new int[columns];
-				int colWidth = (ClientSize.Width - Padding.Horizontal - ((columns - 1) * 2 * this.Margin.Horizontal)) / columns;
-				for (int x = 0; x < columns; x++)
-				{
-					colHeight[x] = this.Padding.Top + this.Margin.Top;
-					colXPos[x] = this.Padding.Left + this.Margin.Left + (x * (colWidth + Margin.Horizontal));
+					// Calculate maximum item height
+					maxItemHeight = Math.Max(maxItemHeight, sz.Height);
 				}
 
 				// Calculate the positions of each item
@@ -343,17 +350,23 @@ namespace GroupControls
 				for (int i = 0; i < this.BaseItems.Count; i++)
 				{
 					// Set bounds of the item
-					this.itemBounds[i] = new Rectangle(colXPos[curCol], colHeight[curCol], this.itemBounds[i].Size.Width, this.itemBounds[i].Size.Height);
+					this.itemBounds[i] = new Rectangle(colPos[curCol], this.itemBounds[i].Size);
 					// Set top position of next item
-					colHeight[curCol] += (spaceEvenly ? maxItemHeight : this.itemBounds[i].Height) + this.Margin.Vertical;
+					colPos[curCol].Y += (spaceEvenly ? maxItemHeight : this.itemBounds[i].Height) + spacing.Height;
 					if (RepeatDirection == GroupControls.RepeatDirection.Horizontal)
 						if (++curCol == columns) curCol = 0;
+					// If spacing evenly we can determine all locations now by changing column count at pure divisions
+					/*if (spaceEvenly && RepeatDirection == GroupControls.RepeatDirection.Vertical && i > 0)
+					{
+						if (i % (this.BaseItems.Count / columns) == 0 && curCol <= (this.BaseItems.Count % columns))
+							curCol++;
+					}*/
 				}
 
 				// Split vertical columns and reset positions of items
 				if (RepeatDirection == GroupControls.RepeatDirection.Vertical && columns > 1)
 				{
-					int idealColHeight = colHeight[0] / columns;
+					int idealColHeight = colPos[0].Y / columns;
 					int thisColBottom = idealColHeight;
 					int y = this.Padding.Top + this.Margin.Top;
 					for (int i = 0; i < this.BaseItems.Count; i++)
@@ -364,21 +377,21 @@ namespace GroupControls
 							nBounds = this.itemBounds[i + 1];
 
 						if (curCol > 0)
-							this.itemBounds[i] = new Rectangle(new Point(colXPos[curCol], y), this.itemBounds[i].Size);
-						colHeight[curCol] = this.itemBounds[i].Bottom + this.Margin.Bottom;
+							this.itemBounds[i] = new Rectangle(new Point(colPos[curCol].X, y), this.itemBounds[i].Size);
+						colPos[curCol].Y = this.itemBounds[i].Bottom + this.spacing.Height;
 
 						if ((iBounds.Bottom > thisColBottom || nBounds.Bottom > thisColBottom) && (curCol + 1 < columns))
 						{
 							if (Math.Abs(iBounds.Bottom - idealColHeight) < Math.Abs(nBounds.Bottom - idealColHeight))
 							{
-								y = this.Padding.Top + this.Margin.Top;
+								y = this.Padding.Top;
 								curCol++;
-								thisColBottom = iBounds.Bottom + this.Margin.Bottom + idealColHeight;
+								thisColBottom = iBounds.Bottom + this.spacing.Height + idealColHeight;
 							}
 						}
 						else
 						{
-							y += (spaceEvenly ? maxItemHeight : this.itemBounds[i].Height) + this.Margin.Vertical;
+							y += (spaceEvenly ? maxItemHeight : this.itemBounds[i].Height) + this.spacing.Height;
 						}
 					}
 				}
@@ -386,9 +399,8 @@ namespace GroupControls
 				// Set ideal height
 				idealHeight = 0;
 				for (int c = 0; c < columns; c++)
-					if (idealHeight < colHeight[c]) idealHeight = colHeight[c];
-				idealHeight -= this.Margin.Vertical;
-				idealHeight += this.Padding.Bottom;
+					if (idealHeight < colPos[c].Y) idealHeight = colPos[c].Y;
+				idealHeight = idealHeight - spacing.Height + this.Padding.Bottom;
 			}
 
 			// Set scroll height and autosize to ideal height
@@ -623,6 +635,11 @@ namespace GroupControls
 			{
 				UpdateToolTip(GetItemToolTipText(timedHoverItem));
 			}
+		}
+
+		private void OnLayoutPropertyChanged(object sender, EventArgs e)
+		{
+			ResetListLayout();
 		}
 
 		private void SetHover(int itemIndex)

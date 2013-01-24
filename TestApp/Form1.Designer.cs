@@ -42,7 +42,7 @@
 			// 
 			// radioButtonList1
 			// 
-			this.radioButtonList1.AutoScrollMinSize = new System.Drawing.Size(210, 51);
+			this.radioButtonList1.AutoScrollMinSize = new System.Drawing.Size(210, 44);
 			radioButtonListItem1.Enabled = false;
 			radioButtonListItem1.Subtext = "A hip dude";
 			radioButtonListItem1.Text = "&Al";
@@ -56,16 +56,15 @@
 			this.radioButtonList1.Items.Add(radioButtonListItem2);
 			this.radioButtonList1.Items.Add(radioButtonListItem3);
 			this.radioButtonList1.Items.Add(radioButtonListItem4);
-			this.radioButtonList1.ItemSpacing = new System.Drawing.Size(0, 7);
 			this.radioButtonList1.Location = new System.Drawing.Point(325, 12);
 			this.radioButtonList1.Name = "radioButtonList1";
 			this.radioButtonList1.RepeatColumns = 2;
-			this.radioButtonList1.Size = new System.Drawing.Size(210, 51);
+			this.radioButtonList1.Size = new System.Drawing.Size(210, 44);
 			this.radioButtonList1.TabIndex = 3;
 			// 
 			// checkBoxList1
 			// 
-			this.checkBoxList1.AutoScrollMinSize = new System.Drawing.Size(307, 250);
+			this.checkBoxList1.AutoScrollMinSize = new System.Drawing.Size(307, 236);
 			this.checkBoxList1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			checkBoxListItem1.CheckState = System.Windows.Forms.CheckState.Checked;
 			checkBoxListItem1.Subtext = "Some very long text to test the subtext property and to ensure that it wraps as i" +
@@ -82,10 +81,9 @@
 			this.checkBoxList1.Items.Add(checkBoxListItem1);
 			this.checkBoxList1.Items.Add(checkBoxListItem2);
 			this.checkBoxList1.Items.Add(checkBoxListItem3);
-			this.checkBoxList1.ItemSpacing = new System.Drawing.Size(0, 7);
 			this.checkBoxList1.Location = new System.Drawing.Point(12, 12);
 			this.checkBoxList1.Name = "checkBoxList1";
-			this.checkBoxList1.Size = new System.Drawing.Size(307, 250);
+			this.checkBoxList1.Size = new System.Drawing.Size(307, 236);
 			this.checkBoxList1.SubtextFont = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.checkBoxList1.TabIndex = 2;
 			this.checkBoxList1.Text = "checkBoxList1";

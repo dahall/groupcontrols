@@ -23,7 +23,7 @@ namespace GroupControls
 		private bool mouseTracking = false;
 		private RepeatDirection repeatDirection = RepeatDirection.Vertical;
 		private bool spaceEvenly = false;
-		private Size spacing = new Size(0, 0);
+		private Size spacing = new Size(0, 6);
 		private int timedHoverItem = -1;
 
 		static ControlListBase()
@@ -136,7 +136,7 @@ namespace GroupControls
 		/// Gets the spacing in between items.
 		/// </summary>
 		/// <value>The <see cref="Size"/> representing the horizontal and vertical spacing between items.</value>
-		[DefaultValue(typeof(Size), "0,0"), Category("Layout"), Description("Spacing between items")]
+		[DefaultValue(typeof(Size), "0,6"), Category("Layout"), Description("Spacing between items")]
 		public virtual Size ItemSpacing
 		{
 			get { return spacing; }

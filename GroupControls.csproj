@@ -88,7 +88,12 @@
     <Compile Include="ControlListBase.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="ControlListCodeDomSerializer.cs" />
+    <Compile Include="CursorExtension.cs" />
     <Compile Include="EventedList.cs" />
+    <Compile Include="Native.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

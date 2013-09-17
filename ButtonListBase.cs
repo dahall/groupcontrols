@@ -13,21 +13,22 @@ namespace GroupControls
 	{
 		internal const int lrPadding = 3, tPadding = 2;
 
+		private const TextFormatFlags baseTextFormatFlags = TextFormatFlags.WordBreak | TextFormatFlags.PreserveGraphicsTranslateTransform;
+
+		private ContentAlignment checkAlign = ContentAlignment.TopLeft;
 		private int focusedIndex = -1;
 		private Size imageSize = Size.Empty;
 		private Font subtextFont;
 		private Color subtextForeColor = Color.Empty;
 		private int subtextSeparatorHeight = 5;
 		private ContentAlignment textAlign = ContentAlignment.TopLeft;
+		private TextFormatFlags textFormatFlags = baseTextFormatFlags;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ButtonListBase"/> class.
 		/// </summary>
-		public ButtonListBase()
-			: base()
+		public ButtonListBase() : base()
 		{
-			ImageAlign = ContentAlignment.TopLeft;
-			TextFormatFlags = TextFormatFlags.WordBreak | TextFormatFlags.PreserveGraphicsTranslateTransform;
 		}
 
 		/// <summary>
@@ -43,6 +44,17 @@ namespace GroupControls
 		public event PropertyChangedEventHandler SubtextSeparatorHeightChanged;
 
 		/// <summary>
+		/// Gets or sets the alignment of the check box in relation to the text.
+		/// </summary>
+		[DefaultValue(typeof(ContentAlignment), "TopLeft"), Category("Appearance"), Localizable(true)]
+		[Description("The alignment of the check box in relation to the text.")]
+		public ContentAlignment CheckAlign
+		{
+			get { return checkAlign; }
+			set { checkAlign = value; ResetListLayout("CheckAlign"); Refresh(); }
+		}
+
+		/// <summary>
 		/// Gets or sets the font used to render the subtext of each item.
 		/// </summary>
 		[Description("The font used to display the item subtext."),
@@ -50,7 +62,7 @@ namespace GroupControls
 		public Font SubtextFont
 		{
 			get { return subtextFont == null ? this.Font : subtextFont; }
-			set { if (this.Font.Equals(value)) subtextFont = null; else subtextFont = value; ResetListLayout(); Refresh(); }
+			set { if (this.Font.Equals(value)) subtextFont = null; else subtextFont = value; ResetListLayout("SubtextFont"); Refresh(); }
 		}
 
 		/// <summary>
@@ -73,7 +85,7 @@ namespace GroupControls
 		public int SubtextSeparatorHeight
 		{
 			get { return subtextSeparatorHeight; }
-			set { subtextSeparatorHeight = value; OnSubtextSeparatorHeightChanged(new PropertyChangedEventArgs("SubtextSeparatorHeight")); ResetListLayout(); Refresh(); }
+			set { subtextSeparatorHeight = value; OnSubtextSeparatorHeightChanged(new PropertyChangedEventArgs("SubtextSeparatorHeight")); ResetListLayout("SubtextSeparatorHeight"); Refresh(); }
 		}
 
 		/// <summary>
@@ -99,12 +111,8 @@ namespace GroupControls
 			set
 			{
 				textAlign = value;
-				TextFormatFlags = TextFormatFlags.WordBreak;
-				if ((this.textAlign & anyRightAlignment) != (ContentAlignment)0)
-					TextFormatFlags |= TextFormatFlags.Right;
-				else if ((this.textAlign & anyCenterAlignment) != (ContentAlignment)0)
-					TextFormatFlags |= TextFormatFlags.HorizontalCenter;
-				ResetListLayout();
+				RebuildTextFormatFlags();
+				ResetListLayout("TextAlign");
 				Refresh();
 			}
 		}
@@ -135,21 +143,12 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Gets or sets the image alignment.
-		/// </summary>
-		/// <value>The image alignment.</value>
-		protected ContentAlignment ImageAlign
-		{
-			get; set;
-		}
-
-		/// <summary>
 		/// Gets the TextFormatFlags based on alignments.
 		/// </summary>
 		/// <value>The TextFormatFlags.</value>
 		protected TextFormatFlags TextFormatFlags
 		{
-			get; private set;
+			get { return this.RightToLeft == RightToLeft.Yes ? textFormatFlags | TextFormatFlags.RightToLeft : textFormatFlags; }
 		}
 
 		/// <summary>
@@ -227,7 +226,7 @@ namespace GroupControls
 		/// </summary>
 		/// <param name="g">Current <see cref="Graphics"/> context.</param>
 		/// <returns>The size of the image.</returns>
-		protected abstract Size GetImageSize(Graphics g);
+		protected abstract Size GetButtonSize(Graphics g);
 
 		/// <summary>
 		/// Gets the specified item's tooltip text.
@@ -264,76 +263,84 @@ namespace GroupControls
 		/// <returns>Minimum size for the item.</returns>
 		protected override Size MeasureItem(System.Drawing.Graphics g, int index, Size maxSize)
 		{
+			ContentAlignment chkAlign = this.CheckAlign; // base.RtlTranslateContent(this.CheckAlign);
+			ContentAlignment txtAlign = this.TextAlign; // base.RtlTranslateContent(this.TextAlign);
+
 			ButtonListItem item = this.BaseItems[index] as ButtonListItem;
 			if (item == null)
 				return Size.Empty;
 
-			Size itemSize = Size.Empty;
-
 			// Get glyph size
 			if (imageSize == Size.Empty)
-				imageSize = GetImageSize(g);
+				imageSize = GetButtonSize(g);
 			int glyphWithPadding = imageSize.Width + (lrPadding * 2);
 
 			// Calculate text size
 			Size textSize = new Size(maxSize.Width, Int32.MaxValue);
-			if ((this.ImageAlign & anyCenterAlignment) == (ContentAlignment)0)
+			if ((chkAlign & anyCenterAlignment) == (ContentAlignment)0)
 				textSize.Width -= glyphWithPadding;
 
 			Size tsz = TextRenderer.MeasureText(g, item.Text, this.Font, textSize, TextFormatFlags);
-			item.TextRect = new Rectangle(Point.Empty, tsz);
+			item.TextRect = new Rectangle(0, 0, textSize.Width, tsz.Height);
+			Size stsz = Size.Empty;
 			item.SubtextRect = Rectangle.Empty;
 			if (!string.IsNullOrEmpty(item.Subtext))
 			{
-				item.SubtextRect.Size = TextRenderer.MeasureText(g, item.Subtext, this.SubtextFont, textSize, TextFormatFlags);
-				item.SubtextRect.Y = tsz.Height + subtextSeparatorHeight;
+				stsz = TextRenderer.MeasureText(g, item.Subtext, this.SubtextFont, textSize, TextFormatFlags);
+				item.SubtextRect = new Rectangle(0, tsz.Height + subtextSeparatorHeight, textSize.Width, stsz.Height);
 			}
 
 			// Calculate minimum item height
 			int minHeight = item.TextRect.Height;
 			if (!item.SubtextRect.IsEmpty)
 				minHeight += (item.SubtextRect.Height + subtextSeparatorHeight);
-			if ((this.ImageAlign & ContentAlignment.TopCenter) != (ContentAlignment)0)
+			int textHeight = minHeight;
+			if ((chkAlign == ContentAlignment.TopCenter) || (chkAlign == ContentAlignment.BottomCenter))
 				minHeight += (imageSize.Height + tPadding);
-			else if ((this.ImageAlign & ContentAlignment.BottomCenter) != (ContentAlignment)0)
-				minHeight += imageSize.Height;
 
-			itemSize = new Size(Math.Max(tsz.Width, item.SubtextRect.Width) + glyphWithPadding, minHeight);
+			Size itemSize = new Size(maxSize.Width, minHeight);
 
 			// Set relative position of glyph
 			item.GlyphPosition = Point.Empty;
-			if ((this.ImageAlign & anyBottomAlignment) != (ContentAlignment)0)
+			if ((chkAlign & anyBottomAlignment) != (ContentAlignment)0)
 			{
 				item.GlyphPosition.Y = itemSize.Height - imageSize.Height;
 			}
-			else if ((this.ImageAlign & anyMiddleAlignment) != (ContentAlignment)0)
+			else if ((chkAlign & anyMiddleAlignment) != (ContentAlignment)0)
 			{
 				item.GlyphPosition.Y = (itemSize.Height - imageSize.Height) / 2;
 			}
 			else
 			{
-				if (this.ImageAlign == ContentAlignment.TopCenter)
+				if (chkAlign == ContentAlignment.TopCenter)
 					item.OffsetText(0, imageSize.Height + tPadding);
 			}
-			if ((this.ImageAlign & anyRightAlignment) != (ContentAlignment)0)
+			if ((chkAlign & anyRightAlignment) != (ContentAlignment)0)
 			{
 				item.GlyphPosition.X = itemSize.Width - imageSize.Width;
 				item.OffsetText(lrPadding, 0);
 			}
-			else if ((this.ImageAlign & anyCenterAlignment) != (ContentAlignment)0)
+			else if ((chkAlign & anyCenterAlignment) != (ContentAlignment)0)
 			{
-				item.GlyphPosition.X = (itemSize.Width - imageSize.Width - glyphWithPadding) / 2;
+				item.GlyphPosition.X = (itemSize.Width - imageSize.Width) / 2;
 			}
 			else
 			{
 				item.OffsetText(imageSize.Width + lrPadding, 0);
 			}
 
+			// Set text focus rectangle
+			item.FocusRect = new Rectangle(item.TextRect.Location, new Size(Math.Min(Math.Max(tsz.Width, stsz.Width), maxSize.Width), textHeight));
+			if ((txtAlign & anyCenterAlignment) != (ContentAlignment)0)
+				item.FocusRect.X += (itemSize.Width - item.FocusRect.Width) / 2;
+			else if ((txtAlign & anyRightAlignment) != (ContentAlignment)0)
+				item.FocusRect.X = itemSize.Width - item.FocusRect.Width - imageSize.Width - lrPadding;
+
 			// Adjust text position for bottom or middle
-			if ((this.TextAlign & anyBottomAlignment) != (ContentAlignment)0)
+			/*if ((txtAlign & anyBottomAlignment) != (ContentAlignment)0)
 				item.OffsetText(0, itemSize.Height - item.TextRect.Height);
-			else if ((this.TextAlign & anyMiddleAlignment) != (ContentAlignment)0)
-				item.OffsetText(0, (itemSize.Height - item.TextRect.Height) / 2);
+			else if ((txtAlign & anyMiddleAlignment) != (ContentAlignment)0)
+				item.OffsetText(0, (itemSize.Height - item.TextRect.Height) / 2);*/
 
 			return itemSize;
 		}
@@ -364,6 +371,16 @@ namespace GroupControls
 		}
 
 		/// <summary>
+		/// Raises the <see cref="Control.RightToLeftChanged"/> event.
+		/// </summary>
+		/// <param name="e">An <see cref="T:System.EventArgs" /> that contains the event data.</param>
+		protected override void OnRightToLeftChanged(EventArgs e)
+		{
+			base.OnRightToLeftChanged(e);
+			RebuildTextFormatFlags();
+		}
+
+		/// <summary>
 		/// Raises the <see cref="SubtextForeColorChanged"/> event.
 		/// </summary>
 		/// <param name="e">An <see cref="PropertyChangedEventArgs"/> that contains the event data.</param>
@@ -383,6 +400,51 @@ namespace GroupControls
 			PropertyChangedEventHandler handler1 = this.SubtextSeparatorHeightChanged;
 			if (handler1 != null)
 				handler1(this, e);
+		}
+
+		/// <summary>
+		/// Paints the button.
+		/// </summary>
+		/// <param name="g">A <see cref="Graphics" /> reference.</param>
+		/// <param name="index">The index of the item.</param>
+		/// <param name="bounds">The bounds in which to paint the item.</param>
+		protected abstract void PaintButton(Graphics g, int index, Rectangle bounds);
+
+		/// <summary>
+		/// Paints the specified item.
+		/// </summary>
+		/// <param name="g">A <see cref="Graphics"/> reference.</param>
+		/// <param name="index">The index of the item.</param>
+		/// <param name="bounds">The bounds in which to paint the item.</param>
+		protected override void PaintItem(System.Drawing.Graphics g, int index, Rectangle bounds)
+		{
+			ButtonListItem li = this.BaseItems[index] as ButtonListItem;
+			System.Diagnostics.Debug.WriteLine(string.Format("PaintItem: {0}[{1}], Bounds=({2},{3},{4},{5}), GlPos=({6},{7}), TPos=({8},{9},{10},{11})", this.Name, index,
+				bounds.X, bounds.Y, bounds.Width, bounds.Height, li.GlyphPosition.X, li.GlyphPosition.Y, li.TextRect.X, li.TextRect.Y, li.TextRect.Width, li.TextRect.Height));
+
+			// Draw glyph
+			PaintButton(g, index, bounds);
+
+			// Draw text
+			Rectangle tr = li.TextRect;
+			tr.Offset(bounds.Location);
+			TextRenderer.DrawText(g, li.Text, this.Font, tr, li.Enabled ? this.ForeColor : SystemColors.GrayText, TextFormatFlags);
+
+			Rectangle str = li.SubtextRect;
+			bool hasSubtext = !string.IsNullOrEmpty(li.Subtext);
+			if (hasSubtext)
+			{
+				str.Offset(bounds.Location);
+				TextRenderer.DrawText(g, li.Subtext, this.SubtextFont, str, li.Enabled ? this.SubtextForeColor : SystemColors.GrayText, TextFormatFlags);
+			}
+
+			// Draw focus rect
+			if (index == FocusedIndex && this.Focused)
+			{
+				Rectangle fr = li.FocusRect;
+				fr.Offset(bounds.Location);
+				ControlPaint.DrawFocusRectangle(g, fr);
+			}
 		}
 
 		/// <summary>
@@ -409,6 +471,16 @@ namespace GroupControls
 					InvalidateItem(focusedIndex);
 			}
 		}
+
+		private void RebuildTextFormatFlags()
+		{
+			ContentAlignment txtAlign = this.TextAlign; // base.RtlTranslateContent(this.TextAlign);
+			textFormatFlags = baseTextFormatFlags;
+			if ((txtAlign & anyRightAlignment) != (ContentAlignment)0)
+				textFormatFlags |= TextFormatFlags.Right;
+			else if ((txtAlign & anyCenterAlignment) != (ContentAlignment)0)
+				textFormatFlags |= TextFormatFlags.HorizontalCenter;
+		}
 	}
 
 	/// <summary>
@@ -417,7 +489,7 @@ namespace GroupControls
 	public class ButtonListItem : IEquatable<ButtonListItem>
 	{
 		internal Point GlyphPosition;
-		internal Rectangle TextRect, SubtextRect;
+		internal Rectangle TextRect, SubtextRect, FocusRect;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ButtonListItem"/> class.

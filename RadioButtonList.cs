@@ -31,17 +31,6 @@ namespace GroupControls
 		public event EventHandler SelectedIndexChanged;
 
 		/// <summary>
-		/// Gets or sets the alignment of the check box in relation to the text.
-		/// </summary>
-		[DefaultValue(typeof(ContentAlignment), "TopLeft"), Category("Appearance"), Localizable(true),
-		Description("Determines the location of the check box in relation to the text.")]
-		public ContentAlignment CheckAlign
-		{
-			get { return ImageAlign; }
-			set { ImageAlign = value; ResetListLayout(); Refresh(); }
-		}
-
-		/// <summary>
 		/// Gets the list of <see cref="RadioButtonListItem"/> associated with the control.
 		/// </summary>
 		[MergableProperty(false), Category("Data"),
@@ -107,6 +96,17 @@ namespace GroupControls
 		}
 
 		/// <summary>
+		/// Gets the background renderer for this type of control.
+		/// </summary>
+		/// <value>
+		/// The background renderer.
+		/// </value>
+		protected override PaintBackgroundMethod BackgroundRenderer
+		{
+			get { return RadioButtonRenderer.DrawParentBackground; }
+		}
+
+		/// <summary>
 		/// Gets the base list of items.
 		/// </summary>
 		/// <value>
@@ -122,7 +122,7 @@ namespace GroupControls
 		/// </summary>
 		/// <param name="g">Current <see cref="Graphics"/> context.</param>
 		/// <returns>The size of the image.</returns>
-		protected override Size GetImageSize(Graphics g)
+		protected override Size GetButtonSize(Graphics g)
 		{
 			return RadioButtonRenderer.GetGlyphSize(g, System.Windows.Forms.VisualStyles.RadioButtonState.CheckedNormal);
 		}
@@ -181,22 +181,6 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Raises the <see cref="Control.KeyUp"/> event.
-		/// </summary>
-		/// <param name="e">An <see cref="KeyEventArgs"/> that contains the event data.</param>
-		protected override void OnKeyUp(KeyEventArgs e)
-		{
-			if (PressingItem != -1)
-			{
-				int ci = PressingItem;
-				PressingItem = -1;
-				InvalidateItem(ci);
-			}
-			// Handle button press on Space
-			base.OnKeyUp(e);
-		}
-
-		/// <summary>
 		/// Raises the <see cref="Control.LostFocus"/> event.
 		/// </summary>
 		/// <param name="e">An <see cref="EventArgs"/> that contains the event data.</param>
@@ -219,19 +203,6 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Raises the <see cref="Control.Paint"/> event.
-		/// </summary>
-		/// <param name="pe">An <see cref="PaintEventArgs"/> that contains the event data.</param>
-		protected override void OnPaint(PaintEventArgs pe)
-		{
-			if (Application.RenderWithVisualStyles)
-				RadioButtonRenderer.DrawParentBackground(pe.Graphics, pe.ClipRectangle, this);
-			else
-				pe.Graphics.Clear(this.BackColor);
-			base.OnPaint(pe);
-		}
-
-		/// <summary>
 		/// Raises the <see cref="E:SelectedIndexChanged"/> event.
 		/// </summary>
 		/// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
@@ -243,46 +214,41 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Paints the specified item.
+		/// Paints the button.
 		/// </summary>
-		/// <param name="g">A <see cref="Graphics"/> reference.</param>
+		/// <param name="g">A <see cref="Graphics" /> reference.</param>
 		/// <param name="index">The index of the item.</param>
 		/// <param name="bounds">The bounds in which to paint the item.</param>
-		protected override void PaintItem(System.Drawing.Graphics g, int index, Rectangle bounds)
+		protected override void PaintButton(Graphics g, int index, Rectangle bounds)
 		{
-			// Draw glyph
-			RadioButtonListItem li = items[index];
+			RadioButtonListItem li = this.BaseItems[index] as RadioButtonListItem;
+
 			System.Windows.Forms.VisualStyles.RadioButtonState rbs = li.Checked ? System.Windows.Forms.VisualStyles.RadioButtonState.CheckedNormal : System.Windows.Forms.VisualStyles.RadioButtonState.UncheckedNormal;
-			int idx = items.IndexOf(li);
 			if (!this.Enabled || !li.Enabled)
 				rbs += 3;
-			else if (idx == PressingItem)
+			else if (index == PressingItem)
 				rbs += 2;
-			else if (idx == HoverItem)
+			else if (index == HoverItem)
 				rbs++;
+
 			Point gp = li.GlyphPosition;
 			gp.Offset(bounds.Location);
-			RadioButtonRenderer.DrawRadioButton(g, gp, rbs);
 
-			// Draw text
-			Rectangle tr = li.TextRect;
-			tr.Offset(bounds.Location);
-			TextRenderer.DrawText(g, li.Text, this.Font, tr, li.Enabled ? this.ForeColor : SystemColors.GrayText, TextFormatFlags);
-
-			Rectangle str = li.SubtextRect;
-			bool hasSubtext = !string.IsNullOrEmpty(li.Subtext);
-			if (hasSubtext)
+			/*if (this.RightToLeft == System.Windows.Forms.RightToLeft.Yes)
 			{
-				str.Offset(bounds.Location);
-				TextRenderer.DrawText(g, li.Subtext, this.SubtextFont, str, li.Enabled ? this.SubtextForeColor : SystemColors.GrayText, TextFormatFlags);
+				Size btnSize = GetButtonSize(g);
+				Bitmap bmp = new Bitmap(btnSize.Width, btnSize.Height, g);
+				using (Graphics bg = Graphics.FromImage(bmp))
+				{
+					bg.Clear(this.Parent.BackColor);
+					RadioButtonRenderer.DrawParentBackground(bg, new Rectangle(Point.Empty, btnSize), this);
+					RadioButtonRenderer.DrawRadioButton(bg, Point.Empty, rbs);
+					g.DrawImage(bmp, new Rectangle(gp.X, gp.Y, btnSize.Width, btnSize.Height), 0, 0, btnSize.Width, btnSize.Height, GraphicsUnit.Pixel);
+				}
 			}
-
-			// Draw focus rect
-			if (idx == FocusedIndex && this.Focused)
+			else*/
 			{
-				if (hasSubtext)
-					tr = Rectangle.Union(tr, str);
-				ControlPaint.DrawFocusRectangle(g, tr);
+				RadioButtonRenderer.DrawRadioButton(g, gp, rbs);
 			}
 		}
 
@@ -330,9 +296,9 @@ namespace GroupControls
 		/// <summary>
 		/// Resets the list's layout.
 		/// </summary>
-		protected override void ResetListLayout()
+		protected override void ResetListLayout(string property)
 		{
-			base.ResetListLayout();
+			base.ResetListLayout(property);
 			// Get the change to the selected index based on item Checked property
 			this.SelectedIndex = items.CheckedItemIndex;
 		}
@@ -418,7 +384,22 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Called when [item added].
+		/// Adds the specified text values to the collection.
+		/// </summary>
+		/// <param name="textValues">The text value pairs representing matching text and subtext.</param>
+		/// <exception cref="System.ArgumentException">List of values must contain matching text/subtext entries for an even count of strings.;textValues</exception>
+		public void Add(params string[] textValues)
+		{
+			if (textValues.Length % 2 != 0)
+				throw new ArgumentException("List of values must contain matching text/subtext entries for an even count of strings.", "textValues");
+			parent.SuspendLayout();
+			for (int i = 0; i < textValues.Length; i += 2)
+				this.Add(textValues[i], textValues[i + 1]);
+			parent.ResumeLayout();
+		}
+
+		/// <summary>
+		/// Called when a new <see cref="RadioButtonListItem"/> has been added.
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="value">The value.</param>
@@ -429,7 +410,7 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Called when [item changed].
+		/// Called when a <see cref="RadioButtonListItem"/> has been changed.
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="oldValue">The old value.</param>
@@ -442,7 +423,7 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Called when [item deleted].
+		/// Called when a <see cref="RadioButtonListItem"/> has been deleted.
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="value">The value.</param>

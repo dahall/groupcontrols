@@ -10,6 +10,7 @@ namespace GroupControls
 	/// <summary>
 	/// Abstract class that handles the display of numerous control items.
 	/// </summary>
+	[System.ComponentModel.Design.Serialization.DesignerSerializer(typeof(Design.DesignerLayoutCodeDomSerializer), typeof(System.ComponentModel.Design.Serialization.CodeDomSerializer))]
 	public abstract class ControlListBase : ScrollableControl
 	{
 		internal static readonly ContentAlignment anyRightAlignment, anyCenterAlignment, anyBottomAlignment, anyMiddleAlignment;
@@ -105,34 +106,6 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Gets the required creation parameters when the control handle is created.
-		/// </summary>
-		/// <returns>A <see cref="T:System.Windows.Forms.CreateParams"/> that contains the required creation parameters when the handle to the control is created.</returns>
-		protected override CreateParams CreateParams
-		{
-			get
-			{
-				const int WS_EX_CONTROLPARENT = 0x10000;
-				const int WS_EX_CLIENTEDGE = 0x200;
-				const int WS_BORDER = 0x800000;
-				CreateParams createParams = base.CreateParams;
-				createParams.ExStyle |= WS_EX_CONTROLPARENT;
-				createParams.ExStyle &= ~WS_EX_CLIENTEDGE;
-				createParams.Style &= ~WS_BORDER;
-				switch (this.borderStyle)
-				{
-					case BorderStyle.FixedSingle:
-						createParams.Style |= WS_BORDER;
-						return createParams;
-					case BorderStyle.Fixed3D:
-						createParams.ExStyle |= WS_EX_CLIENTEDGE;
-						return createParams;
-				}
-				return createParams;
-			}
-		}
-
-		/// <summary>
 		/// Gets the spacing in between items.
 		/// </summary>
 		/// <value>The <see cref="Size"/> representing the horizontal and vertical spacing between items.</value>
@@ -140,7 +113,7 @@ namespace GroupControls
 		public virtual Size ItemSpacing
 		{
 			get { return spacing; }
-			set { spacing = value; ResetListLayout(); Refresh(); }
+			set { spacing = value; ResetListLayout("ItemSpacing"); Refresh(); }
 		}
 
 		/// <summary>
@@ -151,7 +124,7 @@ namespace GroupControls
 		public virtual int RepeatColumns
 		{
 			get { return columns; }
-			set { columns = value; ResetListLayout(); Refresh(); }
+			set { columns = value; ResetListLayout("RepeatColumns"); Refresh(); }
 		}
 
 		/// <summary>
@@ -162,7 +135,7 @@ namespace GroupControls
 		public virtual RepeatDirection RepeatDirection
 		{
 			get { return repeatDirection; }
-			set { repeatDirection = value; ResetListLayout(); Refresh(); }
+			set { repeatDirection = value; ResetListLayout("RepeatDirection"); Refresh(); }
 		}
 
 		/// <summary>
@@ -180,7 +153,7 @@ namespace GroupControls
 		public bool SpaceEvenly
 		{
 			get { return spaceEvenly; }
-			set { spaceEvenly = value; ResetListLayout(); Refresh(); }
+			set { spaceEvenly = value; ResetListLayout("SpaceEvenly"); Refresh(); }
 		}
 
 		/// <summary>
@@ -198,9 +171,52 @@ namespace GroupControls
 		/// Gets the base list of items.
 		/// </summary>
 		/// <value>Any list supportting and <see cref="System.Collections.IList"/> interface.</value>
-		protected abstract System.Collections.IList BaseItems
+		protected abstract System.Collections.IList BaseItems { get; }
+
+		/// <summary>
+		/// Gets the required creation parameters when the control handle is created.
+		/// </summary>
+		/// <returns>A <see cref="T:System.Windows.Forms.CreateParams"/> that contains the required creation parameters when the handle to the control is created.</returns>
+		protected override CreateParams CreateParams
 		{
-			get;
+			get
+			{
+				const int WS_EX_CONTROLPARENT = 0x10000;
+				const int WS_EX_CLIENTEDGE = 0x200;
+				const int WS_BORDER = 0x800000;
+				const int WS_EX_LAYOUTRTL = 0x400000;
+				const int WS_EX_NOINHERITLAYOUT = 0x100000;
+				const int WS_EX_RIGHT = 0x1000;
+				const int WS_EX_RTLREADING = 0x2000;
+				const int WS_EX_LEFTSCROLLBAR = 0x4000;
+
+				CreateParams createParams = base.CreateParams;
+				createParams.ExStyle &= ~WS_EX_CONTROLPARENT;
+
+				// Set border
+				createParams.ExStyle &= ~WS_EX_CLIENTEDGE;
+				createParams.Style &= ~WS_BORDER;
+				switch (this.borderStyle)
+				{
+					case BorderStyle.FixedSingle:
+						createParams.Style |= WS_BORDER;
+						break;
+					case BorderStyle.Fixed3D:
+						createParams.ExStyle |= WS_EX_CLIENTEDGE;
+						break;
+				}
+
+				// Set right to left layout
+				Form parent = this.FindForm();
+				bool parentRightToLeftLayout = parent != null ? parent.RightToLeftLayout : false;
+				if ((this.RightToLeft == RightToLeft.Yes) && parentRightToLeftLayout)
+				{
+					createParams.ExStyle |= WS_EX_LAYOUTRTL | WS_EX_NOINHERITLAYOUT;
+					createParams.ExStyle &= ~(WS_EX_RIGHT | WS_EX_RTLREADING | WS_EX_LEFTSCROLLBAR);
+				}
+
+				return createParams;
+			}
 		}
 
 		/// <summary>
@@ -215,9 +231,28 @@ namespace GroupControls
 		/// <value>The pressed item index.</value>
 		protected int PressingItem { get; set; }
 
+		/// <summary>
+		/// Method that will draw a control's background in a specified area.
+		/// </summary>
+		/// <param name="g">The Graphics object used to draw.</param>
+		/// <param name="bounds">The bounds.</param>
+		/// <param name="childControl">The child control.</param>
+		protected delegate void PaintBackgroundMethod(Graphics g, Rectangle bounds, Control childControl);
+
+		/// <summary>
+		/// Gets the background renderer for this type of control.
+		/// </summary>
+		/// <value>
+		/// The background renderer.
+		/// </value>
+		protected virtual PaintBackgroundMethod BackgroundRenderer
+		{
+			get { return ButtonRenderer.DrawParentBackground; }
+		}
+
 		internal void OnListChanged()
 		{
-			ResetListLayout();
+			ResetListLayout("Items");
 			Refresh();
 		}
 
@@ -244,7 +279,10 @@ namespace GroupControls
 		/// </summary>
 		/// <param name="index">The index of the item.</param>
 		/// <returns>Tooltip text to display. <c>null</c> or <see cref="String.Empty"/> to display no tooltip.</returns>
-		protected abstract string GetItemToolTipText(int index);
+		protected virtual string GetItemToolTipText(int index)
+		{
+			return null;
+		}
 
 		/// <summary>
 		/// Invalidates the specified item.
@@ -252,7 +290,8 @@ namespace GroupControls
 		/// <param name="index">The item index.</param>
 		protected virtual void InvalidateItem(int index)
 		{
-			base.Invalidate(OffsetForScroll(itemBounds[index]));
+			//base.Invalidate(OffsetForScroll(itemBounds[index]));
+			base.Invalidate();
 		}
 
 		/// <summary>
@@ -270,7 +309,10 @@ namespace GroupControls
 		/// </summary>
 		/// <param name="charCode">The mnumonic character.</param>
 		/// <returns><c>true</c> if list has the mnemonic; otherwise, <c>false</c>.</returns>
-		protected abstract bool ListHasMnemonic(char charCode);
+		protected virtual bool ListHasMnemonic(char charCode)
+		{
+			return false;
+		}
 
 		/// <summary>
 		/// Measures the specified item.
@@ -287,7 +329,8 @@ namespace GroupControls
 		/// <returns>Offset point</returns>
 		protected Point OffsetForScroll(Point pt)
 		{
-			//Creates the drawing matrix with the right zoom;
+			System.Diagnostics.Debug.Write(string.Format("OffsetForScroll: pt={0};", pt));
+			/*//Creates the drawing matrix with the right zoom;
 			Matrix mx = new Matrix(1, 0, 0, 1, 0, 0);
 			//pans it according to the scroll bars
 			mx.Translate(this.AutoScrollPosition.X, this.AutoScrollPosition.Y);
@@ -297,8 +340,12 @@ namespace GroupControls
 			//uses it to transform the current mouse position
 			Point[] pa = new Point[] { pt };
 			mx.TransformPoints(pa);
+			System.Diagnostics.Debug.WriteLine(string.Format("outPt={0};", pa[0]));
 
-			return pa[0];
+			return pa[0];*/
+			pt.Offset(this.AutoScrollPosition);
+			System.Diagnostics.Debug.WriteLine(string.Format("outPt={0};", pt));
+			return pt;
 		}
 
 		/// <summary>
@@ -307,9 +354,27 @@ namespace GroupControls
 		/// <returns>Offset rectangle</returns>
 		protected Rectangle OffsetForScroll(Rectangle rect)
 		{
+			System.Diagnostics.Debug.Write(string.Format("OffsetForScroll: rect={0};", rect));
 			Rectangle outRect = rect;
 			outRect.Offset(this.AutoScrollPosition);
+			System.Diagnostics.Debug.WriteLine(string.Format("outrect={0};", outRect));
 			return outRect;
+		}
+
+		/// <summary>
+		/// Raises the <see cref="Control.KeyUp"/> event.
+		/// </summary>
+		/// <param name="e">An <see cref="KeyEventArgs"/> that contains the event data.</param>
+		protected override void OnKeyUp(KeyEventArgs e)
+		{
+			if (PressingItem != -1)
+			{
+				int ci = PressingItem;
+				PressingItem = -1;
+				InvalidateItem(ci);
+			}
+			// Handle button press on Space
+			base.OnKeyUp(e);
 		}
 
 		/// <summary>
@@ -323,6 +388,8 @@ namespace GroupControls
 			if (this.BaseItems == null || this.BaseItems.Count == 0)
 				return;
 
+			System.Diagnostics.Debug.WriteLine(this.Name + ": OnLayout: " + e.AffectedProperty);
+			System.Diagnostics.Debug.WriteLine(string.Format("  ClientSize:{0}, Margin:{1}, Padding:{2}, Cols:{3}, Spacing:{4}, Items:{5}, Dir:{6}, Even:{7}", ClientSize, Margin, Padding, columns, spacing, BaseItems.Count, RepeatDirection, spaceEvenly));
 			itemBounds.Clear();
 			using (Graphics g = this.CreateGraphics())
 			{
@@ -406,6 +473,13 @@ namespace GroupControls
 			// Set scroll height and autosize to ideal height
 			this.AutoScrollMinSize = new Size(this.ClientRectangle.Width, idealHeight);
 			if (this.AutoSize) this.Height = idealHeight;
+
+#if DEBUG
+			var sb = new System.Text.StringBuilder();
+			for (int i = 0; i < itemBounds.Count; i++)
+				sb.AppendFormat("({0}),", itemBounds[i]);
+			System.Diagnostics.Debug.WriteLine("  " + sb.ToString());
+#endif
 		}
 
 		/// <summary>
@@ -477,8 +551,13 @@ namespace GroupControls
 		/// <param name="pe">An <see cref="PaintEventArgs"/> that contains the event data.</param>
 		protected override void OnPaint(PaintEventArgs pe)
 		{
+			System.Diagnostics.Debug.WriteLine(string.Format("OnPaint: {0}", pe.ClipRectangle));
 			Point pt = AutoScrollPosition;
 			pe.Graphics.TranslateTransform(pt.X, pt.Y);
+
+			pe.Graphics.Clear(this.BackColor);
+			if (Application.RenderWithVisualStyles)
+				BackgroundRenderer(pe.Graphics, pe.ClipRectangle, this);
 
 			for (int i = 0; i < this.BaseItems.Count; i++)
 			{
@@ -505,7 +584,7 @@ namespace GroupControls
 		/// <param name="e">An <see cref="EventArgs"/> that contains the event data.</param>
 		protected override void OnStyleChanged(EventArgs e)
 		{
-			ResetListLayout();
+			ResetListLayout("Style");
 			base.OnStyleChanged(e);
 		}
 
@@ -552,7 +631,10 @@ namespace GroupControls
 		/// </summary>
 		/// <param name="ke">The <see cref="KeyEventArgs"/> associated with the key press.</param>
 		/// <returns><c>true</c> if the key was processed by the control; otherwise, <c>false</c>.</returns>
-		protected abstract bool ProcessKey(KeyEventArgs ke);
+		protected virtual bool ProcessKey(KeyEventArgs ke)
+		{
+			return false;
+		}
 
 		/// <summary>
 		/// Previews a keyboard message.
@@ -608,9 +690,9 @@ namespace GroupControls
 		/// <summary>
 		/// Resets the list's layout.
 		/// </summary>
-		protected virtual void ResetListLayout()
+		protected virtual void ResetListLayout(string property)
 		{
-			this.PerformLayout();
+			this.PerformLayout(this, property);
 		}
 
 		/// <summary>
@@ -639,46 +721,57 @@ namespace GroupControls
 
 		private void OnLayoutPropertyChanged(object sender, EventArgs e)
 		{
-			ResetListLayout();
+			ResetListLayout("Layout");
 		}
 
 		private void SetHover(int itemIndex)
 		{
 			if (itemIndex != HoverItem)
 			{
+				System.Diagnostics.Debug.WriteLine(string.Format("SetHover: old={0}, new={1}", HoverItem, itemIndex));
 				hoverTimer.Stop();
 				UpdateToolTip(null);
 				int oldHover = HoverItem;
 				HoverItem = itemIndex;
-				// clear hover item
-				if (oldHover != -1)
-					InvalidateItem(oldHover);
-				// Set hover item
-				if (itemIndex != -1 && IsItemEnabled(itemIndex))
+				// If no new item, invalidate everything
+				if (HoverItem == -1)
 				{
+					base.Invalidate();
+				}
+				// Set hover item
+				else
+				{
+					// clear old hover item
+					if (oldHover != -1)
+						InvalidateItem(oldHover);
+
 					InvalidateItem(HoverItem);
+
 					if (!string.IsNullOrEmpty(GetItemToolTipText(HoverItem)))
 					{
 						timedHoverItem = HoverItem;
 						hoverTimer.Start();
 					}
 				}
+				base.Update();
 			}
 		}
 
 		private void UpdateToolTip(string tiptext)
 		{
-			if (this.ShowItemToolTip)
+			toolTip.Hide(this);
+			toolTip.Active = false;
+			if (this.ShowItemToolTip && !string.IsNullOrEmpty(tiptext))
 			{
-				toolTip.Hide(this);
-				toolTip.Active = false;
-				Cursor currentInternal = Cursor.Current;
-				if (currentInternal != null)
+				if (Cursor.Current != null)
 				{
 					toolTip.Active = true;
-					Point position = Cursor.Position;
-					position.Y += this.Cursor.Size.Height - currentInternal.HotSpot.Y;
-					toolTip.Show(tiptext, this, base.PointToClient(position), toolTip.AutoPopDelay);
+
+					Point position = this.MapPointToClient(Cursor.Position);
+					position.Offset(0, Cursor.Current.Bounds().Bottom);
+					if (this.RightToLeft == System.Windows.Forms.RightToLeft.Yes)
+						position.X = this.Width - position.X;
+					toolTip.Show(tiptext, this, position, toolTip.AutoPopDelay);
 				}
 			}
 		}
@@ -689,13 +782,9 @@ namespace GroupControls
 	/// </summary>
 	public enum RepeatDirection
 	{
-		/// <summary>
-		/// Items of a list are displayed vertically in columns from top to bottom, and then left to right, until all items are rendered.
-		/// </summary>
+		/// <summary>Items of a list are displayed vertically in columns from top to bottom, and then left to right, until all items are rendered.</summary>
 		Vertical,
-		/// <summary>
-		/// Items of a list are displayed horizontally in rows from left to right, then top to bottom, until all items are rendered.
-		/// </summary>
+		/// <summary>Items of a list are displayed horizontally in rows from left to right, then top to bottom, until all items are rendered.</summary>
 		Horizontal
 	}
 }

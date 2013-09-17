@@ -18,8 +18,7 @@ namespace GroupControls
 		/// <summary>
 		/// Creates a new instance of a <see cref="CheckBoxList"/>.
 		/// </summary>
-		public CheckBoxList()
-			: base()
+		public CheckBoxList() : base()
 		{
 			items = new CheckBoxListItemCollection(this);
 		}
@@ -29,19 +28,6 @@ namespace GroupControls
 		/// </summary>
 		[Category("Behavior"), Description("Occurs when the value of any item's CheckState property changes.")]
 		public event EventHandler ItemCheckStateChanged;
-
-		/// <summary>
-		/// Gets or sets the alignment of the checkbox in relation to the text.
-		/// </summary>
-		[DefaultValue(typeof(ContentAlignment), "TopLeft"),
-		Description("The alignment of the checkbox in relation to the text."),
-		Category("Appearance"),
-		Localizable(true)]
-		public ContentAlignment CheckAlign
-		{
-			get { return ImageAlign; }
-			set { ImageAlign = value; ResetListLayout(); Refresh(); }
-		}
 
 		/// <summary>
 		/// Gets the list of <see cref="CheckBoxListItem"/> associated with the control.
@@ -89,10 +75,17 @@ namespace GroupControls
 		[DefaultValue(false),
 		Description("Indicates whether the checkboxes will use three states rather than two."),
 		Category("Behavior")]
-		public bool ThreeState
+		public bool ThreeState { get; set; }
+
+		/// <summary>
+		/// Gets the background renderer for this type of control.
+		/// </summary>
+		/// <value>
+		/// The background renderer.
+		/// </value>
+		protected override PaintBackgroundMethod BackgroundRenderer
 		{
-			get;
-			set;
+			get { return CheckBoxRenderer.DrawParentBackground; }
 		}
 
 		/// <summary>
@@ -111,7 +104,7 @@ namespace GroupControls
 		/// </summary>
 		/// <param name="g">Current <see cref="Graphics"/> context.</param>
 		/// <returns>The size of the image.</returns>
-		protected override Size GetImageSize(Graphics g)
+		protected override Size GetButtonSize(Graphics g)
 		{
 			return CheckBoxRenderer.GetGlyphSize(g, System.Windows.Forms.VisualStyles.CheckBoxState.CheckedNormal);
 		}
@@ -165,22 +158,6 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Raises the <see cref="Control.KeyUp"/> event.
-		/// </summary>
-		/// <param name="e">An <see cref="KeyEventArgs"/> that contains the event data.</param>
-		protected override void OnKeyUp(KeyEventArgs e)
-		{
-			if (PressingItem != -1)
-			{
-				int ci = PressingItem;
-				PressingItem = -1;
-				InvalidateItem(ci);
-			}
-			// Handle button press on Space
-			base.OnKeyUp(e);
-		}
-
-		/// <summary>
 		/// Raises the <see cref="Control.MouseClick"/> event.
 		/// </summary>
 		/// <param name="e">An <see cref="MouseEventArgs"/> that contains the event data.</param>
@@ -195,60 +172,26 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Raises the <see cref="Control.Paint"/> event.
+		/// Paints the button.
 		/// </summary>
-		/// <param name="pe">An <see cref="PaintEventArgs"/> that contains the event data.</param>
-		protected override void OnPaint(PaintEventArgs pe)
-		{
-			if (Application.RenderWithVisualStyles)
-				CheckBoxRenderer.DrawParentBackground(pe.Graphics, pe.ClipRectangle, this);
-			else
-				pe.Graphics.Clear(this.BackColor);
-			base.OnPaint(pe);
-		}
-
-		/// <summary>
-		/// Paints the specified item.
-		/// </summary>
-		/// <param name="g">A <see cref="Graphics"/> reference.</param>
+		/// <param name="g">A <see cref="Graphics" /> reference.</param>
 		/// <param name="index">The index of the item.</param>
 		/// <param name="bounds">The bounds in which to paint the item.</param>
-		protected override void PaintItem(System.Drawing.Graphics g, int index, Rectangle bounds)
+		protected override void PaintButton(Graphics g, int index, Rectangle bounds)
 		{
+			CheckBoxListItem li = this.BaseItems[index] as CheckBoxListItem;
+
 			// Draw glyph
-			CheckBoxListItem li = items[index];
 			System.Windows.Forms.VisualStyles.CheckBoxState rbs = (System.Windows.Forms.VisualStyles.CheckBoxState)(((int)li.CheckState * 4) + 1);
-			int idx = items.IndexOf(li);
 			if (!this.Enabled || !li.Enabled)
 				rbs += 3;
-			else if (idx == PressingItem)
+			else if (index == PressingItem)
 				rbs += 2;
-			else if (idx == HoverItem)
+			else if (index == HoverItem)
 				rbs++;
 			Point gp = li.GlyphPosition;
 			gp.Offset(bounds.Location);
 			CheckBoxRenderer.DrawCheckBox(g, gp, rbs);
-
-			// Draw text
-			Rectangle tr = li.TextRect;
-			tr.Offset(bounds.Location);
-			TextRenderer.DrawText(g, li.Text, this.Font, tr, li.Enabled ? this.ForeColor : SystemColors.GrayText, TextFormatFlags);
-
-			Rectangle str = li.SubtextRect;
-			bool hasSubtext = !string.IsNullOrEmpty(li.Subtext);
-			if (hasSubtext)
-			{
-				str.Offset(bounds.Location);
-				TextRenderer.DrawText(g, li.Subtext, this.SubtextFont, str, li.Enabled ? this.SubtextForeColor : SystemColors.GrayText, TextFormatFlags);
-			}
-
-			// Draw focus rect
-			if (idx == FocusedIndex && this.Focused)
-			{
-				if (hasSubtext)
-					tr = Rectangle.Union(tr, str);
-				ControlPaint.DrawFocusRectangle(g, tr);
-			}
 		}
 
 		/// <summary>
@@ -451,7 +394,22 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Called when [item added].
+		/// Adds the specified text values to the collection.
+		/// </summary>
+		/// <param name="textValues">The text value pairs representing matching text and subtext.</param>
+		/// <exception cref="System.ArgumentException">List of values must contain matching text/subtext entries for an even count of strings.;textValues</exception>
+		public void Add(params string[] textValues)
+		{
+			if (textValues.Length % 2 != 0)
+				throw new ArgumentException("List of values must contain matching text/subtext entries for an even count of strings.", "textValues");
+			parent.SuspendLayout();
+			for (int i = 0; i < textValues.Length; i += 2)
+				this.Add(textValues[i], textValues[i + 1]);
+			parent.ResumeLayout();
+		}
+
+		/// <summary>
+		/// Called when a <see cref="CheckBoxListItem"/> has been added.
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="value">The value.</param>
@@ -462,7 +420,7 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Called when [item changed].
+		/// Called when a <see cref="CheckBoxListItem"/> has been changed.
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="oldValue">The old value.</param>
@@ -475,7 +433,7 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Called when [item deleted].
+		/// Called when a <see cref="CheckBoxListItem"/> has been deleted.
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="value">The value.</param>
@@ -483,14 +441,6 @@ namespace GroupControls
 		{
 			base.OnItemDeleted(index, value);
 			parent.OnListChanged();
-		}
-
-		/// <summary>
-		/// Called when [reset].
-		/// </summary>
-		protected override void OnReset()
-		{
-			base.OnReset();
 		}
 	}
 }

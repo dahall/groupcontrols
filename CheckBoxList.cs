@@ -27,16 +27,13 @@ namespace GroupControls
 		/// Occurs when item check state changed.
 		/// </summary>
 		[Category("Behavior"), Description("Occurs when the value of any item's CheckState property changes.")]
-		public event EventHandler ItemCheckStateChanged;
+		public event EventHandler<CheckBoxListItemCheckStateChangedEventArgs> ItemCheckStateChanged;
 
 		/// <summary>
 		/// Gets the list of <see cref="CheckBoxListItem"/> associated with the control.
 		/// </summary>
-		[MergableProperty(false),
-		Category("Data"),
-		DesignerSerializationVisibility(DesignerSerializationVisibility.Content),
-		Localizable(true),
-		Description("List of checkboxes with optional subtext")]
+		[MergableProperty(false), Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content),
+		Localizable(true), Description("List of checkboxes with optional subtext")]
 		public virtual CheckBoxListItemCollection Items
 		{
 			get { return items; }
@@ -100,6 +97,88 @@ namespace GroupControls
 		}
 
 		/// <summary>
+		/// If each items <c>Tag</c> property has been assigned a value of <c>T</c>, this method retrived the OR value of all items.
+		/// </summary>
+		/// <typeparam name="T">An enumerated type with a FlagsAttribute assigned to all item's <c>Tag</c> properties.</typeparam>
+		/// <param name="defaultValue">The default value.</param>
+		/// <returns>The OR value of all items</returns>
+		public T GetFlagsValue<T>(T defaultValue) where T : struct, IConvertible
+		{
+			IsValidEnum<T>();
+			long ret = Convert.ToInt64(defaultValue);
+			foreach (var item in this.items)
+			{
+				if (item.Tag != null && item.Tag is T && item.Checked)
+					ret |= Convert.ToInt64(item.Tag);
+			}
+			return (T)Enum.ToObject(typeof(T), ret);
+		}
+
+		private static void IsValidEnum<T>() where T : struct, IConvertible
+		{
+			if (!typeof(T).IsEnum)
+				throw new ArgumentException(string.Format("Type '{0}' is not an enum", typeof(T).FullName));
+			if (!Attribute.IsDefined(typeof(T), typeof(FlagsAttribute)))
+				throw new ArgumentException(string.Format("Type '{0}' doesn't have the 'Flags' attribute", typeof(T).FullName));
+		}
+
+		/// <summary>
+		/// If each items <c>Tag</c> property has been assigned a value of <c>T</c>, this method with set the item's Checked property appropriately.
+		/// </summary>
+		/// <typeparam name="T">An enumerated type with a FlagsAttribute assigned to all item's <c>Tag</c> properties.</typeparam>
+		/// <param name="value">The composite flag value.</param>
+		public void SetFlagsValue<T>(T value) where T : struct, IConvertible
+		{
+			IsValidEnum<T>();
+			long lv = Convert.ToInt64(value);
+			foreach (var item in this.items)
+			{
+				if (item.Tag != null && item.Tag is T)
+				{
+					long tlv = Convert.ToInt64(item.Tag);
+					item.Checked = (lv & tlv) == tlv;
+				}
+			}
+		}
+
+		private static bool EnumHasValue<T>(object enumValue, object value) where T : struct, IConvertible
+		{
+			if (enumValue == null || value == null || !(enumValue is T) || !(value is T))
+				return false;
+			long val = Convert.ToInt64(value);
+			return (Convert.ToInt64(enumValue) & val) == val;
+		}
+
+		/// <summary>
+		/// Processes the flags on check state changed. Include this method in the event handler for ItemCheckStateChanged.
+		/// </summary>
+		/// <param name="item">The item that was changed.</param>
+		public void ProcessFlagsOnCheckStateChanged<T>(CheckBoxListItem item) where T : struct, IConvertible
+		{
+			IsValidEnum<T>();
+
+			bool set = item.Checked;
+			T newVal = GetFlagsValue<T>(Activator.CreateInstance<T>());
+			for (int i = 0; i < items.Count; i++)
+			{
+				CheckBoxListItem curItem = items[i];
+				bool changed = false;
+				if (set && EnumHasValue<T>(newVal, curItem.Tag) && !curItem.Checked)
+				{
+					curItem.Checked = true;
+					changed = true;
+				}
+				if (!set && EnumHasValue<T>(curItem.Tag, item.Tag) && curItem.Checked)
+				{
+					curItem.Checked = false;
+					changed = true;
+				}
+				if (changed)
+					InvalidateItem(i);
+			}
+		}
+
+		/// <summary>
 		/// Gets the size of the image used to display the button.
 		/// </summary>
 		/// <param name="g">Current <see cref="Graphics"/> context.</param>
@@ -134,11 +213,12 @@ namespace GroupControls
 		/// <summary>
 		/// Called when item check state changed.
 		/// </summary>
-		protected virtual void OnItemCheckStateChanged()
+		/// <param name="e">The <see cref="CheckBoxListItemCheckStateChangedEventArgs"/> instance containing the event data.</param>
+		protected virtual void OnItemCheckStateChanged(CheckBoxListItemCheckStateChangedEventArgs e)
 		{
-			EventHandler h = this.ItemCheckStateChanged;
+			var h = this.ItemCheckStateChanged;
 			if (h != null)
-				h(this, EventArgs.Empty);
+				h(this, e);
 		}
 
 		/// <summary>
@@ -262,9 +342,33 @@ namespace GroupControls
 						break;
 				}
 				InvalidateItem(itemIndex);
-				OnItemCheckStateChanged();
+				OnItemCheckStateChanged(new CheckBoxListItemCheckStateChangedEventArgs(items[itemIndex]));
 			}
 		}
+	}
+
+	/// <summary>
+	/// Provides data for the <see cref="E:CheckBoxList.ItemCheckStateChanged"/> event of the <see cref="CheckBoxList"/> control.
+	/// </summary>
+	[DefaultProperty("Item")]
+	public class CheckBoxListItemCheckStateChangedEventArgs : EventArgs
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="CheckBoxListItemCheckStateChangedEventArgs"/> class.
+		/// </summary>
+		/// <param name="item">The item.</param>
+		public CheckBoxListItemCheckStateChangedEventArgs(CheckBoxListItem item)
+		{
+			this.Item = item;
+		}
+
+		/// <summary>
+		/// Gets the <see cref="CheckBoxListItem"/> whose checked state is changing.
+		/// </summary>
+		/// <value>
+		/// The <see cref="CheckBoxListItem"/> whose checked state is changing.
+		/// </value>
+		public CheckBoxListItem Item { get; private set; }
 	}
 
 	/// <summary>
@@ -326,6 +430,14 @@ namespace GroupControls
 				base.Checked = value;
 			}
 		}
+
+		/*/// <summary>
+		/// Gets or sets the value.
+		/// </summary>
+		/// <value>
+		/// The value.
+		/// </value>
+		public virtual T Value { get; set; }*/
 
 		/// <summary>
 		/// Gets or sets the state of the checkbox.

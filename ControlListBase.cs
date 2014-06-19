@@ -11,6 +11,7 @@ namespace GroupControls
 	/// Abstract class that handles the display of numerous control items.
 	/// </summary>
 	[System.ComponentModel.Design.Serialization.DesignerSerializer(typeof(Design.DesignerLayoutCodeDomSerializer), typeof(System.ComponentModel.Design.Serialization.CodeDomSerializer))]
+	[System.ComponentModel.Designer(typeof(ControlListBaseDesigner))]
 	public abstract class ControlListBase : ScrollableControl
 	{
 		internal static readonly ContentAlignment anyRightAlignment, anyCenterAlignment, anyBottomAlignment, anyMiddleAlignment;

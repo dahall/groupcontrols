@@ -86,6 +86,7 @@
     <Compile Include="ControlListBase.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="ControlListBaseDesigner.cs" />
     <Compile Include="ControlListCodeDomSerializer.cs" />
     <Compile Include="CursorExtension.cs" />
     <Compile Include="EventedList.cs" />

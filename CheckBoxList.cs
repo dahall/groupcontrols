@@ -163,7 +163,7 @@ namespace GroupControls
 			{
 				CheckBoxListItem curItem = items[i];
 				bool changed = false;
-				if (set && EnumHasValue<T>(newVal, curItem.Tag) && !curItem.Checked)
+				if (set && (EnumHasValue<T>(newVal, curItem.Tag) || EnumHasValue<T>(curItem.Tag, item.Tag)) && !curItem.Checked)
 				{
 					curItem.Checked = true;
 					changed = true;

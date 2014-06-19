@@ -768,7 +768,7 @@ namespace GroupControls
 				{
 					toolTip.Active = true;
 
-					Point position = this.MapPointToClient(Cursor.Position);
+					Point position = Microsoft.Win32.NativeMethods.MapPointToClient(this, Cursor.Position);
 					position.Offset(0, Cursor.Current.Bounds().Bottom);
 					if (this.RightToLeft == System.Windows.Forms.RightToLeft.Yes)
 						position.X = this.Width - position.X;

@@ -1,25 +1,9 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Drawing;
-using System.Runtime.InteropServices;
 
-namespace GroupControls
+namespace System.Windows.Forms
 {
-	internal static partial class NativeMethods
-	{
-		[StructLayout(LayoutKind.Sequential)]
-		public class ICONINFO
-		{
-			public int fIcon;
-			public int xHotspot;
-			public int yHotspot;
-			public IntPtr hbmMask = IntPtr.Zero;
-			public IntPtr hbmColor = IntPtr.Zero;
-		}
-
-		[DllImport("user32.dll", ExactSpelling = true, SetLastError = true)]
-		public static extern bool GetIconInfo(IntPtr hIcon, [In, Out] NativeMethods.ICONINFO info);
-	}
-
 	internal static class CursorExtension
 	{
 		public static Size GetSize(this System.Windows.Forms.Cursor cursor)

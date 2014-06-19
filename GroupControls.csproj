@@ -88,12 +88,12 @@
     </Compile>
     <Compile Include="ControlListBaseDesigner.cs" />
     <Compile Include="ControlListCodeDomSerializer.cs" />
-    <Compile Include="CursorExtension.cs" />
+    <Compile Include="Native\CursorExtension.cs" />
     <Compile Include="EventedList.cs" />
     <Compile Include="ExtensionAttributeFor.NET_2.0.cs" Condition=" $(TargetFrameworkVersion.Replace('v', '')) &lt; 3.5 " />
-    <Compile Include="Native.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="Native\ICONINFO.cs" />
+    <Compile Include="Native\MapWindowPoints.cs" />
+    <Compile Include="Native\RECT.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

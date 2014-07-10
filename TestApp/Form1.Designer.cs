@@ -164,8 +164,6 @@
 			this.Controls.Add(this.radioButtonList2);
 			this.Controls.Add(this.radioButtonList1);
 			this.Name = "Form1";
-			this.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-			this.RightToLeftLayout = true;
 			this.Text = "Test GroupControls";
 			this.checkBoxList1.ResumeLayout(true);
 			this.radioButtonList2.ResumeLayout(true);

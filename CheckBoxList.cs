@@ -21,6 +21,11 @@ namespace GroupControls
 		public CheckBoxList() : base()
 		{
 			items = new CheckBoxListItemCollection(this);
+			items.ItemAdded += itemsChanged;
+			items.ItemDeleted += itemsChanged;
+			items.ItemChanged += itemsChanged;
+			items.Reset += itemsChanged;
+			items.ItemPropertyChanged += itemPropertyChanged;
 		}
 
 		/// <summary>
@@ -321,6 +326,17 @@ namespace GroupControls
 			return ret;
 		}
 
+		private void itemPropertyChanged(object sender, PropertyChangedEventArgs e)
+		{
+			this.OnListChanged();
+		}
+
+		private void itemsChanged(object sender, EventedList<CheckBoxListItem>.ListChangedEventArgs<CheckBoxListItem> e)
+		{
+			if (e.ListChangedType != ListChangedType.ItemChanged || !e.Item.Equals(e.OldItem))
+				this.OnListChanged();
+		}
+
 		/// <summary>
 		/// Flips the indicated items check state.
 		/// </summary>
@@ -454,6 +470,7 @@ namespace GroupControls
 				{
 					this.checkState = value;
 					OnCheckStateChanged(EventArgs.Empty);
+					OnNotifyPropertyChanged("CheckState");
 				}
 			}
 		}
@@ -518,41 +535,6 @@ namespace GroupControls
 			for (int i = 0; i < textValues.Length; i += 2)
 				this.Add(textValues[i], textValues[i + 1]);
 			parent.ResumeLayout();
-		}
-
-		/// <summary>
-		/// Called when a <see cref="CheckBoxListItem"/> has been added.
-		/// </summary>
-		/// <param name="index">The index.</param>
-		/// <param name="value">The value.</param>
-		protected override void OnItemAdded(int index, CheckBoxListItem value)
-		{
-			base.OnItemAdded(index, value);
-			parent.OnListChanged();
-		}
-
-		/// <summary>
-		/// Called when a <see cref="CheckBoxListItem"/> has been changed.
-		/// </summary>
-		/// <param name="index">The index.</param>
-		/// <param name="oldValue">The old value.</param>
-		/// <param name="newValue">The new value.</param>
-		protected override void OnItemChanged(int index, CheckBoxListItem oldValue, CheckBoxListItem newValue)
-		{
-			base.OnItemChanged(index, oldValue, newValue);
-			if (!oldValue.Equals(newValue))
-				parent.OnListChanged();
-		}
-
-		/// <summary>
-		/// Called when a <see cref="CheckBoxListItem"/> has been deleted.
-		/// </summary>
-		/// <param name="index">The index.</param>
-		/// <param name="value">The value.</param>
-		protected override void OnItemDeleted(int index, CheckBoxListItem value)
-		{
-			base.OnItemDeleted(index, value);
-			parent.OnListChanged();
 		}
 	}
 }

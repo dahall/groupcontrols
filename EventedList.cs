@@ -8,7 +8,7 @@ namespace System.Collections.Generic
 	/// </summary>
 	/// <typeparam name="T">Type for the list.</typeparam>
 	[Serializable]
-	public class EventedList<T> : IList<T>, IList
+	public class EventedList<T> : IList<T>, IList where T : INotifyPropertyChanged
 	{
 		// Fields
 		private const int _defaultCapacity = 4;
@@ -96,6 +96,11 @@ namespace System.Collections.Generic
 		/// Occurs when an item has been deleted.
 		/// </summary>
 		public event EventHandler<ListChangedEventArgs<T>> ItemDeleted;
+
+		/// <summary>
+		/// Occurs when an item's property value has been changed.
+		/// </summary>
+		public event PropertyChangedEventHandler ItemPropertyChanged;
 
 		/// <summary>
 		/// Occurs when the list has been reset.
@@ -375,7 +380,7 @@ namespace System.Collections.Generic
 		/// <typeparam name="TOutput">The type of the output.</typeparam>
 		/// <param name="converter">The converter.</param>
 		/// <returns></returns>
-		public EventedList<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter)
+		public EventedList<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter) where TOutput : INotifyPropertyChanged
 		{
 			if (converter == null)
 			{
@@ -1117,9 +1122,23 @@ namespace System.Collections.Generic
 		/// <param name="value">The value.</param>
 		protected virtual void OnItemAdded(int index, T value)
 		{
+			if (value != null)
+				value.PropertyChanged += OnItemPropertyChanged;
 			EventHandler<ListChangedEventArgs<T>> h = ItemAdded;
 			if (h != null)
 				h(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.ItemAdded, value, index));
+		}
+
+		/// <summary>
+		/// Called when [item property changed].
+		/// </summary>
+		/// <param name="sender">The sender.</param>
+		/// <param name="e">The <see cref="PropertyChangedEventArgs"/> instance containing the event data.</param>
+		protected virtual void OnItemPropertyChanged(object sender, PropertyChangedEventArgs e)
+		{
+			var h = ItemPropertyChanged;
+			if (h != null)
+				h(sender, e);
 		}
 
 		/// <summary>
@@ -1130,6 +1149,12 @@ namespace System.Collections.Generic
 		/// <param name="newValue">The new value.</param>
 		protected virtual void OnItemChanged(int index, T oldValue, T newValue)
 		{
+			if (oldValue != null && !oldValue.Equals(newValue))
+			{
+				oldValue.PropertyChanged -= OnItemPropertyChanged;
+				if (newValue != null)
+					newValue.PropertyChanged += OnItemPropertyChanged;
+			}
 			EventHandler<ListChangedEventArgs<T>> h = ItemChanged;
 			if (h != null)
 				h(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.ItemChanged, newValue, index, oldValue));
@@ -1142,6 +1167,8 @@ namespace System.Collections.Generic
 		/// <param name="value">The value.</param>
 		protected virtual void OnItemDeleted(int index, T value)
 		{
+			if (value != null)
+				value.PropertyChanged -= OnItemPropertyChanged;
 			EventHandler<ListChangedEventArgs<T>> h = ItemDeleted;
 			if (h != null)
 				h(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.ItemDeleted, value, index));
@@ -1152,6 +1179,7 @@ namespace System.Collections.Generic
 		/// </summary>
 		protected virtual void OnReset()
 		{
+			this.ForEach(delegate(T item) { item.PropertyChanged -= OnItemPropertyChanged; });
 			EventHandler<ListChangedEventArgs<T>> h = Reset;
 			if (h != null)
 				h(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.Reset));

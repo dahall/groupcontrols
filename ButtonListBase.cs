@@ -486,10 +486,15 @@ namespace GroupControls
 	/// <summary>
 	/// Base button item type.
 	/// </summary>
-	public class ButtonListItem : IEquatable<ButtonListItem>
+	public class ButtonListItem : IEquatable<ButtonListItem>, INotifyPropertyChanged
 	{
 		internal Point GlyphPosition;
 		internal Rectangle TextRect, SubtextRect, FocusRect;
+
+		private bool hascheck = false;
+		private bool enabled = true;
+		private string text = string.Empty, subtext, tooltip;
+		private object tag;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ButtonListItem"/> class.
@@ -516,12 +521,28 @@ namespace GroupControls
 		}
 
 		/// <summary>
+		/// Occurs when a property value has changed.
+		/// </summary>
+		public event PropertyChangedEventHandler PropertyChanged;
+
+		/// <summary>
 		/// Gets or sets a value indicating whether this <see cref="ButtonListItem"/> is checked.
 		/// </summary>
 		/// <value><c>true</c> if checked; otherwise, <c>false</c>.</value>
 		[DefaultValue(false), Description("Indicates whether this item is checked."), Category("Appearance")]
 		[BindableAttribute(true)]
-		public virtual bool Checked { get; set; }
+		public virtual bool Checked
+		{
+			get { return hascheck; }
+			set
+			{
+				if (value != hascheck)
+				{
+					hascheck = value;
+					OnNotifyPropertyChanged("Checked");
+				}
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets a value indicating whether this <see cref="ButtonListItem"/> is enabled.
@@ -529,7 +550,18 @@ namespace GroupControls
 		/// <value><c>true</c> if enabled; otherwise, <c>false</c>.</value>
 		[DefaultValue(true), Category("Behavior")]
 		[BindableAttribute(true)]
-		public bool Enabled { get; set; }
+		public bool Enabled
+		{
+			get { return enabled; }
+			set
+			{
+				if (value != enabled)
+				{
+					enabled = value;
+					OnNotifyPropertyChanged("Enabled");
+				}
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets the subtext.
@@ -537,7 +569,18 @@ namespace GroupControls
 		/// <value>The subtext.</value>
 		[DefaultValue((string)null), Category("Appearance")]
 		[BindableAttribute(true)]
-		public string Subtext { get; set; }
+		public string Subtext
+		{
+			get { return subtext; }
+			set
+			{
+				if (value != subtext)
+				{
+					subtext = value;
+					OnNotifyPropertyChanged("Subtext");
+				}
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets the tag.
@@ -546,7 +589,18 @@ namespace GroupControls
 		[DefaultValue((object)null), Category("Data")]
 		[BindableAttribute(true)]
 		[TypeConverterAttribute(typeof(StringConverter))]
-		public object Tag { get; set; }
+		public object Tag
+		{
+			get { return tag; }
+			set
+			{
+				if (value != tag)
+				{
+					tag = value;
+					OnNotifyPropertyChanged("Tag");
+				}
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets the text.
@@ -554,7 +608,18 @@ namespace GroupControls
 		/// <value>The text.</value>
 		[DefaultValue(""), Category("Appearance")]
 		[BindableAttribute(true)]
-		public string Text { get; set; }
+		public string Text
+		{
+			get { return text; }
+			set
+			{
+				if (value != text)
+				{
+					text = value;
+					OnNotifyPropertyChanged("Text");
+				}
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets the tool tip text.
@@ -562,7 +627,18 @@ namespace GroupControls
 		/// <value>The tool tip text.</value>
 		[DefaultValue((string)null), Category("Appearance")]
 		[BindableAttribute(true)]
-		public string ToolTipText { get; set; }
+		public string ToolTipText
+		{
+			get { return tooltip; }
+			set
+			{
+				if (value != tooltip)
+				{
+					tooltip = value;
+					OnNotifyPropertyChanged("ToolTipText");
+				}
+			}
+		}
 
 		/// <summary>
 		/// Determines whether the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>.
@@ -601,10 +677,7 @@ namespace GroupControls
 		/// </returns>
 		public override int GetHashCode()
 		{
-			int ret = this.Checked.GetHashCode() ^ this.Enabled.GetHashCode() ^ this.Text.GetHashCode();
-			if (this.Subtext != null) ret ^= this.Subtext.GetHashCode();
-			if (this.ToolTipText != null) ret ^= this.ToolTipText.GetHashCode();
-			return ret;
+			return new { A = hascheck, B = enabled, C = text, D = subtext, E = tooltip }.GetHashCode();
 		}
 
 		/// <summary>
@@ -616,6 +689,17 @@ namespace GroupControls
 		public override string ToString()
 		{
 			return System.Text.RegularExpressions.Regex.Replace(this.Text, @"\&([^\&])", "$1");
+		}
+
+		/// <summary>
+		/// Called when a property value has changed.
+		/// </summary>
+		/// <param name="propertyName">Name of the property.</param>
+		protected virtual void OnNotifyPropertyChanged(string propertyName)
+		{
+			var h = PropertyChanged;
+			if (h != null)
+				h(this, new PropertyChangedEventArgs(propertyName));
 		}
 
 		internal void OffsetText(int x, int y)

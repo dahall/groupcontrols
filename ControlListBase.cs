@@ -330,7 +330,7 @@ namespace GroupControls
 		/// <returns>Offset point</returns>
 		protected Point OffsetForScroll(Point pt)
 		{
-			System.Diagnostics.Debug.Write(string.Format("OffsetForScroll: pt={0};", pt));
+			System.Diagnostics.Debug.Write(string.Format("OffsetForScroll: pt={0}; scPos={1}; ", pt, this.AutoScrollPosition));
 			/*//Creates the drawing matrix with the right zoom;
 			Matrix mx = new Matrix(1, 0, 0, 1, 0, 0);
 			//pans it according to the scroll bars
@@ -344,7 +344,7 @@ namespace GroupControls
 			System.Diagnostics.Debug.WriteLine(string.Format("outPt={0};", pa[0]));
 
 			return pa[0];*/
-			pt.Offset(this.AutoScrollPosition);
+			pt.Offset(-this.AutoScrollPosition.X, -this.AutoScrollPosition.Y);
 			System.Diagnostics.Debug.WriteLine(string.Format("outPt={0};", pt));
 			return pt;
 		}

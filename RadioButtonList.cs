@@ -22,6 +22,11 @@ namespace GroupControls
 		public RadioButtonList() : base()
 		{
 			items = new RadioButtonListItemCollection(this);
+			items.ItemAdded += itemsChanged;
+			items.ItemDeleted += itemsChanged;
+			items.ItemChanged += itemsChanged;
+			items.Reset += itemsChanged;
+			items.ItemPropertyChanged += itemPropertyChanged;
 		}
 
 		/// <summary>
@@ -303,6 +308,17 @@ namespace GroupControls
 			this.SelectedIndex = items.CheckedItemIndex;
 		}
 
+		private void itemPropertyChanged(object sender, PropertyChangedEventArgs e)
+		{
+			this.OnListChanged();
+		}
+
+		private void itemsChanged(object sender, EventedList<RadioButtonListItem>.ListChangedEventArgs<RadioButtonListItem> e)
+		{
+			if (e.ListChangedType != ListChangedType.ItemChanged || !e.Item.Equals(e.OldItem))
+				this.OnListChanged();
+		}
+
 		private bool SelectNextItem(RadioButtonListItem i, bool forward)
 		{
 			if (items.Count > 0)
@@ -396,41 +412,6 @@ namespace GroupControls
 			for (int i = 0; i < textValues.Length; i += 2)
 				this.Add(textValues[i], textValues[i + 1]);
 			parent.ResumeLayout();
-		}
-
-		/// <summary>
-		/// Called when a new <see cref="RadioButtonListItem"/> has been added.
-		/// </summary>
-		/// <param name="index">The index.</param>
-		/// <param name="value">The value.</param>
-		protected override void OnItemAdded(int index, RadioButtonListItem value)
-		{
-			base.OnItemAdded(index, value);
-			parent.OnListChanged();
-		}
-
-		/// <summary>
-		/// Called when a <see cref="RadioButtonListItem"/> has been changed.
-		/// </summary>
-		/// <param name="index">The index.</param>
-		/// <param name="oldValue">The old value.</param>
-		/// <param name="newValue">The new value.</param>
-		protected override void OnItemChanged(int index, RadioButtonListItem oldValue, RadioButtonListItem newValue)
-		{
-			base.OnItemChanged(index, oldValue, newValue);
-			if (!oldValue.Equals(newValue))
-				parent.OnListChanged();
-		}
-
-		/// <summary>
-		/// Called when a <see cref="RadioButtonListItem"/> has been deleted.
-		/// </summary>
-		/// <param name="index">The index.</param>
-		/// <param name="value">The value.</param>
-		protected override void OnItemDeleted(int index, RadioButtonListItem value)
-		{
-			base.OnItemDeleted(index, value);
-			parent.OnListChanged();
 		}
 	}
 }

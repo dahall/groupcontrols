@@ -358,7 +358,7 @@ namespace GroupControls
 						break;
 				}
 				InvalidateItem(itemIndex);
-				OnItemCheckStateChanged(new CheckBoxListItemCheckStateChangedEventArgs(items[itemIndex]));
+				OnItemCheckStateChanged(new CheckBoxListItemCheckStateChangedEventArgs(items[itemIndex], itemIndex));
 			}
 		}
 	}
@@ -373,9 +373,10 @@ namespace GroupControls
 		/// Initializes a new instance of the <see cref="CheckBoxListItemCheckStateChangedEventArgs"/> class.
 		/// </summary>
 		/// <param name="item">The item.</param>
-		public CheckBoxListItemCheckStateChangedEventArgs(CheckBoxListItem item)
+		public CheckBoxListItemCheckStateChangedEventArgs(CheckBoxListItem item, int index)
 		{
 			this.Item = item;
+			this.ItemIndex = index;
 		}
 
 		/// <summary>
@@ -385,6 +386,8 @@ namespace GroupControls
 		/// The <see cref="CheckBoxListItem"/> whose checked state is changing.
 		/// </value>
 		public CheckBoxListItem Item { get; private set; }
+
+		public int ItemIndex { get; private set; }
 	}
 
 	/// <summary>

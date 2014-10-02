@@ -370,9 +370,10 @@ namespace GroupControls
 	public class CheckBoxListItemCheckStateChangedEventArgs : EventArgs
 	{
 		/// <summary>
-		/// Initializes a new instance of the <see cref="CheckBoxListItemCheckStateChangedEventArgs"/> class.
+		/// Initializes a new instance of the <see cref="CheckBoxListItemCheckStateChangedEventArgs" /> class.
 		/// </summary>
 		/// <param name="item">The item.</param>
+		/// <param name="index">The index.</param>
 		public CheckBoxListItemCheckStateChangedEventArgs(CheckBoxListItem item, int index)
 		{
 			this.Item = item;
@@ -387,6 +388,12 @@ namespace GroupControls
 		/// </value>
 		public CheckBoxListItem Item { get; private set; }
 
+		/// <summary>
+		/// Gets the index of the item.
+		/// </summary>
+		/// <value>
+		/// The index of the item.
+		/// </value>
 		public int ItemIndex { get; private set; }
 	}
 

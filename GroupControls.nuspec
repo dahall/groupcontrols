@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>GroupControls</id>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
     <title>WinForms Group Controls</title>
     <authors>David Hall</authors>
     <description>RadioButtonList and CheckBoxList for WinForms</description>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 
 namespace GroupControls
 {
@@ -14,6 +15,8 @@ namespace GroupControls
 	public class CheckBoxList : ButtonListBase
 	{
 		private CheckBoxListItemCollection items;
+		private CheckBoxState lastState = CheckBoxState.UncheckedNormal;
+		private VisualStyleRenderer renderer;
 
 		/// <summary>
 		/// Creates a new instance of a <see cref="CheckBoxList"/>.
@@ -26,6 +29,8 @@ namespace GroupControls
 			items.ItemChanged += itemsChanged;
 			items.Reset += itemsChanged;
 			items.ItemPropertyChanged += itemPropertyChanged;
+
+			try { renderer = new VisualStyleRenderer("BUTTON", 3, 0); } catch { }
 		}
 
 		/// <summary>
@@ -265,18 +270,31 @@ namespace GroupControls
 		protected override void PaintButton(Graphics g, int index, Rectangle bounds)
 		{
 			CheckBoxListItem li = this.BaseItems[index] as CheckBoxListItem;
-
-			// Draw glyph
-			System.Windows.Forms.VisualStyles.CheckBoxState rbs = (System.Windows.Forms.VisualStyles.CheckBoxState)(((int)li.CheckState * 4) + 1);
+			// Get current state
+			CheckBoxState curState = (CheckBoxState)(((int)li.CheckState * 4) + 1);
 			if (!this.Enabled || !li.Enabled)
-				rbs += 3;
+				curState += 3;
 			else if (index == PressingItem)
-				rbs += 2;
+				curState += 2;
 			else if (index == HoverItem)
-				rbs++;
+				curState++;
+			// Draw glyph
+			Microsoft.Win32.NativeMethods.BufferedPaint.Paint<CheckBoxState, CheckBoxListItem>(g, this, bounds, PaintAnimatedButton, lastState, curState, GetTransition(curState, lastState), li);
+			lastState = curState;
+		}
+
+		private void PaintAnimatedButton(Graphics g, Rectangle bounds, CheckBoxState curState, CheckBoxListItem li)
+		{
 			Point gp = li.GlyphPosition;
 			gp.Offset(bounds.Location);
-			CheckBoxRenderer.DrawCheckBox(g, gp, rbs);
+			CheckBoxRenderer.DrawCheckBox(g, gp, curState);
+		}
+
+		private uint GetTransition(CheckBoxState curState, CheckBoxState lastState)
+		{
+			if (renderer != null)
+				return renderer.GetTransitionDuration((int)curState, (int)lastState);
+			return 0;
 		}
 
 		/// <summary>

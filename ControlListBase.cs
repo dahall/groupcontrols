@@ -291,8 +291,8 @@ namespace GroupControls
 		/// <param name="index">The item index.</param>
 		protected virtual void InvalidateItem(int index)
 		{
-			//base.Invalidate(OffsetForScroll(itemBounds[index]));
-			base.Invalidate();
+			base.Invalidate(OffsetForScroll(itemBounds[index]));
+			//base.Invalidate();
 		}
 
 		/// <summary>

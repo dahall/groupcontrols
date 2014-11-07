@@ -53,6 +53,7 @@
 			this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
 			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
 			this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+			this.checkBox1 = new System.Windows.Forms.CheckBox();
 			this.checkBoxList1.SuspendLayout();
 			this.radioButtonList2.SuspendLayout();
 			this.radioButtonList1.SuspendLayout();
@@ -63,7 +64,7 @@
 			// radioButton1
 			// 
 			this.radioButton1.AutoSize = true;
-			this.radioButton1.Location = new System.Drawing.Point(335, 159);
+			this.radioButton1.Location = new System.Drawing.Point(335, 153);
 			this.radioButton1.Name = "radioButton1";
 			this.radioButton1.Size = new System.Drawing.Size(85, 17);
 			this.radioButton1.TabIndex = 8;
@@ -95,7 +96,7 @@
 			this.checkBoxList1.Location = new System.Drawing.Point(3, 3);
 			this.checkBoxList1.Name = "checkBoxList1";
 			this.checkBoxList1.Padding = new System.Windows.Forms.Padding(3);
-			this.tableLayoutPanel1.SetRowSpan(this.checkBoxList1, 2);
+			this.tableLayoutPanel1.SetRowSpan(this.checkBoxList1, 3);
 			this.checkBoxList1.Size = new System.Drawing.Size(326, 190);
 			this.checkBoxList1.SubtextFont = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.checkBoxList1.TabIndex = 6;
@@ -174,13 +175,15 @@
 			this.tableLayoutPanel1.Controls.Add(this.checkBoxList1, 0, 0);
 			this.tableLayoutPanel1.Controls.Add(this.radioButton1, 1, 1);
 			this.tableLayoutPanel1.Controls.Add(this.radioButtonList1, 1, 0);
+			this.tableLayoutPanel1.Controls.Add(this.checkBox1, 1, 2);
 			this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
 			this.tableLayoutPanel1.Name = "tableLayoutPanel1";
 			this.tableLayoutPanel1.Padding = new System.Windows.Forms.Padding(0, 0, 0, 4);
-			this.tableLayoutPanel1.RowCount = 2;
-			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 80F));
-			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
+			this.tableLayoutPanel1.RowCount = 3;
+			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
+			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.tableLayoutPanel1.Size = new System.Drawing.Size(566, 200);
 			this.tableLayoutPanel1.TabIndex = 9;
 			// 
@@ -198,6 +201,16 @@
 			// 
 			this.statusLabel.Name = "statusLabel";
 			this.statusLabel.Size = new System.Drawing.Size(0, 17);
+			// 
+			// checkBox1
+			// 
+			this.checkBox1.AutoSize = true;
+			this.checkBox1.Location = new System.Drawing.Point(335, 176);
+			this.checkBox1.Name = "checkBox1";
+			this.checkBox1.Size = new System.Drawing.Size(80, 17);
+			this.checkBox1.TabIndex = 9;
+			this.checkBox1.Text = "checkBox1";
+			this.checkBox1.UseVisualStyleBackColor = true;
 			// 
 			// Form1
 			// 
@@ -230,6 +243,7 @@
 		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
 		private System.Windows.Forms.StatusStrip statusStrip1;
 		private System.Windows.Forms.ToolStripStatusLabel statusLabel;
+		private System.Windows.Forms.CheckBox checkBox1;
 	}
 }
 

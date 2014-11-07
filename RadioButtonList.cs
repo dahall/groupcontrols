@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 
 namespace GroupControls
 {
@@ -14,6 +15,8 @@ namespace GroupControls
 	public class RadioButtonList : ButtonListBase
 	{
 		private RadioButtonListItemCollection items;
+		private RadioButtonState lastState = RadioButtonState.UncheckedNormal;
+		private VisualStyleRenderer renderer;
 		private int selectedIndex = -1;
 
 		/// <summary>
@@ -27,6 +30,8 @@ namespace GroupControls
 			items.ItemChanged += itemsChanged;
 			items.Reset += itemsChanged;
 			items.ItemPropertyChanged += itemPropertyChanged;
+
+			try { renderer = new VisualStyleRenderer("BUTTON", 2, 0); } catch { }
 		}
 
 		/// <summary>
@@ -227,34 +232,31 @@ namespace GroupControls
 		protected override void PaintButton(Graphics g, int index, Rectangle bounds)
 		{
 			RadioButtonListItem li = this.BaseItems[index] as RadioButtonListItem;
-
-			System.Windows.Forms.VisualStyles.RadioButtonState rbs = li.Checked ? System.Windows.Forms.VisualStyles.RadioButtonState.CheckedNormal : System.Windows.Forms.VisualStyles.RadioButtonState.UncheckedNormal;
+			// Get current state
+			System.Windows.Forms.VisualStyles.RadioButtonState curState = li.Checked ? System.Windows.Forms.VisualStyles.RadioButtonState.CheckedNormal : System.Windows.Forms.VisualStyles.RadioButtonState.UncheckedNormal;
 			if (!this.Enabled || !li.Enabled)
-				rbs += 3;
+				curState += 3;
 			else if (index == PressingItem)
-				rbs += 2;
+				curState += 2;
 			else if (index == HoverItem)
-				rbs++;
+				curState++;
+			// Draw glyph
+			Microsoft.Win32.NativeMethods.BufferedPaint.Paint<RadioButtonState, RadioButtonListItem>(g, this, bounds, PaintAnimatedButton, lastState, curState, GetTransition(curState, lastState), li);
+			lastState = curState;
+		}
 
+		private void PaintAnimatedButton(Graphics g, Rectangle bounds, RadioButtonState curState, RadioButtonListItem li)
+		{
 			Point gp = li.GlyphPosition;
 			gp.Offset(bounds.Location);
+			RadioButtonRenderer.DrawRadioButton(g, gp, curState);
+		}
 
-			/*if (this.RightToLeft == System.Windows.Forms.RightToLeft.Yes)
-			{
-				Size btnSize = GetButtonSize(g);
-				Bitmap bmp = new Bitmap(btnSize.Width, btnSize.Height, g);
-				using (Graphics bg = Graphics.FromImage(bmp))
-				{
-					bg.Clear(this.Parent.BackColor);
-					RadioButtonRenderer.DrawParentBackground(bg, new Rectangle(Point.Empty, btnSize), this);
-					RadioButtonRenderer.DrawRadioButton(bg, Point.Empty, rbs);
-					g.DrawImage(bmp, new Rectangle(gp.X, gp.Y, btnSize.Width, btnSize.Height), 0, 0, btnSize.Width, btnSize.Height, GraphicsUnit.Pixel);
-				}
-			}
-			else*/
-			{
-				RadioButtonRenderer.DrawRadioButton(g, gp, rbs);
-			}
+		private uint GetTransition(RadioButtonState curState, RadioButtonState lastState)
+		{
+			if (renderer != null)
+				return renderer.GetTransitionDuration((int)curState, (int)lastState);
+			return 0;
 		}
 
 		/// <summary>

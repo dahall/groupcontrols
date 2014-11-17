@@ -292,7 +292,7 @@ namespace GroupControls
 
 		private uint GetTransition(CheckBoxState curState, CheckBoxState lastState)
 		{
-			if (renderer != null)
+			if (renderer != null && System.Environment.OSVersion.Version.Major >= 6)
 				return renderer.GetTransitionDuration((int)curState, (int)lastState);
 			return 0;
 		}

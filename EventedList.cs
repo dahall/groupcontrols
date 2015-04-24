@@ -288,7 +288,7 @@ namespace System.Collections.Generic
 		}
 
 		/// <summary>
-		/// Ases the read only.
+		/// Determines if the collection is read-only.
 		/// </summary>
 		/// <returns></returns>
 		public ReadOnlyCollection<T> AsReadOnly()
@@ -437,7 +437,7 @@ namespace System.Collections.Generic
 		}
 
 		/// <summary>
-		/// Existses the specified match.
+		/// Determines if an item matches the specified predicate.
 		/// </summary>
 		/// <param name="match">The match.</param>
 		/// <returns></returns>
@@ -614,7 +614,7 @@ namespace System.Collections.Generic
 		}
 
 		/// <summary>
-		/// Fors the each.
+		/// Performs an <see cref="Action"/> on each items in the collection.
 		/// </summary>
 		/// <param name="action">The action.</param>
 		public void ForEach(Action<T> action)

@@ -99,7 +99,7 @@ namespace GroupControls
 		/// Gets the base list of items.
 		/// </summary>
 		/// <value>
-		/// Any list supportting and <see cref="System.Collections.IList"/> interface.
+		/// Any list supporting and <see cref="System.Collections.IList"/> interface.
 		/// </value>
 		protected override System.Collections.IList BaseItems
 		{
@@ -107,7 +107,7 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// If each items <c>Tag</c> property has been assigned a value of <c>T</c>, this method retrived the OR value of all items.
+		/// If each items <c>Tag</c> property has been assigned a value of <c>T</c>, this method retrieved the OR value of all items.
 		/// </summary>
 		/// <typeparam name="T">An enumerated type with a FlagsAttribute assigned to all item's <c>Tag</c> properties.</typeparam>
 		/// <param name="defaultValue">The default value.</param>
@@ -201,7 +201,7 @@ namespace GroupControls
 		/// <summary>
 		/// Determines whether this list has the specified mnemonic in its members.
 		/// </summary>
-		/// <param name="charCode">The mnumonic character.</param>
+		/// <param name="charCode">The mnemonic character.</param>
 		/// <returns>
 		/// 	<c>true</c> if list has the mnemonic; otherwise, <c>false</c>.
 		/// </returns>

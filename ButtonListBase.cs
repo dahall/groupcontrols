@@ -99,10 +99,10 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Gest or sets the alignment of the text in relation to the bounds of the item.
+		/// Gets or sets the alignment of the text in relation to the bounds of the item.
 		/// </summary>
 		[DefaultValue(typeof(ContentAlignment), "TopLeft"),
-		Description("Aligment of the text in relation to the item."),
+		Description("Alignment of the text in relation to the item."),
 		Category("Appearance"),
 		Localizable(true)]
 		public ContentAlignment TextAlign

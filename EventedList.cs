@@ -614,7 +614,7 @@ namespace System.Collections.Generic
 		}
 
 		/// <summary>
-		/// Performs an <see cref="Action"/> on each items in the collection.
+		/// Performs an action on each item in the collection.
 		/// </summary>
 		/// <param name="action">The action.</param>
 		public void ForEach(Action<T> action)

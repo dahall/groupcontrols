@@ -171,7 +171,7 @@ namespace GroupControls
 		/// <summary>
 		/// Gets the base list of items.
 		/// </summary>
-		/// <value>Any list supportting and <see cref="System.Collections.IList"/> interface.</value>
+		/// <value>Any list supporting and <see cref="System.Collections.IList"/> interface.</value>
 		protected abstract System.Collections.IList BaseItems { get; }
 
 		/// <summary>
@@ -308,7 +308,7 @@ namespace GroupControls
 		/// <summary>
 		/// Determines whether this list has the specified mnemonic in its members.
 		/// </summary>
-		/// <param name="charCode">The mnumonic character.</param>
+		/// <param name="charCode">The mnemonic character.</param>
 		/// <returns><c>true</c> if list has the mnemonic; otherwise, <c>false</c>.</returns>
 		protected virtual bool ListHasMnemonic(char charCode)
 		{

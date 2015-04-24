@@ -120,7 +120,7 @@ namespace GroupControls
 		/// Gets the base list of items.
 		/// </summary>
 		/// <value>
-		/// Any list supportting and <see cref="System.Collections.IList"/> interface.
+		/// Any list supporting and <see cref="System.Collections.IList"/> interface.
 		/// </value>
 		protected override System.Collections.IList BaseItems
 		{
@@ -140,7 +140,7 @@ namespace GroupControls
 		/// <summary>
 		/// Determines whether this list has the specified mnemonic in its members.
 		/// </summary>
-		/// <param name="charCode">The mnumonic character.</param>
+		/// <param name="charCode">The mnemonic character.</param>
 		/// <returns>
 		/// 	<c>true</c> if list has the mnemonic; otherwise, <c>false</c>.
 		/// </returns>

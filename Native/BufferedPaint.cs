@@ -79,5 +79,71 @@ namespace Microsoft.Win32
 				catch { }
 			}
 		}
+
+		[Flags]
+		public enum BufferedPaintAnimationStyle
+		{
+			None = 0,
+			Linear = 1,
+			Cubic = 2,
+			Sine = 3
+		}
+
+		public enum BufferedPaintBufferFormat
+		{
+			CompatibleBitmap,
+			Dib,
+			TopDownDib,
+			TopDownMonoDib
+		}
+
+		[DllImport(UXTHEME)]
+		public static extern IntPtr BeginBufferedAnimation(IntPtr hwnd, IntPtr hdcTarget,
+			ref RECT rcTarget, BufferedPaintBufferFormat dwFormat, IntPtr pPaintParams,
+			ref BufferedPaintAnimationParams pAnimationParams, out IntPtr phdcFrom, out IntPtr phdcTo);
+
+		[DllImport(UXTHEME)]
+		public static extern IntPtr BufferedPaintInit();
+
+		[DllImport(UXTHEME)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		public static extern bool BufferedPaintRenderAnimation(IntPtr hwnd, IntPtr hdcTarget);
+
+		[DllImport(UXTHEME)]
+		public static extern IntPtr BufferedPaintStopAllAnimations(IntPtr hwnd);
+
+		[DllImport(UXTHEME)]
+		public static extern IntPtr BufferedPaintUnInit();
+
+		[DllImport(UXTHEME)]
+		public static extern IntPtr EndBufferedAnimation(IntPtr hbpAnimation, bool fUpdateTarget);
+
+		[StructLayout(LayoutKind.Sequential)]
+		public struct BufferedPaintAnimationParams
+		{
+			private Int32 cbSize, dwFlags;
+			private BufferedPaintAnimationStyle style;
+			private UInt32 dwDuration;
+
+			public BufferedPaintAnimationParams(BufferedPaintAnimationStyle animStyle = BufferedPaintAnimationStyle.Linear, UInt32 dur = 0)
+			{
+				cbSize = Marshal.SizeOf(typeof(BufferedPaintAnimationParams));
+				dwFlags = 0;
+				dwDuration = dur;
+				style = animStyle;
+			}
+
+			public BufferedPaintAnimationStyle AnimationStyle
+			{
+				get { return style; }
+				set { style = value; }
+			}
+
+			public UInt32 Duration
+			{
+				get { return dwDuration; }
+				set { dwDuration = value; }
+			}
+		}
 	}
 }

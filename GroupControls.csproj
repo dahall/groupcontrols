@@ -95,7 +95,7 @@
     <Compile Include="Native\ICONINFO.cs" />
     <Compile Include="Native\MapWindowPoints.cs" />
     <Compile Include="Native\RECT.cs" />
-    <Compile Include="Native\SafeHandles.cs" />
+    <Compile Include="Native\SafeGDIHandle.cs" />
     <Compile Include="Native\UXTHEME.cs" />
     <Compile Include="Native\VisualStylesRendererExtension.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

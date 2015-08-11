@@ -25,9 +25,9 @@ namespace System.Collections.Generic
 			private SparseArray<T> parent;
 			public SparseArrayEnumerator(SparseArray<T> array) { parent = array; Reset(); }
 			public void Reset() { dict = parent.hashtable.GetEnumerator(); }
-			public bool MoveNext() { return dict.MoveNext(); }
-			T IEnumerator<T>.Current { get { return dict.Current.Value; } }
-			public object Current { get { return this.Current; } }
+			public bool MoveNext() => dict.MoveNext();
+			T IEnumerator<T>.Current => dict.Current.Value;
+			public object Current => Current;
 			public void Dispose() { dict.Dispose(); parent = null; }
 		}
 
@@ -37,22 +37,16 @@ namespace System.Collections.Generic
 		/// <returns>
 		/// A <see cref="T:System.Collections.Generic.IEnumerator`1"/> that can be used to iterate through the collection.
 		/// </returns>
-		public IEnumerator<T> GetEnumerator()
-		{
-			return new SparseArrayEnumerator<T>(this);
-		}
+		public IEnumerator<T> GetEnumerator() => new SparseArrayEnumerator<T>(this);
 
 		/// <summary>
 		/// Determines whether [contains] [the specified value].
 		/// </summary>
-		/// <param name="value">The value.</param>
+		/// <param name="item">The value.</param>
 		/// <returns>
 		/// 	<c>true</c> if [contains] [the specified value]; otherwise, <c>false</c>.
 		/// </returns>
-		public bool Contains(T value)
-		{
-			return hashtable.ContainsValue(value);
-		}
+		public bool Contains(T item) => hashtable.ContainsValue(item);
 
 		/// <summary>
 		/// Removes all items from the <see cref="T:System.Collections.Generic.ICollection`1"/>.
@@ -66,22 +60,19 @@ namespace System.Collections.Generic
 		/// <summary>
 		/// Indexes the of.
 		/// </summary>
-		/// <param name="value">The value.</param>
+		/// <param name="item">The value.</param>
 		/// <returns></returns>
-		public int IndexOf(T value)
+		public int IndexOf(T item)
 		{
-			foreach (KeyValuePair<int, T> item in hashtable)
+			foreach (KeyValuePair<int, T> hash in hashtable)
 			{
-				if (item.Value.Equals(value))
-					return item.Key;
+				if (hash.Value.Equals(item))
+					return hash.Key;
 			}
 			return -1;
 		}
 
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return this.GetEnumerator();
-		}
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
 		/// <summary>
 		/// Inserts an item to the <see cref="T:System.Collections.Generic.IList`1"/> at the specified index.
@@ -162,20 +153,14 @@ namespace System.Collections.Generic
 		/// </summary>
 		/// <value></value>
 		/// <returns>The number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1"/>.</returns>
-		public int Count
-		{
-			get { return hashtable.Count; }
-		}
+		public int Count => hashtable.Count;
 
 		/// <summary>
 		/// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.
 		/// </summary>
 		/// <value></value>
 		/// <returns>true if the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only; otherwise, false.</returns>
-		public bool IsReadOnly
-		{
-			get { return false; }
-		}
+		public bool IsReadOnly => false;
 
 		/// <summary>
 		/// Removes the first occurrence of a specific object from the <see cref="T:System.Collections.Generic.ICollection`1"/>.

@@ -28,12 +28,12 @@ namespace GroupControls.Design
 			// Add layout methods
 			if (statements != null)
 			{
-				this.SerializeMethodInvocation(manager, statements, value, "SuspendLayout", null, new Type[0], true);
+				SerializeMethodInvocation(manager, statements, value, "SuspendLayout", null, new Type[0], true);
 
 				CodeExpressionCollection parameters = new CodeExpressionCollection();
 				parameters.Add(new CodePrimitiveExpression(true));
 				Type[] paramTypes = new Type[] { typeof(bool) };
-				this.SerializeMethodInvocation(manager, statements, value, "ResumeLayout", parameters, paramTypes, false);
+				SerializeMethodInvocation(manager, statements, value, "ResumeLayout", parameters, paramTypes, false);
 			}
 
 			// Return the new statements
@@ -62,10 +62,7 @@ namespace GroupControls.Design
 			}
 		}
 
-		private static Type ToTargetType(object context, Type runtimeType)
-		{
-			return TypeDescriptor.GetProvider(context).GetReflectionType(runtimeType);
-		}
+		private static Type ToTargetType(object context, Type runtimeType) => TypeDescriptor.GetProvider(context).GetReflectionType(runtimeType);
 
 		private static Type[] ToTargetTypes(object context, Type[] runtimeTypes)
 		{

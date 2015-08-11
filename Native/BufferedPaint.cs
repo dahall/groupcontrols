@@ -20,15 +20,9 @@ namespace Microsoft.Win32
 					base.SetHandle(NativeMethods.BeginBufferedAnimation(hwnd, hdcTarget, ref rc, NativeMethods.BufferedPaintBufferFormat.CompatibleBitmap, IntPtr.Zero, ref pAnimationParams, out phdcFrom, out phdcTo));
 				}
 
-				public override bool IsInvalid
-				{
-					get { return base.handle == IntPtr.Zero; }
-				}
+				public override bool IsInvalid => base.handle == IntPtr.Zero;
 
-				protected override bool ReleaseHandle()
-				{
-					return NativeMethods.EndBufferedAnimation(base.handle, true).ToInt32() == 0;
-				}
+				protected override bool ReleaseHandle() => NativeMethods.EndBufferedAnimation(base.handle, true).ToInt32() == 0;
 			}
 
 			public static void Paint<TState, TParam>(Graphics g, IWin32Window w, Rectangle rc, PaintAction<TState, TParam> f, TState currentState, TState newState, uint duration, TParam optParam)
@@ -64,7 +58,6 @@ namespace Microsoft.Win32
 										}
 										else
 										{
-											hdc.Dispose();
 											f(g, rc, newState, optParam);
 										}
 									}

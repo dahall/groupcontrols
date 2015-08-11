@@ -15,12 +15,12 @@ namespace TestApp
 
 		private void checkBoxList1_ItemCheckStateChanged(object sender, GroupControls.CheckBoxListItemCheckStateChangedEventArgs e)
 		{
-			statusLabel.Text = string.Format("{0} item {1} checked = {2}", ((Control)sender).Name, e.ItemIndex, e.Item.Checked);
+			statusLabel.Text = $"{((Control)sender).Name} item {e.ItemIndex} checked = {e.Item.Checked}";
 		}
 
 		private void radioButtonList2_SelectedIndexChanged(object sender, System.EventArgs e)
 		{
-			statusLabel.Text = string.Format("{0} selectedIndex {1}", ((Control)sender).Name, radioButtonList2.SelectedIndex);
+			statusLabel.Text = $"{((Control)sender).Name} selectedIndex {radioButtonList2.SelectedIndex}";
 		}
 	}
 }

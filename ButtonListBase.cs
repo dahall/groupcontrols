@@ -27,7 +27,7 @@ namespace GroupControls
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ButtonListBase"/> class.
 		/// </summary>
-		public ButtonListBase() : base()
+		protected ButtonListBase() : base()
 		{
 		}
 
@@ -61,8 +61,8 @@ namespace GroupControls
 		Category("Appearance")]
 		public Font SubtextFont
 		{
-			get { return subtextFont == null ? this.Font : subtextFont; }
-			set { if (this.Font.Equals(value)) subtextFont = null; else subtextFont = value; ResetListLayout("SubtextFont"); Refresh(); }
+			get { return subtextFont == null ? Font : subtextFont; }
+			set { if (Font.Equals(value)) subtextFont = null; else subtextFont = value; ResetListLayout("SubtextFont"); Refresh(); }
 		}
 
 		/// <summary>
@@ -72,7 +72,7 @@ namespace GroupControls
 		Description("The color used to display the item subtext.")]
 		public Color SubtextForeColor
 		{
-			get { return subtextForeColor == Color.Empty ? this.ForeColor : subtextForeColor; }
+			get { return subtextForeColor == Color.Empty ? ForeColor : subtextForeColor; }
 			set { subtextForeColor = value; OnSubtextForeColorChanged(new PropertyChangedEventArgs("SubtextForeColor")); Refresh(); }
 		}
 
@@ -121,10 +121,7 @@ namespace GroupControls
 		/// Gets the index of the focused item.
 		/// </summary>
 		/// <value>The index of the focused item.</value>
-		protected int FocusedIndex
-		{
-			get { return focusedIndex; }
-		}
+		protected int FocusedIndex => focusedIndex;
 
 		/// <summary>
 		/// Gets or sets the focused item.
@@ -134,11 +131,11 @@ namespace GroupControls
 		{
 			get
 			{
-				return this.focusedIndex == -1 ? null : this.BaseItems[this.focusedIndex] as ButtonListItem;
+				return focusedIndex == -1 ? null : BaseItems[focusedIndex] as ButtonListItem;
 			}
 			set
 			{
-				focusedIndex = this.BaseItems.IndexOf(value);
+				focusedIndex = BaseItems.IndexOf(value);
 			}
 		}
 
@@ -146,10 +143,7 @@ namespace GroupControls
 		/// Gets the TextFormatFlags based on alignments.
 		/// </summary>
 		/// <value>The TextFormatFlags.</value>
-		protected TextFormatFlags TextFormatFlags
-		{
-			get { return this.RightToLeft == RightToLeft.Yes ? textFormatFlags | TextFormatFlags.RightToLeft : textFormatFlags; }
-		}
+		protected TextFormatFlags TextFormatFlags => RightToLeft == RightToLeft.Yes ? textFormatFlags | TextFormatFlags.RightToLeft : textFormatFlags;
 
 		/// <summary>
 		/// Ensures that the specified item is visible within the control, scrolling the contents of the control if necessary.
@@ -158,10 +152,10 @@ namespace GroupControls
 		public override void EnsureVisible(int index)
 		{
 			Rectangle r = GetItemRect(index);
-			Rectangle scrollRect = new Rectangle(-this.AutoScrollPosition.X, -this.AutoScrollPosition.Y, this.ClientRectangle.Size.Width, this.ClientRectangle.Size.Height);
+			Rectangle scrollRect = new Rectangle(-AutoScrollPosition.X, -AutoScrollPosition.Y, ClientRectangle.Size.Width, ClientRectangle.Size.Height);
 			if (!scrollRect.Contains(r))
 			{
-				this.AutoScrollPosition = r.Location;
+				AutoScrollPosition = r.Location;
 				Refresh();
 			}
 		}
@@ -171,29 +165,23 @@ namespace GroupControls
 			subtextFont = null;
 		}
 
-		internal bool ShouldSerializeSubtextFont()
-		{
-			return (subtextFont != null && !subtextFont.Equals(this.Font));
-		}
+		internal bool ShouldSerializeSubtextFont() => (subtextFont != null && !subtextFont.Equals(Font));
 
-		internal bool ShouldSerializeSubtextForeColor()
-		{
-			return (subtextForeColor != Color.Empty && subtextForeColor != this.ForeColor);
-		}
+		internal bool ShouldSerializeSubtextForeColor() => (subtextForeColor != Color.Empty && subtextForeColor != ForeColor);
 
 		/// <summary>
 		/// Focuses the next item.
 		/// </summary>
-		/// <param name="i">The current item.</param>
+		/// <param name="item">The current item.</param>
 		/// <param name="forward">if set to <c>true</c>, moves to the next item, otherwise moves to the previous item.</param>
 		/// <returns><c>true</c> on success, <c>false</c> otherwise.</returns>
-		protected bool FocusNextItem(ButtonListItem i, bool forward)
+		protected bool FocusNextItem(ButtonListItem item, bool forward)
 		{
-			if (this.BaseItems.Count > 0)
+			if (BaseItems.Count > 0)
 			{
 				int idx = -1;
-				if (i != null && (idx = this.BaseItems.IndexOf(i)) == -1)
-					throw new IndexOutOfRangeException();
+				if (item != null && (idx = BaseItems.IndexOf(item)) == -1)
+					throw new ArgumentOutOfRangeException(nameof(item));
 				idx = GetNextEnabledItemIndex(idx, forward);
 				if (idx != -1)
 				{
@@ -212,10 +200,10 @@ namespace GroupControls
 		/// <returns>Index of next enabled item, or -1 if not found.</returns>
 		protected int GetNextEnabledItemIndex(int startIndex, bool forward)
 		{
-			int idx = startIndex == -1 && !forward ? this.BaseItems.Count : startIndex;
-			while ((forward && ++idx < this.BaseItems.Count) || (!forward && --idx >= 0))
+			int idx = startIndex == -1 && !forward ? BaseItems.Count : startIndex;
+			while ((forward && ++idx < BaseItems.Count) || (!forward && --idx >= 0))
 			{
-				if (((ButtonListItem)this.BaseItems[idx]).Enabled)
+				if (((ButtonListItem)BaseItems[idx]).Enabled)
 					return idx;
 			}
 			return -1;
@@ -237,7 +225,7 @@ namespace GroupControls
 		/// </returns>
 		protected override string GetItemToolTipText(int index)
 		{
-			ButtonListItem item = this.BaseItems[index] as ButtonListItem;
+			ButtonListItem item = BaseItems[index] as ButtonListItem;
 			return item == null ? string.Empty : item.ToolTipText;
 		}
 
@@ -250,7 +238,7 @@ namespace GroupControls
 		/// </returns>
 		protected override bool IsItemEnabled(int index)
 		{
-			ButtonListItem item = this.BaseItems[index] as ButtonListItem;
+			ButtonListItem item = BaseItems[index] as ButtonListItem;
 			return item == null ? true : item.Enabled;
 		}
 
@@ -263,10 +251,10 @@ namespace GroupControls
 		/// <returns>Minimum size for the item.</returns>
 		protected override Size MeasureItem(System.Drawing.Graphics g, int index, Size maxSize)
 		{
-			ContentAlignment chkAlign = this.CheckAlign; // base.RtlTranslateContent(this.CheckAlign);
-			ContentAlignment txtAlign = this.TextAlign; // base.RtlTranslateContent(this.TextAlign);
+			ContentAlignment chkAlign = CheckAlign; // base.RtlTranslateContent(this.CheckAlign);
+			ContentAlignment txtAlign = TextAlign; // base.RtlTranslateContent(this.TextAlign);
 
-			ButtonListItem item = this.BaseItems[index] as ButtonListItem;
+			ButtonListItem item = BaseItems[index] as ButtonListItem;
 			if (item == null)
 				return Size.Empty;
 
@@ -280,13 +268,13 @@ namespace GroupControls
 			if ((chkAlign & anyCenterAlignment) == (ContentAlignment)0)
 				textSize.Width -= glyphWithPadding;
 
-			Size tsz = TextRenderer.MeasureText(g, item.Text, this.Font, textSize, TextFormatFlags);
+			Size tsz = TextRenderer.MeasureText(g, item.Text, Font, textSize, TextFormatFlags);
 			item.TextRect = new Rectangle(0, 0, textSize.Width, tsz.Height);
 			Size stsz = Size.Empty;
 			item.SubtextRect = Rectangle.Empty;
 			if (!string.IsNullOrEmpty(item.Subtext))
 			{
-				stsz = TextRenderer.MeasureText(g, item.Subtext, this.SubtextFont, textSize, TextFormatFlags);
+				stsz = TextRenderer.MeasureText(g, item.Subtext, SubtextFont, textSize, TextFormatFlags);
 				item.SubtextRect = new Rectangle(0, tsz.Height + subtextSeparatorHeight, textSize.Width, stsz.Height);
 			}
 
@@ -386,9 +374,7 @@ namespace GroupControls
 		/// <param name="e">An <see cref="PropertyChangedEventArgs"/> that contains the event data.</param>
 		protected virtual void OnSubtextForeColorChanged(PropertyChangedEventArgs e)
 		{
-			PropertyChangedEventHandler handler1 = this.SubtextForeColorChanged;
-			if (handler1 != null)
-				handler1(this, e);
+			SubtextForeColorChanged?.Invoke(this, e);
 		}
 
 		/// <summary>
@@ -397,9 +383,7 @@ namespace GroupControls
 		/// <param name="e">An <see cref="PropertyChangedEventArgs"/> that contains the event data.</param>
 		protected virtual void OnSubtextSeparatorHeightChanged(PropertyChangedEventArgs e)
 		{
-			PropertyChangedEventHandler handler1 = this.SubtextSeparatorHeightChanged;
-			if (handler1 != null)
-				handler1(this, e);
+			SubtextSeparatorHeightChanged?.Invoke(this, e);
 		}
 
 		/// <summary>
@@ -418,9 +402,9 @@ namespace GroupControls
 		/// <param name="bounds">The bounds in which to paint the item.</param>
 		protected override void PaintItem(System.Drawing.Graphics g, int index, Rectangle bounds)
 		{
-			ButtonListItem li = this.BaseItems[index] as ButtonListItem;
-			System.Diagnostics.Debug.WriteLine(string.Format("PaintItem: {0}[{1}], Bounds=({2},{3},{4},{5}), GlPos=({6},{7}), TPos=({8},{9},{10},{11})", this.Name, index,
-				bounds.X, bounds.Y, bounds.Width, bounds.Height, li.GlyphPosition.X, li.GlyphPosition.Y, li.TextRect.X, li.TextRect.Y, li.TextRect.Width, li.TextRect.Height));
+			ButtonListItem li = BaseItems[index] as ButtonListItem;
+			System.Diagnostics.Debug.WriteLine($"PaintItem: {Name}[{index}], Bounds=({bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}), " +
+				$"GlPos=({li.GlyphPosition.X},{li.GlyphPosition.Y}), TPos=({li.TextRect.X},{li.TextRect.Y},{li.TextRect.Width},{li.TextRect.Height})");
 
 			// Draw glyph
 			PaintButton(g, index, bounds);
@@ -428,18 +412,18 @@ namespace GroupControls
 			// Draw text
 			Rectangle tr = li.TextRect;
 			tr.Offset(bounds.Location);
-			TextRenderer.DrawText(g, li.Text, this.Font, tr, li.Enabled ? this.ForeColor : SystemColors.GrayText, TextFormatFlags);
+			TextRenderer.DrawText(g, li.Text, Font, tr, li.Enabled ? ForeColor : SystemColors.GrayText, TextFormatFlags);
 
 			Rectangle str = li.SubtextRect;
 			bool hasSubtext = !string.IsNullOrEmpty(li.Subtext);
 			if (hasSubtext)
 			{
 				str.Offset(bounds.Location);
-				TextRenderer.DrawText(g, li.Subtext, this.SubtextFont, str, li.Enabled ? this.SubtextForeColor : SystemColors.GrayText, TextFormatFlags);
+				TextRenderer.DrawText(g, li.Subtext, SubtextFont, str, li.Enabled ? SubtextForeColor : SystemColors.GrayText, TextFormatFlags);
 			}
 
 			// Draw focus rect
-			if (index == FocusedIndex && this.Focused)
+			if (index == FocusedIndex && Focused)
 			{
 				Rectangle fr = li.FocusRect;
 				fr.Offset(bounds.Location);
@@ -461,20 +445,20 @@ namespace GroupControls
 			// clear old selected item
 			if (oldSelect > -1)
 			{
-				if (this.Focused)
+				if (Focused)
 					InvalidateItem(oldSelect);
 			}
 			// Set new item
 			if (itemIndex > -1)
 			{
-				if (this.Focused)
+				if (Focused)
 					InvalidateItem(focusedIndex);
 			}
 		}
 
 		private void RebuildTextFormatFlags()
 		{
-			ContentAlignment txtAlign = this.TextAlign; // base.RtlTranslateContent(this.TextAlign);
+			ContentAlignment txtAlign = TextAlign; // base.RtlTranslateContent(this.TextAlign);
 			textFormatFlags = baseTextFormatFlags;
 			if ((txtAlign & anyRightAlignment) != (ContentAlignment)0)
 				textFormatFlags |= TextFormatFlags.Right;
@@ -493,31 +477,20 @@ namespace GroupControls
 
 		private bool hascheck = false;
 		private bool enabled = true;
-		private string text = string.Empty, subtext, tooltip;
+		private string text, subtext, tooltip;
 		private object tag;
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ButtonListItem"/> class.
-		/// </summary>
-		public ButtonListItem()
-		{
-			this.Enabled = true;
-			this.Checked = false;
-			this.Text = string.Empty;
-		}
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ButtonListItem"/> class.
 		/// </summary>
 		/// <param name="text">The text.</param>
 		/// <param name="subtext">The subtext.</param>
-		/// <param name="tooltiptext">The tooltip text.</param>
-		public ButtonListItem(string text, string subtext = null, string tooltiptext = null)
-			: this()
+		/// <param name="tooltipText">The tooltip text.</param>
+		public ButtonListItem(string text = "", string subtext = null, string tooltipText = null)
 		{
-			this.Text = text;
-			this.Subtext = subtext;
-			this.ToolTipText = tooltiptext;
+			Text = text;
+			Subtext = subtext;
+			ToolTipText = tooltipText;
 		}
 
 		/// <summary>
@@ -650,23 +623,24 @@ namespace GroupControls
 		/// <exception cref="T:System.NullReferenceException">The <paramref name="obj"/> parameter is null.</exception>
 		public override bool Equals(object obj)
 		{
-			if (obj == null || !(obj is ButtonListItem))
+			var bli = obj as ButtonListItem;
+            if (obj == null || bli == null)
 				return false;
-			return this.Equals(obj as ButtonListItem);
+			return Equals(bli);
 		}
 
 		/// <summary>
 		/// Determines whether the specified <see cref="ButtonListItem"/> is equal to the current <see cref="ButtonListItem"/>.
 		/// </summary>
-		/// <param name="b2">The <see cref="ButtonListItem"/> to compare with the current <see cref="ButtonListItem"/>.</param>
+		/// <param name="other">The <see cref="ButtonListItem"/> to compare with the current <see cref="ButtonListItem"/>.</param>
 		/// <returns>
 		/// true if the specified <see cref="ButtonListItem"/> is equal to the current <see cref="ButtonListItem"/>; otherwise, false.
 		/// </returns>
-		public bool Equals(ButtonListItem b2)
+		public bool Equals(ButtonListItem other)
 		{
-			if (b2 == null) return false;
-			return (this.Checked == b2.Checked) && (this.Enabled == b2.Enabled) &&
-				(this.Subtext == b2.Subtext) && (this.Text == b2.Text) && (this.ToolTipText == b2.ToolTipText);
+			if (other == null) return false;
+			return (Checked == other.Checked) && (Enabled == other.Enabled) &&
+				(Subtext == other.Subtext) && (Text == other.Text) && (ToolTipText == other.ToolTipText);
 		}
 
 		/// <summary>
@@ -675,10 +649,7 @@ namespace GroupControls
 		/// <returns>
 		/// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
 		/// </returns>
-		public override int GetHashCode()
-		{
-			return new { A = hascheck, B = enabled, C = text, D = subtext, E = tooltip }.GetHashCode();
-		}
+		public override int GetHashCode() => new { A = hascheck, B = enabled, C = text, D = subtext, E = tooltip }.GetHashCode();
 
 		/// <summary>
 		/// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
@@ -686,10 +657,7 @@ namespace GroupControls
 		/// <returns>
 		/// A <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
 		/// </returns>
-		public override string ToString()
-		{
-			return System.Text.RegularExpressions.Regex.Replace(this.Text, @"\&([^\&])", "$1");
-		}
+		public override string ToString() => System.Text.RegularExpressions.Regex.Replace(Text, @"\&([^\&])", "$1");
 
 		/// <summary>
 		/// Called when a property value has changed.
@@ -704,8 +672,8 @@ namespace GroupControls
 
 		internal void OffsetText(int x, int y)
 		{
-			this.TextRect.Offset(x, y);
-			this.SubtextRect.Offset(x, y);
+			TextRect.Offset(x, y);
+			SubtextRect.Offset(x, y);
 		}
 	}
 }

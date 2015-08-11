@@ -88,6 +88,7 @@
     </Compile>
     <Compile Include="ControlListBaseDesigner.cs" />
     <Compile Include="ControlListCodeDomSerializer.cs" />
+    <Compile Include="GenericDesigner.cs" />
     <Compile Include="Native\BufferedPaint.cs" />
     <Compile Include="Native\CursorExtension.cs" />
     <Compile Include="EventedList.cs" />

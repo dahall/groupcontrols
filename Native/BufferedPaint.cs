@@ -58,6 +58,7 @@ namespace Microsoft.Win32
 										}
 										else
 										{
+											hdc.Dispose();
 											f(g, rc, newState, optParam);
 										}
 									}

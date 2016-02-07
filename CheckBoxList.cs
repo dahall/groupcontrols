@@ -95,7 +95,7 @@ namespace GroupControls
 		/// <value>
 		/// Any list supporting and <see cref="System.Collections.IList"/> interface.
 		/// </value>
-		protected override System.Collections.IList BaseItems => items;
+		protected internal override System.Collections.IList BaseItems => items;
 
 		/// <summary>
 		/// If each items <c>Tag</c> property has been assigned a value of <c>T</c>, this method retrieved the OR value of all items.
@@ -548,6 +548,18 @@ namespace GroupControls
 			for (int i = 0; i < textValues.Length; i += 2)
 				Add(textValues[i], textValues[i + 1]);
 			parent.ResumeLayout();
+		}
+
+		/// <summary>
+		/// Called when an item is added.
+		/// </summary>
+		/// <param name="index">The item index.</param>
+		/// <param name="value">The item value.</param>
+		protected override void OnItemAdded(int index, CheckBoxListItem value)
+		{
+			base.OnItemAdded(index, value);
+			if (value != null && string.IsNullOrEmpty(value.Text) && parent != null && parent.IsDesignerHosted)
+				value.Text = "checkBoxItem" + Count.ToString();
 		}
 	}
 }

@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using System.Windows.Forms.Layout;
 
 namespace GroupControls
 {
@@ -23,13 +24,13 @@ namespace GroupControls
 		private BorderStyle borderStyle;
 		private int columns = 1;
 		private Timer hoverTimer;
-		private int idealHeight = 100;
-		private SparseArray<Rectangle> itemBounds = new SparseArray<Rectangle>();
+		private ColumnLayoutEngine layoutEngine;
 		private bool mouseTracking = false;
 		private RepeatDirection repeatDirection = RepeatDirection.Vertical;
 		private bool spaceEvenly = false;
 		private Size spacing = new Size(0, 6);
 		private int timedHoverItem = -1;
+		private bool variableColWidth = false;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ControlListBase"/> class.
@@ -43,7 +44,7 @@ namespace GroupControls
 			SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.StandardClick | ControlStyles.OptimizedDoubleBuffer, true);
 			SuspendLayout();
 			base.AutoScroll = true;
-			base.Size = new System.Drawing.Size(100, 100);
+			base.Size = ColumnLayoutEngine.DefaultSize;
 			base.AutoSize = true;
 			ResumeLayout(false);
 			hoverTimer = new Timer() { Interval = SystemInformation.MouseHoverTime };
@@ -108,8 +109,16 @@ namespace GroupControls
 		public virtual Size ItemSpacing
 		{
 			get { return spacing; }
-			set { spacing = value; ResetListLayout("ItemSpacing"); Refresh(); }
+			set { spacing = value; ResetListLayout(nameof(ItemSpacing)); Refresh(); }
 		}
+
+		/// <summary>
+		/// Gets or sets the layout engine.
+		/// </summary>
+		/// <value>
+		/// The layout engine.
+		/// </value>
+		public override LayoutEngine LayoutEngine => MyLayoutEngine;
 
 		/// <summary>
 		/// Gets or sets the number of columns to display in the control.
@@ -119,7 +128,7 @@ namespace GroupControls
 		public virtual int RepeatColumns
 		{
 			get { return columns; }
-			set { columns = value; ResetListLayout("RepeatColumns"); Refresh(); }
+			set { columns = value; ResetListLayout(nameof(RepeatColumns)); Refresh(); }
 		}
 
 		/// <summary>
@@ -130,7 +139,7 @@ namespace GroupControls
 		public virtual RepeatDirection RepeatDirection
 		{
 			get { return repeatDirection; }
-			set { repeatDirection = value; ResetListLayout("RepeatDirection"); Refresh(); }
+			set { repeatDirection = value; ResetListLayout(nameof(RepeatDirection)); Refresh(); }
 		}
 
 		/// <summary>
@@ -148,7 +157,7 @@ namespace GroupControls
 		public bool SpaceEvenly
 		{
 			get { return spaceEvenly; }
-			set { spaceEvenly = value; ResetListLayout("SpaceEvenly"); Refresh(); }
+			set { spaceEvenly = value; ResetListLayout(nameof(SpaceEvenly)); Refresh(); }
 		}
 
 		/// <summary>
@@ -163,10 +172,38 @@ namespace GroupControls
 		}
 
 		/// <summary>
+		/// Gets or sets a value that determines if the columns are allowed to be a variable width or if they are to be all the same width.
+		/// </summary>
+		/// <value><c>true</c> if the columns can be a variable width; otherwise, <c>false</c>.</value>
+		[DefaultValue(false), Description("Make columns variable width."), Category("Appearance")]
+		internal bool VariableColumnWidths
+		{
+			get { return variableColWidth; }
+			set { variableColWidth = value; ResetListLayout(nameof(VariableColumnWidths)); Refresh(); }
+		}
+
+		internal bool IsDesignerHosted
+		{
+			get
+			{
+				Control ctrl = this;
+				while (ctrl != null)
+				{
+					if ((ctrl.Site != null) && ctrl.Site.DesignMode)
+						return true;
+					ctrl = ctrl.Parent;
+				}
+				return false;
+			}
+		}
+
+		/// <summary>
 		/// Gets the base list of items.
 		/// </summary>
 		/// <value>Any list supporting and <see cref="System.Collections.IList"/> interface.</value>
-		protected abstract System.Collections.IList BaseItems { get; }
+		internal protected abstract System.Collections.IList BaseItems { get; }
+
+		internal ColumnLayoutEngine MyLayoutEngine => layoutEngine ?? (layoutEngine = new ColumnLayoutEngine());
 
 		/// <summary>
 		/// Gets the required creation parameters when the control handle is created.
@@ -275,7 +312,7 @@ namespace GroupControls
 		{
 			if (index < 0 || index >= BaseItems.Count)
 				throw new ArgumentOutOfRangeException(nameof(index));
-			return itemBounds[index];
+			return MyLayoutEngine.ItemBounds[index];
 		}
 
 		/// <summary>
@@ -286,12 +323,19 @@ namespace GroupControls
 		protected virtual string GetItemToolTipText(int index) => null;
 
 		/// <summary>
+		/// Retrieves the size of a rectangular area into which a control can be fitted.
+		/// </summary>
+		/// <param name="proposedSize">The custom-sized area for a control.</param>
+		/// <returns>An ordered pair of type <see cref="Size"/> representing the width and height of a rectangle.</returns>
+		public override Size GetPreferredSize(Size proposedSize) => MyLayoutEngine.GetPreferredSize(this, proposedSize);
+
+		/// <summary>
 		/// Invalidates the specified item.
 		/// </summary>
 		/// <param name="index">The item index.</param>
 		protected virtual void InvalidateItem(int index)
 		{
-			base.Invalidate(OffsetForScroll(itemBounds[index]));
+			base.Invalidate(OffsetForScroll(MyLayoutEngine.ItemBounds[index]));
 			//base.Invalidate();
 		}
 
@@ -316,7 +360,7 @@ namespace GroupControls
 		/// <param name="index">The index of the item.</param>
 		/// <param name="maxSize">Maximum size of the item. Usually only constrains the width.</param>
 		/// <returns>Minimum size for the item.</returns>
-		protected abstract Size MeasureItem(Graphics g, int index, Size maxSize);
+		protected internal abstract Size MeasureItem(Graphics g, int index, Size maxSize);
 
 		/// <summary>
 		/// Offsets the client point for scrolling.
@@ -370,111 +414,6 @@ namespace GroupControls
 			}
 			// Handle button press on Space
 			base.OnKeyUp(e);
-		}
-
-		/// <summary>
-		/// Raises the <see cref="Control.Layout"/> event.
-		/// </summary>
-		/// <param name="e">An <see cref="LayoutEventArgs"/> that contains the event data.</param>
-		protected override void OnLayout(LayoutEventArgs e)
-		{
-			base.OnLayout(e);
-
-			if (BaseItems == null || BaseItems.Count == 0)
-				return;
-
-			System.Diagnostics.Debug.WriteLine(Name + ": OnLayout: " + e.AffectedProperty);
-			System.Diagnostics.Debug.WriteLine($"  ClientSize:{ClientSize}, Margin:{Margin}, Padding:{Padding}, Cols:{columns}, Spacing:{spacing}, Items:{BaseItems.Count}, Dir:{RepeatDirection}, Even:{spaceEvenly}");
-			itemBounds.Clear();
-			using (Graphics g = CreateGraphics())
-			{
-				// Determine the start coordinate of each column
-				int colWidth = (ClientSize.Width - Padding.Horizontal - ((columns - 1) * spacing.Width)) / columns;
-				Point[] colPos = new Point[columns];
-				for (int x = 0; x < columns; x++)
-					colPos[x] = new Point(Padding.Left + (x * (colWidth + spacing.Width)), Padding.Top);
-
-				// Get the base height of all items and the max height
-				int maxItemHeight = 0;
-				idealHeight = 0;
-				Size maxSize = new Size(colWidth, 0);
-				for (int i = 0; i < BaseItems.Count; i++)
-				{
-					Size sz = MeasureItem(g, i, maxSize);
-					itemBounds[i] = new Rectangle(Point.Empty, sz);
-
-					// Calculate maximum item height
-					maxItemHeight = Math.Max(maxItemHeight, sz.Height);
-				}
-
-				// Calculate the positions of each item
-				int curCol = 0;
-				for (int i = 0; i < BaseItems.Count; i++)
-				{
-					// Set bounds of the item
-					itemBounds[i] = new Rectangle(colPos[curCol], itemBounds[i].Size);
-					// Set top position of next item
-					colPos[curCol].Y += (spaceEvenly ? maxItemHeight : itemBounds[i].Height) + spacing.Height;
-					if (RepeatDirection == GroupControls.RepeatDirection.Horizontal)
-						if (++curCol == columns) curCol = 0;
-					// If spacing evenly we can determine all locations now by changing column count at pure divisions
-					/*if (spaceEvenly && RepeatDirection == GroupControls.RepeatDirection.Vertical && i > 0)
-					{
-						if (i % (this.BaseItems.Count / columns) == 0 && curCol <= (this.BaseItems.Count % columns))
-							curCol++;
-					}*/
-				}
-
-				// Split vertical columns and reset positions of items
-				if (RepeatDirection == GroupControls.RepeatDirection.Vertical && columns > 1)
-				{
-					int idealColHeight = colPos[0].Y / columns;
-					int thisColBottom = idealColHeight;
-					int y = Padding.Top + Margin.Top;
-					for (int i = 0; i < BaseItems.Count; i++)
-					{
-						Rectangle iBounds = itemBounds[i];
-						Rectangle nBounds = Rectangle.Empty;
-						if ((i + 1) < BaseItems.Count)
-							nBounds = itemBounds[i + 1];
-
-						if (curCol > 0)
-							itemBounds[i] = new Rectangle(new Point(colPos[curCol].X, y), itemBounds[i].Size);
-						colPos[curCol].Y = itemBounds[i].Bottom + spacing.Height;
-
-						if ((iBounds.Bottom > thisColBottom || nBounds.Bottom > thisColBottom) && (curCol + 1 < columns))
-						{
-							if (Math.Abs(iBounds.Bottom - idealColHeight) < Math.Abs(nBounds.Bottom - idealColHeight))
-							{
-								y = Padding.Top;
-								curCol++;
-								thisColBottom = iBounds.Bottom + spacing.Height + idealColHeight;
-							}
-						}
-						else
-						{
-							y += (spaceEvenly ? maxItemHeight : itemBounds[i].Height) + spacing.Height;
-						}
-					}
-				}
-
-				// Set ideal height
-				idealHeight = 0;
-				for (int c = 0; c < columns; c++)
-					if (idealHeight < colPos[c].Y) idealHeight = colPos[c].Y;
-				idealHeight = idealHeight - spacing.Height + Padding.Bottom;
-			}
-
-			// Set scroll height and autosize to ideal height
-			AutoScrollMinSize = new Size(ClientRectangle.Width, idealHeight);
-			if (AutoSize) Height = idealHeight;
-
-#if DEBUG
-			var sb = new System.Text.StringBuilder();
-			for (int i = 0; i < itemBounds.Count; i++)
-				sb.AppendFormat("({0}),", itemBounds[i]);
-			System.Diagnostics.Debug.WriteLine("  " + sb.ToString());
-#endif
 		}
 
 		/// <summary>
@@ -541,6 +480,16 @@ namespace GroupControls
 		}
 
 		/// <summary>
+		/// Raises the <see cref="E:PaddingChanged" /> event.
+		/// </summary>
+		/// <param name="e">The <see cref="System.EventArgs" /> instance containing the event data.</param>
+		protected override void OnPaddingChanged(EventArgs e)
+		{
+			base.OnPaddingChanged(e);
+			ResetListLayout("Padding");
+		}
+
+		/// <summary>
 		/// Raises the <see cref="Control.Paint"/> event.
 		/// </summary>
 		/// <param name="pe">An <see cref="PaintEventArgs"/> that contains the event data.</param>
@@ -556,9 +505,9 @@ namespace GroupControls
 
 			for (int i = 0; i < BaseItems.Count; i++)
 			{
-				if (pe.ClipRectangle.IntersectsWith(OffsetForScroll(itemBounds[i])))
+				if (pe.ClipRectangle.IntersectsWith(OffsetForScroll(MyLayoutEngine.ItemBounds[i])))
 				{
-					PaintItem(pe.Graphics, i, itemBounds[i]);
+					PaintItem(pe.Graphics, i, MyLayoutEngine.ItemBounds[i]);
 				}
 			}
 		}
@@ -695,9 +644,9 @@ namespace GroupControls
 		/// <returns></returns>
 		protected int GetItemAtLocation(Point pt)
 		{
-			for (int i = 0; i < itemBounds.Count; i++)
+			for (int i = 0; i < MyLayoutEngine.ItemBounds.Count; i++)
 			{
-				if (itemBounds[i].Contains(pt))
+				if (MyLayoutEngine.ItemBounds[i].Contains(pt))
 					return i;
 			}
 			return -1;

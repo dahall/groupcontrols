@@ -241,12 +241,21 @@ namespace System.Collections.Generic
 		}
 
 		/// <summary>
-		/// Adds the range.
+		/// Adds the range of items to the list.
 		/// </summary>
-		/// <param name="collection">The collection.</param>
+		/// <param name="collection">The collection of items to add.</param>
 		public void AddRange(IEnumerable<T> collection)
 		{
 			InsertRange(_size, collection);
+		}
+
+		/// <summary>
+		/// Adds the range of items to the list.
+		/// </summary>
+		/// <param name="items">The items to add.</param>
+		public void AddRange(T[] items)
+		{
+			InsertRange(_size, items);
 		}
 
 		/// <summary>
@@ -1037,10 +1046,10 @@ namespace System.Collections.Generic
 		protected virtual void OnItemAdded(int index, T value)
 		{
 			if (value != null)
+			{
 				value.PropertyChanged += OnItemPropertyChanged;
-			EventHandler<ListChangedEventArgs<T>> h = ItemAdded;
-			if (h != null)
-				h(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.ItemAdded, value, index));
+				ItemAdded?.Invoke(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.ItemAdded, value, index));
+			}
 		}
 
 		/// <summary>
@@ -1050,9 +1059,7 @@ namespace System.Collections.Generic
 		/// <param name="e">The <see cref="PropertyChangedEventArgs"/> instance containing the event data.</param>
 		protected virtual void OnItemPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			var h = ItemPropertyChanged;
-			if (h != null)
-				h(sender, e);
+			ItemPropertyChanged?.Invoke(sender, e);
 		}
 
 		/// <summary>
@@ -1069,9 +1076,7 @@ namespace System.Collections.Generic
 				if (newValue != null)
 					newValue.PropertyChanged += OnItemPropertyChanged;
 			}
-			EventHandler<ListChangedEventArgs<T>> h = ItemChanged;
-			if (h != null)
-				h(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.ItemChanged, newValue, index, oldValue));
+			ItemChanged?.Invoke(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.ItemChanged, newValue, index, oldValue));
 		}
 
 		/// <summary>
@@ -1082,10 +1087,10 @@ namespace System.Collections.Generic
 		protected virtual void OnItemDeleted(int index, T value)
 		{
 			if (value != null)
+			{
 				value.PropertyChanged -= OnItemPropertyChanged;
-			EventHandler<ListChangedEventArgs<T>> h = ItemDeleted;
-			if (h != null)
-				h(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.ItemDeleted, value, index));
+				ItemDeleted?.Invoke(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.ItemDeleted, value, index));
+			}
 		}
 
 		/// <summary>
@@ -1094,9 +1099,7 @@ namespace System.Collections.Generic
 		protected virtual void OnReset()
 		{
 			ForEach(delegate(T item) { item.PropertyChanged -= OnItemPropertyChanged; });
-			EventHandler<ListChangedEventArgs<T>> h = Reset;
-			if (h != null)
-				h(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.Reset));
+			Reset?.Invoke(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.Reset));
 		}
 
 		/// <summary>
@@ -1106,14 +1109,7 @@ namespace System.Collections.Generic
 		/// <returns>
 		/// 	<c>true</c> if [is compatible object] [the specified value]; otherwise, <c>false</c>.
 		/// </returns>
-		private static bool IsCompatibleObject(object value)
-		{
-			if (!(value is T) && ((value != null) || typeof(T).IsValueType))
-			{
-				return false;
-			}
-			return true;
-		}
+		private static bool IsCompatibleObject(object value) => (value is T || (value == null && !typeof(T).IsValueType));
 
 		/// <summary>
 		/// Verifies the type of the value.
@@ -1308,28 +1304,19 @@ namespace System.Collections.Generic
 			/// Gets the item that has changed.
 			/// </summary>
 			/// <value>The item.</value>
-			public T Item
-			{
-				get;
-			}
+			public T Item { get; }
 
 			/// <summary>
 			/// Gets the index of the item.
 			/// </summary>
 			/// <value>The index of the item.</value>
-			public int ItemIndex
-			{
-				get;
-			}
+			public int ItemIndex { get; }
 
 			/// <summary>
 			/// Gets the type of change for the list.
 			/// </summary>
 			/// <value>The type of change for the list.</value>
-			public ListChangedType ListChangedType
-			{
-				get;
-			}
+			public ListChangedType ListChangedType { get; }
 
 			/// <summary>
 			/// Gets the item's previous value.

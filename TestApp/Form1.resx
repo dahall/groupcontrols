@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="checkBoxListItem3.Subtext" xml:space="preserve">
-    <value>A whole lot of text. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Curabitur sollicitudin tellus at sem. Quisque ac magna. Nam scelerisque feugiat diam. Duis sagittis massa eu ante. Aenean scelerisque convallis augue. Nunc pretium. In eget enim. Pellentesque feugiat leo eget sem. Morbi ornare vulputate lectus. Proin ut mauris. Quisque rutrum. Donec bibendum massa vel massa. Vestibulum ut ipsum. Pellentesque vulputate. Aliquam quam elit, viverra et, egestas ac, tristique eget, lectus. Sed placerat.</value>
+    <value>Some very long text to test the subtext property and to ensure that it wraps as it should and is properly positioned, selected and displayed. Some very long text to test the subtext property and to ensure that it wraps as it should and is properly positioned, selected and displayed. Some very long text to test the subtext property and to ensure that it wraps as it should and is properly positioned, selected and displayed.</value>
   </data>
   <metadata name="statusStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>

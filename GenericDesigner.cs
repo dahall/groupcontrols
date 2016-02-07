@@ -565,7 +565,7 @@ namespace System.Windows.Forms.Design
 		{
 			if (disposing)
 			{
-				if (BehaviorService != null)
+				if (BehaviorService != null && adorner != null)
 					BehaviorService.Adorners.Remove(adorner);
 				ISelectionService ss = SelectionService;
 				if (ss != null)

@@ -116,7 +116,7 @@ namespace GroupControls
 		/// <value>
 		/// Any list supporting and <see cref="System.Collections.IList"/> interface.
 		/// </value>
-		protected override System.Collections.IList BaseItems => items;
+		protected internal override System.Collections.IList BaseItems => items;
 
 		/// <summary>
 		/// Gets the size of the image used to display the button.
@@ -341,12 +341,17 @@ namespace GroupControls
 	public class RadioButtonListItem : ButtonListItem
 	{
 		/// <summary>
+		/// Initializes a new instance of the <see cref="RadioButtonListItem" /> class.
+		/// </summary>
+		public RadioButtonListItem() : base() { }
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="RadioButtonListItem"/> class.
 		/// </summary>
 		/// <param name="text">Text displayed next to radio button.</param>
 		/// <param name="subtext">Subtext displayed under text.</param>
 		/// <param name="tooltipText">Tooltip displayed for the item.</param>
-		public RadioButtonListItem(string text = "", string subtext = null, string tooltipText = null)
+		public RadioButtonListItem(string text, string subtext = null, string tooltipText = null)
 			: base(text, subtext, tooltipText)
 		{
 		}
@@ -390,6 +395,18 @@ namespace GroupControls
 			for (int i = 0; i < textValues.Length; i += 2)
 				Add(textValues[i], textValues[i + 1]);
 			parent.ResumeLayout();
+		}
+
+		/// <summary>
+		/// Called when an item is added.
+		/// </summary>
+		/// <param name="index">The item index.</param>
+		/// <param name="value">The item value.</param>
+		protected override void OnItemAdded(int index, RadioButtonListItem value)
+		{
+			base.OnItemAdded(index, value);
+			if (value != null && string.IsNullOrEmpty(value.Text) && parent != null && parent.IsDesignerHosted)
+				value.Text = "radioButtonItem" + Count.ToString();
 		}
 	}
 }

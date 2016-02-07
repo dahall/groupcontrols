@@ -178,5 +178,16 @@ namespace System.Collections.Generic
 			RemoveAt(idx);
 			return true;
 		}
+
+		/// <summary>
+		/// Collapses array into new, condensed array. Does not maintain indexes.
+		/// </summary>
+		/// <returns>An array of <typeparamref name="T"/></returns>
+		public T[] ToArray()
+		{
+			T[] output = new T[hashtable.Values.Count];
+			hashtable.Values.CopyTo(output, 0);
+			return output;
+		}
 	}
 }

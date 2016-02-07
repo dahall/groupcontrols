@@ -83,6 +83,7 @@
     <Compile Include="CheckBoxList.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="ColumnLayoutEngine.cs" />
     <Compile Include="ControlListBase.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -93,6 +94,7 @@
     <Compile Include="Native\CursorExtension.cs" />
     <Compile Include="EventedList.cs" />
     <Compile Include="ExtensionAttributeFor.NET_2.0.cs" Condition=" $(TargetFrameworkVersion.Replace('v', '')) &lt; 3.5 " />
+    <Compile Include="Native\EnumFlagIndexer.cs" />
     <Compile Include="Native\ICONINFO.cs" />
     <Compile Include="Native\MapWindowPoints.cs" />
     <Compile Include="Native\RECT.cs" />

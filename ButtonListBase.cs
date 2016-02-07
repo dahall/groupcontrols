@@ -249,10 +249,10 @@ namespace GroupControls
 		/// <param name="index">The index of the item.</param>
 		/// <param name="maxSize">Maximum size of the item. Usually only constrains the width.</param>
 		/// <returns>Minimum size for the item.</returns>
-		protected override Size MeasureItem(System.Drawing.Graphics g, int index, Size maxSize)
+		protected internal override Size MeasureItem(System.Drawing.Graphics g, int index, Size maxSize)
 		{
-			ContentAlignment chkAlign = CheckAlign; // base.RtlTranslateContent(this.CheckAlign);
-			ContentAlignment txtAlign = TextAlign; // base.RtlTranslateContent(this.TextAlign);
+			var chkAlign = new EnumFlagIndexer<ContentAlignment>(CheckAlign, false); // base.RtlTranslateContent(this.CheckAlign);
+			var txtAlign = new EnumFlagIndexer<ContentAlignment>(TextAlign, false); // base.RtlTranslateContent(this.TextAlign);
 
 			ButtonListItem item = BaseItems[index] as ButtonListItem;
 			if (item == null)
@@ -265,17 +265,19 @@ namespace GroupControls
 
 			// Calculate text size
 			Size textSize = new Size(maxSize.Width, Int32.MaxValue);
-			if ((chkAlign & anyCenterAlignment) == (ContentAlignment)0)
+			if (!chkAlign[anyCenterAlignment])
 				textSize.Width -= glyphWithPadding;
 
 			Size tsz = TextRenderer.MeasureText(g, item.Text, Font, textSize, TextFormatFlags);
 			item.TextRect = new Rectangle(0, 0, textSize.Width, tsz.Height);
+			// NEW: item.TextRect = new Rectangle(Point.Empty, tsz);
 			Size stsz = Size.Empty;
 			item.SubtextRect = Rectangle.Empty;
 			if (!string.IsNullOrEmpty(item.Subtext))
 			{
 				stsz = TextRenderer.MeasureText(g, item.Subtext, SubtextFont, textSize, TextFormatFlags);
 				item.SubtextRect = new Rectangle(0, tsz.Height + subtextSeparatorHeight, textSize.Width, stsz.Height);
+				// NEW: item.SubtextRect = new Rectangle(0, tsz.Height + subtextSeparatorHeight, stsz.Width, stsz.Height);
 			}
 
 			// Calculate minimum item height
@@ -283,34 +285,37 @@ namespace GroupControls
 			if (!item.SubtextRect.IsEmpty)
 				minHeight += (item.SubtextRect.Height + subtextSeparatorHeight);
 			int textHeight = minHeight;
-			if ((chkAlign == ContentAlignment.TopCenter) || (chkAlign == ContentAlignment.BottomCenter))
+			if (chkAlign[ContentAlignment.TopCenter] || chkAlign[ContentAlignment.BottomCenter])
 				minHeight += (imageSize.Height + tPadding);
 
+			// Calculate minimum item width
+			int minWidth = Math.Max(tsz.Width, stsz.Width);
+			if (imageSize.Width > 0 && !chkAlign[anyCenterAlignment])
+				minWidth += (imageSize.Width + lrPadding);
+
 			Size itemSize = new Size(maxSize.Width, minHeight);
+			// NEW: Size itemSize = new Size(minWidth, minHeight);
 
 			// Set relative position of glyph
 			item.GlyphPosition = Point.Empty;
-			if ((chkAlign & anyBottomAlignment) != (ContentAlignment)0)
-			{
+			if (chkAlign[anyBottomAlignment])
 				item.GlyphPosition.Y = itemSize.Height - imageSize.Height;
-			}
-			else if ((chkAlign & anyMiddleAlignment) != (ContentAlignment)0)
-			{
+			else if (chkAlign[anyMiddleAlignment])
 				item.GlyphPosition.Y = (itemSize.Height - imageSize.Height) / 2;
-			}
-			else
-			{
-				if (chkAlign == ContentAlignment.TopCenter)
-					item.OffsetText(0, imageSize.Height + tPadding);
-			}
-			if ((chkAlign & anyRightAlignment) != (ContentAlignment)0)
+			else if (chkAlign == ContentAlignment.TopCenter)
+				item.OffsetText(0, imageSize.Height + tPadding);
+			if (chkAlign[anyRightAlignment])
 			{
 				item.GlyphPosition.X = itemSize.Width - imageSize.Width;
 				item.OffsetText(lrPadding, 0);
 			}
-			else if ((chkAlign & anyCenterAlignment) != (ContentAlignment)0)
+			else if (chkAlign[anyCenterAlignment])
 			{
 				item.GlyphPosition.X = (itemSize.Width - imageSize.Width) / 2;
+				if (item.TextRect.Width < item.SubtextRect.Width)
+					item.TextRect.Offset((item.SubtextRect.Width - item.TextRect.Width) / 2, 0);
+				else
+					item.SubtextRect.Offset((item.TextRect.Width - item.SubtextRect.Width) / 2, 0);
 			}
 			else
 			{
@@ -318,17 +323,18 @@ namespace GroupControls
 			}
 
 			// Set text focus rectangle
-			item.FocusRect = new Rectangle(item.TextRect.Location, new Size(Math.Min(Math.Max(tsz.Width, stsz.Width), maxSize.Width), textHeight));
+			item.FocusRect = Rectangle.Union(item.TextRect, item.SubtextRect);
+			/*item.FocusRect = new Rectangle(item.TextRect.Location, new Size(Math.Min(Math.Max(tsz.Width, stsz.Width), maxSize.Width), textHeight));
 			if ((txtAlign & anyCenterAlignment) != (ContentAlignment)0)
 				item.FocusRect.X += (itemSize.Width - item.FocusRect.Width) / 2;
 			else if ((txtAlign & anyRightAlignment) != (ContentAlignment)0)
-				item.FocusRect.X = itemSize.Width - item.FocusRect.Width - imageSize.Width - lrPadding;
+				item.FocusRect.X = itemSize.Width - item.FocusRect.Width - imageSize.Width - lrPadding;*/
 
 			// Adjust text position for bottom or middle
-			/*if ((txtAlign & anyBottomAlignment) != (ContentAlignment)0)
+			if (txtAlign[anyBottomAlignment])
 				item.OffsetText(0, itemSize.Height - item.TextRect.Height);
-			else if ((txtAlign & anyMiddleAlignment) != (ContentAlignment)0)
-				item.OffsetText(0, (itemSize.Height - item.TextRect.Height) / 2);*/
+			else if (txtAlign[anyMiddleAlignment])
+				item.OffsetText(0, (itemSize.Height - item.TextRect.Height) / 2);
 
 			return itemSize;
 		}
@@ -422,7 +428,7 @@ namespace GroupControls
 				TextRenderer.DrawText(g, li.Subtext, SubtextFont, str, li.Enabled ? SubtextForeColor : SystemColors.GrayText, TextFormatFlags);
 			}
 
-			// Draw focus rect
+			// Draw focus rectangle
 			if (index == FocusedIndex && Focused)
 			{
 				Rectangle fr = li.FocusRect;
@@ -460,9 +466,9 @@ namespace GroupControls
 		{
 			ContentAlignment txtAlign = TextAlign; // base.RtlTranslateContent(this.TextAlign);
 			textFormatFlags = baseTextFormatFlags;
-			if ((txtAlign & anyRightAlignment) != (ContentAlignment)0)
+			if ((txtAlign & anyRightAlignment) != 0)
 				textFormatFlags |= TextFormatFlags.Right;
-			else if ((txtAlign & anyCenterAlignment) != (ContentAlignment)0)
+			else if ((txtAlign & anyCenterAlignment) != 0)
 				textFormatFlags |= TextFormatFlags.HorizontalCenter;
 		}
 	}
@@ -512,7 +518,7 @@ namespace GroupControls
 				if (value != hascheck)
 				{
 					hascheck = value;
-					OnNotifyPropertyChanged("Checked");
+					OnNotifyPropertyChanged(nameof(Checked));
 				}
 			}
 		}
@@ -531,7 +537,7 @@ namespace GroupControls
 				if (value != enabled)
 				{
 					enabled = value;
-					OnNotifyPropertyChanged("Enabled");
+					OnNotifyPropertyChanged(nameof(Enabled));
 				}
 			}
 		}
@@ -540,7 +546,7 @@ namespace GroupControls
 		/// Gets or sets the subtext.
 		/// </summary>
 		/// <value>The subtext.</value>
-		[DefaultValue((string)null), Category("Appearance")]
+		[DefaultValue(null), Category("Appearance")]
 		[BindableAttribute(true)]
 		public string Subtext
 		{
@@ -550,7 +556,7 @@ namespace GroupControls
 				if (value != subtext)
 				{
 					subtext = value;
-					OnNotifyPropertyChanged("Subtext");
+					OnNotifyPropertyChanged(nameof(Subtext));
 				}
 			}
 		}
@@ -570,7 +576,7 @@ namespace GroupControls
 				if (value != tag)
 				{
 					tag = value;
-					OnNotifyPropertyChanged("Tag");
+					OnNotifyPropertyChanged(nameof(Tag));
 				}
 			}
 		}
@@ -589,7 +595,7 @@ namespace GroupControls
 				if (value != text)
 				{
 					text = value;
-					OnNotifyPropertyChanged("Text");
+					OnNotifyPropertyChanged(nameof(Text));
 				}
 			}
 		}
@@ -598,7 +604,7 @@ namespace GroupControls
 		/// Gets or sets the tool tip text.
 		/// </summary>
 		/// <value>The tool tip text.</value>
-		[DefaultValue((string)null), Category("Appearance")]
+		[DefaultValue(null), Category("Appearance")]
 		[BindableAttribute(true)]
 		public string ToolTipText
 		{
@@ -608,7 +614,7 @@ namespace GroupControls
 				if (value != tooltip)
 				{
 					tooltip = value;
-					OnNotifyPropertyChanged("ToolTipText");
+					OnNotifyPropertyChanged(nameof(ToolTipText));
 				}
 			}
 		}
@@ -624,7 +630,7 @@ namespace GroupControls
 		public override bool Equals(object obj)
 		{
 			var bli = obj as ButtonListItem;
-            if (obj == null || bli == null)
+			if (obj == null || bli == null)
 				return false;
 			return Equals(bli);
 		}

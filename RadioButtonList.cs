@@ -12,24 +12,23 @@ namespace GroupControls
 	/// </summary>
 	[ToolboxItem(true), ToolboxBitmap(typeof(RadioButtonList)), DefaultProperty("Items"), DefaultEvent("SelectedIndexChanged")]
 	[Description("Displays a list of radio buttons with optional subtext.")]
-	public class RadioButtonList : ButtonListBase
+	public class RadioButtonList : ButtonListBase<RadioButtonState>
 	{
-		private RadioButtonListItemCollection items;
-		private RadioButtonState lastState = RadioButtonState.UncheckedNormal;
+		private readonly RadioButtonListItemCollection items;
 		private VisualStyleRenderer renderer;
 		private int selectedIndex = -1;
 
 		/// <summary>
 		/// Creates a new instance of a <see cref="RadioButtonList"/>.
 		/// </summary>
-		public RadioButtonList() : base()
+		public RadioButtonList()
 		{
 			items = new RadioButtonListItemCollection(this);
-			items.ItemAdded += itemsChanged;
-			items.ItemDeleted += itemsChanged;
-			items.ItemChanged += itemsChanged;
-			items.Reset += itemsChanged;
-			items.ItemPropertyChanged += itemPropertyChanged;
+			items.ItemAdded += ItemsChanged;
+			items.ItemDeleted += ItemsChanged;
+			items.ItemChanged += ItemsChanged;
+			items.Reset += ItemsChanged;
+			items.ItemPropertyChanged += ItemPropertyChanged;
 
 			try { renderer = new VisualStyleRenderer("BUTTON", 2, 0); } catch { }
 		}
@@ -65,13 +64,12 @@ namespace GroupControls
 						throw new ArgumentOutOfRangeException(nameof(SelectedIndex));
 
 					// Clear old selected item
-					int oldSelect = selectedIndex;
+					var oldSelect = selectedIndex;
 					if (oldSelect > -1 && oldSelect < items.Count)
 					{
 						Items[oldSelect].Checked = false;
 						InvalidateItem(oldSelect);
-						if (Focused)
-							Invalidate(Items[oldSelect].TextRect);
+						//if (Focused) Invalidate(Items[oldSelect].TextRect);
 					}
 
 					// Set new item
@@ -80,8 +78,7 @@ namespace GroupControls
 					{
 						Items[selectedIndex].Checked = true;
 						InvalidateItem(selectedIndex);
-						if (Focused)
-							Invalidate(Items[selectedIndex].TextRect);
+						//if (Focused) Invalidate(Items[selectedIndex].TextRect);
 					}
 					SetFocused(selectedIndex);
 
@@ -123,7 +120,7 @@ namespace GroupControls
 		/// </summary>
 		/// <param name="g">Current <see cref="Graphics"/> context.</param>
 		/// <returns>The size of the image.</returns>
-		protected override Size GetButtonSize(Graphics g) => RadioButtonRenderer.GetGlyphSize(g, System.Windows.Forms.VisualStyles.RadioButtonState.CheckedNormal);
+		protected override Size GetButtonSize(Graphics g) => RadioButtonRenderer.GetGlyphSize(g, RadioButtonState.CheckedNormal);
 
 		/// <summary>
 		/// Determines whether this list has the specified mnemonic in its members.
@@ -134,9 +131,9 @@ namespace GroupControls
 		/// </returns>
 		protected override bool ListHasMnemonic(char charCode)
 		{
-			foreach (RadioButtonListItem item in items)
+			foreach (var item in items)
 			{
-				if (Control.IsMnemonic(charCode, item.Text))
+				if (IsMnemonic(charCode, item.Text))
 				{
 					SetSelected(items.IndexOf(item));
 					return true;
@@ -172,7 +169,7 @@ namespace GroupControls
 			{
 				PressingItem = selectedIndex;
 				InvalidateItem(PressingItem);
-				base.Update();
+				Update();
 				e.Handled = true;
 			}
 			base.OnKeyDown(e);
@@ -215,34 +212,25 @@ namespace GroupControls
 		/// <param name="g">A <see cref="Graphics" /> reference.</param>
 		/// <param name="index">The index of the item.</param>
 		/// <param name="bounds">The bounds in which to paint the item.</param>
-		protected override void PaintButton(Graphics g, int index, Rectangle bounds)
+		/// <param name="newState"></param>
+		protected override void PaintButton(Graphics g, int index, Rectangle bounds, bool newState)
 		{
-			RadioButtonListItem li = BaseItems[index] as RadioButtonListItem;
+			var li = BaseItems[index] as RadioButtonListItem;
+			if (li == null) throw new ArgumentOutOfRangeException(nameof(index));
 			// Get current state
-			System.Windows.Forms.VisualStyles.RadioButtonState curState = li.Checked ? System.Windows.Forms.VisualStyles.RadioButtonState.CheckedNormal : System.Windows.Forms.VisualStyles.RadioButtonState.UncheckedNormal;
+			var curState = li.Checked ? RadioButtonState.CheckedNormal : RadioButtonState.UncheckedNormal;
 			if (!Enabled || !li.Enabled)
 				curState += 3;
 			else if (index == PressingItem)
 				curState += 2;
 			else if (index == HoverItem)
 				curState++;
+			li.State = curState;
 			// Draw glyph
-			Microsoft.Win32.NativeMethods.BufferedPaint.Paint<RadioButtonState, RadioButtonListItem>(g, this, bounds, PaintAnimatedButton, lastState, curState, GetTransition(curState, lastState), li);
-			lastState = curState;
-		}
-
-		private void PaintAnimatedButton(Graphics g, Rectangle bounds, RadioButtonState curState, RadioButtonListItem li)
-		{
-			Point gp = li.GlyphPosition;
+			var gp = li.GlyphPosition;
 			gp.Offset(bounds.Location);
-			RadioButtonRenderer.DrawRadioButton(g, gp, curState);
-		}
-
-		private uint GetTransition(RadioButtonState curState, RadioButtonState priorState)
-		{
-			if (renderer != null && Environment.OSVersion.Version.Major >= 6)
-				return renderer.GetTransitionDuration((int)curState, (int)priorState);
-			return 0;
+			RadioButtonRenderer.DrawRadioButton(g, gp, newState ? li.State : li.PrevState);
+			System.Diagnostics.Debug.WriteLine($"PaintRadioButton[{index}]: tx='{li.Text}'; r={bounds}; st[{newState}]={(newState ? li.State : li.PrevState)}");
 		}
 
 		/// <summary>
@@ -250,7 +238,7 @@ namespace GroupControls
 		/// </summary>
 		/// <param name="ke">The <see cref="KeyEventArgs"/> associated with the key press.</param>
 		/// <returns><c>true</c> if the key was processed by the control; otherwise, <c>false</c>.</returns>
-		protected override bool ProcessKey(System.Windows.Forms.KeyEventArgs ke)
+		protected override bool ProcessKey(KeyEventArgs ke)
 		{
 			switch (ke.KeyCode)
 			{
@@ -277,11 +265,6 @@ namespace GroupControls
 						SetSelected(FocusedIndex);
 					}
 					break;
-				case Keys.Tab:
-				case Keys.Enter:
-				case Keys.Escape:
-				default:
-					break;
 			}
 			return false;
 		}
@@ -296,12 +279,12 @@ namespace GroupControls
 			SelectedIndex = items.CheckedItemIndex;
 		}
 
-		private void itemPropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void ItemPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			OnListChanged();
 		}
 
-		private void itemsChanged(object sender, EventedList<RadioButtonListItem>.ListChangedEventArgs<RadioButtonListItem> e)
+		private void ItemsChanged(object sender, EventedList<RadioButtonListItem>.ListChangedEventArgs<RadioButtonListItem> e)
 		{
 			if (e.ListChangedType != ListChangedType.ItemChanged || !e.Item.Equals(e.OldItem))
 				OnListChanged();
@@ -311,7 +294,7 @@ namespace GroupControls
 		{
 			if (items.Count > 0)
 			{
-				int idx = -1;
+				var idx = -1;
 				if (i != null && (idx = BaseItems.IndexOf(i)) == -1)
 					throw new ArgumentOutOfRangeException(nameof(i));
 				idx = GetNextEnabledItemIndex(idx, forward);
@@ -338,12 +321,12 @@ namespace GroupControls
 	/// An item associated with a <see cref="RadioButtonList"/>.
 	/// </summary>
 	[DefaultProperty("Text")]
-	public class RadioButtonListItem : ButtonListItem
+	public class RadioButtonListItem : ButtonListItem<RadioButtonState>
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="RadioButtonListItem" /> class.
 		/// </summary>
-		public RadioButtonListItem() : base() { }
+		public RadioButtonListItem() { State = PrevState = RadioButtonState.UncheckedNormal; }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="RadioButtonListItem"/> class.
@@ -354,6 +337,36 @@ namespace GroupControls
 		public RadioButtonListItem(string text, string subtext = null, string tooltipText = null)
 			: base(text, subtext, tooltipText)
 		{
+			State = PrevState = RadioButtonState.UncheckedNormal;
+		}
+
+		/// <summary>Gets or sets a value indicating whether this <see cref="RadioButtonListItem"/> is checked.</summary>
+		/// <value><c>true</c> if checked; otherwise, <c>false</c>.</value>
+		public override bool Checked
+		{
+			get { return ((int)state - 1) / 4 == 1; }
+			set
+			{
+				if (value == Checked) return;
+				State = (RadioButtonState)(((int)state - 1) % 4 + 1 + (value ? 4 : 0));
+				OnNotifyPropertyChanged(nameof(Checked));
+			}
+		}
+
+		/// <summary>Gets or sets a value indicating whether this <see cref="RadioButtonListItem"/> is enabled.</summary>
+		/// <value><c>true</c> if checked; otherwise, <c>false</c>.</value>
+		public override bool Enabled
+		{
+			get { return state != RadioButtonState.CheckedDisabled && state != RadioButtonState.UncheckedDisabled; }
+			set
+			{
+				if (Enabled == value) return;
+				if (value)
+					State = Checked ? RadioButtonState.CheckedNormal : RadioButtonState.UncheckedNormal;
+				else
+					State = Checked ? RadioButtonState.CheckedDisabled : RadioButtonState.UncheckedDisabled;
+				OnNotifyPropertyChanged(nameof(Enabled));
+			}
 		}
 	}
 
@@ -363,14 +376,14 @@ namespace GroupControls
 	[Editor(typeof(System.ComponentModel.Design.CollectionEditor), typeof(System.Drawing.Design.UITypeEditor))]
 	public class RadioButtonListItemCollection : EventedList<RadioButtonListItem>
 	{
-		private RadioButtonList parent;
+		private readonly RadioButtonList parent;
 
 		internal RadioButtonListItemCollection(RadioButtonList list)
 		{
 			parent = list;
 		}
 
-		internal int CheckedItemIndex => base.Count > 0 ? base.FindIndex(delegate (RadioButtonListItem item) { return item.Checked; }) : -1;
+		internal int CheckedItemIndex => Count > 0 ? FindIndex(item => item.Checked) : -1;
 
 		/// <summary>
 		/// Adds a new item to the collection.
@@ -379,7 +392,7 @@ namespace GroupControls
 		/// <param name="subtext">Item subtext.</param>
 		public void Add(string text, string subtext)
 		{
-			base.Add(new RadioButtonListItem(text, subtext));
+			Add(new RadioButtonListItem(text, subtext));
 		}
 
 		/// <summary>
@@ -390,9 +403,9 @@ namespace GroupControls
 		public void Add(params string[] textValues)
 		{
 			if (textValues.Length % 2 != 0)
-				throw new ArgumentException("List of values must contain matching text/subtext entries for an even count of strings.", nameof(textValues));
+				throw new ArgumentException(@"List of values must contain matching text/subtext entries for an even count of strings.", nameof(textValues));
 			parent.SuspendLayout();
-			for (int i = 0; i < textValues.Length; i += 2)
+			for (var i = 0; i < textValues.Length; i += 2)
 				Add(textValues[i], textValues[i + 1]);
 			parent.ResumeLayout();
 		}

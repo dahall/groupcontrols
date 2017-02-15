@@ -22,17 +22,16 @@ namespace GroupControls.Design
 		public override object Serialize(IDesignerSerializationManager manager, object value)
 		{
 			// Invoke the default serializer for base class
-			CodeDomSerializer baseSerializer = (CodeDomSerializer)manager.GetSerializer(typeof(ControlListBase).BaseType, typeof(CodeDomSerializer));
-			CodeStatementCollection statements = baseSerializer.Serialize(manager, value) as CodeStatementCollection;
+			var baseSerializer = (CodeDomSerializer)manager.GetSerializer(typeof(ControlListBase).BaseType, typeof(CodeDomSerializer));
+			var statements = baseSerializer.Serialize(manager, value) as CodeStatementCollection;
 
 			// Add layout methods
 			if (statements != null)
 			{
 				SerializeMethodInvocation(manager, statements, value, "SuspendLayout", null, new Type[0], true);
 
-				CodeExpressionCollection parameters = new CodeExpressionCollection();
-				parameters.Add(new CodePrimitiveExpression(true));
-				Type[] paramTypes = new Type[] { typeof(bool) };
+				var parameters = new CodeExpressionCollection { new CodePrimitiveExpression(true) };
+				var paramTypes = new[] { typeof(bool) };
 				SerializeMethodInvocation(manager, statements, value, "ResumeLayout", parameters, paramTypes, false);
 			}
 
@@ -46,14 +45,11 @@ namespace GroupControls.Design
 			paramTypes = ToTargetTypes(control, paramTypes);
 			if (TypeDescriptor.GetReflectionType(control).GetMethod(methodName, BindingFlags.Public | BindingFlags.Instance, null, paramTypes, null) != null)
 			{
-				CodeMethodReferenceExpression expression2 = new CodeMethodReferenceExpression(base.SerializeToExpression(manager, control), methodName);
-				CodeMethodInvokeExpression expression = new CodeMethodInvokeExpression();
-				expression.Method = expression2;
+				var expression2 = new CodeMethodReferenceExpression(SerializeToExpression(manager, control), methodName);
+				var expression = new CodeMethodInvokeExpression { Method = expression2 };
 				if (parameters != null)
-				{
 					expression.Parameters.AddRange(parameters);
-				}
-				CodeExpressionStatement statement = new CodeExpressionStatement(expression);
+				var statement = new CodeExpressionStatement(expression);
 				if (preorder)
 					statement.UserData["statement-ordering"] = "begin";
 				else
@@ -66,8 +62,8 @@ namespace GroupControls.Design
 
 		private static Type[] ToTargetTypes(object context, Type[] runtimeTypes)
 		{
-			Type[] typeArray = new Type[runtimeTypes.Length];
-			for (int i = 0; i < runtimeTypes.Length; i++)
+			var typeArray = new Type[runtimeTypes.Length];
+			for (var i = 0; i < runtimeTypes.Length; i++)
 				typeArray[i] = ToTargetType(context, runtimeTypes[i]);
 			return typeArray;
 		}

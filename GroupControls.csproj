@@ -95,11 +95,14 @@
     <Compile Include="EventedList.cs" />
     <Compile Include="ExtensionAttributeFor.NET_2.0.cs" Condition=" $(TargetFrameworkVersion.Replace('v', '')) &lt; 3.5 " />
     <Compile Include="Native\EnumFlagIndexer.cs" />
+    <Compile Include="Native\GDI32.cs" />
     <Compile Include="Native\ICONINFO.cs" />
+    <Compile Include="Native\InteropUtil.cs" />
     <Compile Include="Native\MapWindowPoints.cs" />
     <Compile Include="Native\RECT.cs" />
-    <Compile Include="Native\SafeGDIHandle.cs" />
+    <Compile Include="Native\SafeDCHandles.cs" />
     <Compile Include="Native\UXTHEME.cs" />
+    <Compile Include="Native\UXTHEME_BufferedPaint.cs" />
     <Compile Include="Native\VisualStylesRendererExtension.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

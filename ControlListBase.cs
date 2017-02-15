@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using System.Windows.Forms.Layout;
+using Vanara.Interop;
 
 namespace GroupControls
 {
@@ -12,42 +11,45 @@ namespace GroupControls
 	/// Abstract class that handles the display of numerous control items.
 	/// </summary>
 	[System.ComponentModel.Design.Serialization.DesignerSerializer(typeof(Design.DesignerLayoutCodeDomSerializer), typeof(System.ComponentModel.Design.Serialization.CodeDomSerializer))]
-	[System.ComponentModel.Designer(typeof(ControlListBaseDesigner))]
+	[Designer(typeof(ControlListBaseDesigner))]
 	public abstract class ControlListBase : ScrollableControl
 	{
-		internal static readonly ContentAlignment anyRightAlignment = ContentAlignment.TopRight | ContentAlignment.MiddleRight | ContentAlignment.BottomRight;
-		internal static readonly ContentAlignment anyCenterAlignment = ContentAlignment.TopCenter | ContentAlignment.MiddleCenter | ContentAlignment.BottomCenter;
-		internal static readonly ContentAlignment anyBottomAlignment = ContentAlignment.BottomLeft | ContentAlignment.BottomCenter | ContentAlignment.BottomRight;
-		internal static readonly ContentAlignment anyMiddleAlignment = ContentAlignment.MiddleLeft | ContentAlignment.MiddleCenter | ContentAlignment.MiddleRight;
-		internal static ToolTip toolTip = new ToolTip();
+		internal const ContentAlignment anyRightAlignment = (ContentAlignment)((int)ContentAlignment.TopRight | (int)ContentAlignment.MiddleRight | (int)ContentAlignment.BottomRight);
+		internal const ContentAlignment anyCenterAlignment = (ContentAlignment)((int)ContentAlignment.TopCenter | (int)ContentAlignment.MiddleCenter | (int)ContentAlignment.BottomCenter);
+		internal const ContentAlignment anyBottomAlignment = (ContentAlignment)((int)ContentAlignment.BottomLeft | (int)ContentAlignment.BottomCenter | (int)ContentAlignment.BottomRight);
+		internal const ContentAlignment anyMiddleAlignment = (ContentAlignment)((int)ContentAlignment.MiddleLeft | (int)ContentAlignment.MiddleCenter | (int)ContentAlignment.MiddleRight);
+		internal static readonly ToolTip toolTip = new ToolTip();
 
 		private BorderStyle borderStyle;
 		private int columns = 1;
-		private Timer hoverTimer;
+		private readonly Timer hoverTimer;
 		private ColumnLayoutEngine layoutEngine;
-		private bool mouseTracking = false;
+		private bool mouseTracking;
 		private RepeatDirection repeatDirection = RepeatDirection.Vertical;
-		private bool spaceEvenly = false;
+		private bool spaceEvenly;
 		private Size spacing = new Size(0, 6);
 		private int timedHoverItem = -1;
-		private bool variableColWidth = false;
+		private bool variableColWidth;
+		private int hoverItem = -1;
+		private int hoverItemOld = -1;
+		private int pressingItem = -1;
+		private int pressingItemOld = -1;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ControlListBase"/> class.
 		/// </summary>
 		protected ControlListBase()
 		{
-			DoubleBuffered = true;
 			ResizeRedraw = true;
-			HoverItem = PressingItem = -1;
-			ShowItemToolTip = true;
-			SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.StandardClick | ControlStyles.OptimizedDoubleBuffer, true);
+			SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.StandardClick, true);
+			SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+			base.DoubleBuffered = true;
 			SuspendLayout();
 			base.AutoScroll = true;
-			base.Size = ColumnLayoutEngine.DefaultSize;
+			Size = ColumnLayoutEngine.DefaultSize;
 			base.AutoSize = true;
 			ResumeLayout(false);
-			hoverTimer = new Timer() { Interval = SystemInformation.MouseHoverTime };
+			hoverTimer = new Timer { Interval = SystemInformation.MouseHoverTime };
 			hoverTimer.Tick += hoverTimer_Tick;
 			PaddingChanged += OnLayoutPropertyChanged;
 			SizeChanged += OnLayoutPropertyChanged;
@@ -87,16 +89,13 @@ namespace GroupControls
 		[DefaultValue(0), Description("Border style of the list control."), Category("Appearance")]
 		public BorderStyle BorderStyle
 		{
-			get
-			{
-				return borderStyle;
-			}
+			get { return borderStyle; }
 			set
 			{
 				if (borderStyle != value)
 				{
 					borderStyle = value;
-					base.UpdateStyles();
+					UpdateStyles();
 				}
 			}
 		}
@@ -147,7 +146,7 @@ namespace GroupControls
 		/// </summary>
 		/// <value><c>true</c> if tooltips are shown; otherwise, <c>false</c>.</value>
 		[DefaultValue(true), Category("Appearance"), Description("Indicates whether to show the tooltip for each item.")]
-		public bool ShowItemToolTip { get; set; }
+		public bool ShowItemToolTip { get; set; } = true;
 
 		/// <summary>
 		/// Gets or sets a value that determines if the items are spaced evenly based on the height of the largest item or if they are spaced according to the height of each item.
@@ -201,7 +200,7 @@ namespace GroupControls
 		/// Gets the base list of items.
 		/// </summary>
 		/// <value>Any list supporting and <see cref="System.Collections.IList"/> interface.</value>
-		internal protected abstract System.Collections.IList BaseItems { get; }
+		protected internal abstract System.Collections.IList BaseItems { get; }
 
 		internal ColumnLayoutEngine MyLayoutEngine => layoutEngine ?? (layoutEngine = new ColumnLayoutEngine());
 
@@ -213,6 +212,7 @@ namespace GroupControls
 		{
 			get
 			{
+				// ReSharper disable InconsistentNaming
 				const int WS_EX_CONTROLPARENT = 0x10000;
 				const int WS_EX_CLIENTEDGE = 0x200;
 				const int WS_BORDER = 0x800000;
@@ -221,8 +221,9 @@ namespace GroupControls
 				const int WS_EX_RIGHT = 0x1000;
 				const int WS_EX_RTLREADING = 0x2000;
 				const int WS_EX_LEFTSCROLLBAR = 0x4000;
+				// ReSharper restore InconsistentNaming
 
-				CreateParams createParams = base.CreateParams;
+				var createParams = base.CreateParams;
 				createParams.ExStyle &= ~WS_EX_CONTROLPARENT;
 
 				// Set border
@@ -239,8 +240,8 @@ namespace GroupControls
 				}
 
 				// Set right to left layout
-				Form parent = FindForm();
-				bool parentRightToLeftLayout = parent != null ? parent.RightToLeftLayout : false;
+				var parent = FindForm();
+				var parentRightToLeftLayout = parent?.RightToLeftLayout ?? false;
 				if ((RightToLeft == RightToLeft.Yes) && parentRightToLeftLayout)
 				{
 					createParams.ExStyle |= WS_EX_LAYOUTRTL | WS_EX_NOINHERITLAYOUT;
@@ -255,13 +256,35 @@ namespace GroupControls
 		/// Gets the hover item's index.
 		/// </summary>
 		/// <value>The hover item index.</value>
-		protected int HoverItem { get; private set; }
+		protected virtual int HoverItem
+		{
+			get { return hoverItem; }
+			set
+			{
+				if (hoverItem == value) return;
+				hoverItemOld = hoverItem;
+				hoverItem = value;
+			}
+		}
+
+		protected int HoverItemOld => hoverItemOld;
 
 		/// <summary>
 		/// Gets or sets the index of the item being pressing.
 		/// </summary>
 		/// <value>The pressed item index.</value>
-		protected int PressingItem { get; set; }
+		protected virtual int PressingItem
+		{
+			get { return pressingItem; }
+			set
+			{
+				if (pressingItem == value) return;
+				pressingItemOld = pressingItem;
+				pressingItem = value;
+			}
+		}
+
+		protected int PressingItemOld => pressingItemOld;
 
 		/// <summary>
 		/// Method that will draw a control's background in a specified area.
@@ -298,12 +321,6 @@ namespace GroupControls
 		}
 
 		/// <summary>
-		/// Ensures that the specified item is visible within the control, scrolling the contents of the control if necessary.
-		/// </summary>
-		/// <param name="index">The zero-based index of the item to scroll into view.</param>
-		public abstract void EnsureVisible(int index);
-
-		/// <summary>
 		/// Retrieves the bounding rectangle for a specific item within the list control.
 		/// </summary>
 		/// <param name="index">The zero-based index of the item whose bounding rectangle you want to return.</param>
@@ -335,7 +352,7 @@ namespace GroupControls
 		/// <param name="index">The item index.</param>
 		protected virtual void InvalidateItem(int index)
 		{
-			base.Invalidate(OffsetForScroll(MyLayoutEngine.ItemBounds[index]));
+			Invalidate(OffsetForScroll(MyLayoutEngine.ItemBounds[index]));
 			//base.Invalidate();
 		}
 
@@ -368,7 +385,7 @@ namespace GroupControls
 		/// <returns>Offset point</returns>
 		protected Point OffsetForScroll(Point pt)
 		{
-			System.Diagnostics.Debug.Write($"OffsetForScroll: pt={pt}; scPos={AutoScrollPosition}; ");
+			//System.Diagnostics.Debug.Write($"OffsetForScroll: pt={pt}; scPos={AutoScrollPosition}; ");
 			/*//Creates the drawing matrix with the right zoom;
 			Matrix mx = new Matrix(1, 0, 0, 1, 0, 0);
 			//pans it according to the scroll bars
@@ -394,7 +411,7 @@ namespace GroupControls
 		protected Rectangle OffsetForScroll(Rectangle rect)
 		{
 			System.Diagnostics.Debug.Write($"OffsetForScroll: rect={rect};");
-			Rectangle outRect = rect;
+			var outRect = rect;
 			outRect.Offset(AutoScrollPosition);
 			System.Diagnostics.Debug.WriteLine($"outrect={outRect};");
 			return outRect;
@@ -408,7 +425,7 @@ namespace GroupControls
 		{
 			if (PressingItem != -1)
 			{
-				int ci = PressingItem;
+				var ci = PressingItem;
 				PressingItem = -1;
 				InvalidateItem(ci);
 			}
@@ -423,13 +440,13 @@ namespace GroupControls
 		protected override void OnMouseDown(MouseEventArgs e)
 		{
 			base.OnMouseDown(e);
-			int i = GetItemAtLocation(OffsetForScroll(e.Location));
+			var i = GetItemAtLocation(OffsetForScroll(e.Location));
 			if (i == -1 || !IsItemEnabled(i))
 				return;
 			PressingItem = i;
 			Focus();
 			InvalidateItem(PressingItem);
-			base.Update();
+			Update();
 		}
 
 		/// <summary>
@@ -472,7 +489,7 @@ namespace GroupControls
 		{
 			if (PressingItem != -1)
 			{
-				int ci = PressingItem;
+				var ci = PressingItem;
 				PressingItem = -1;
 				InvalidateItem(ci);
 			}
@@ -496,19 +513,22 @@ namespace GroupControls
 		protected override void OnPaint(PaintEventArgs pe)
 		{
 			System.Diagnostics.Debug.WriteLine($"OnPaint: {pe.ClipRectangle}");
-			Point pt = AutoScrollPosition;
+			var pt = AutoScrollPosition;
 			pe.Graphics.TranslateTransform(pt.X, pt.Y);
+			//NativeMethods.BufferedPaint.PaintAnimation(pe.Graphics, this, ClientRectangle, PaintControl, false, true, 100, pe.ClipRectangle);
+			PaintControl(pe.Graphics, ClientRectangle, true, pe.ClipRectangle);
+		}
 
-			pe.Graphics.Clear(BackColor);
+		private void PaintControl(Graphics graphics, Rectangle bounds, bool newState, Rectangle clip)
+		{
+			graphics.Clear(BackColor);
 			if (Application.RenderWithVisualStyles)
-				BackgroundRenderer(pe.Graphics, pe.ClipRectangle, this);
+				BackgroundRenderer(graphics, clip, this);
 
-			for (int i = 0; i < BaseItems.Count; i++)
+			for (var i = 0; i < BaseItems.Count; i++)
 			{
-				if (pe.ClipRectangle.IntersectsWith(OffsetForScroll(MyLayoutEngine.ItemBounds[i])))
-				{
-					PaintItem(pe.Graphics, i, MyLayoutEngine.ItemBounds[i]);
-				}
+				if (clip.IntersectsWith(OffsetForScroll(MyLayoutEngine.ItemBounds[i])))
+					PaintItem(graphics, i, MyLayoutEngine.ItemBounds[i], newState);
 			}
 		}
 
@@ -535,10 +555,11 @@ namespace GroupControls
 		/// <summary>
 		/// Paints the specified item.
 		/// </summary>
-		/// <param name="g">A <see cref="Graphics"/> reference.</param>
+		/// <param name="g">A <see cref="Graphics" /> reference.</param>
 		/// <param name="index">The index of the item.</param>
 		/// <param name="bounds">The bounds in which to paint the item.</param>
-		protected abstract void PaintItem(Graphics g, int index, Rectangle bounds);
+		/// <param name="newState">if set to <c>true</c> [new state].</param>
+		protected abstract void PaintItem(Graphics g, int index, Rectangle bounds, bool newState);
 
 		/// <summary>
 		/// Processes a dialog key.
@@ -560,11 +581,9 @@ namespace GroupControls
 				case Keys.Right:
 				case Keys.Down:
 				case Keys.Return:
-					KeyEventArgs args1 = new KeyEventArgs(keyData);
+					var args1 = new KeyEventArgs(keyData);
 					if (ProcessKey(args1))
 						return true;
-					break;
-				default:
 					break;
 			}
 			return base.ProcessDialogKey(keyData);
@@ -586,7 +605,7 @@ namespace GroupControls
 		{
 			if (m.Msg == 0x100)
 			{
-				KeyEventArgs args1 = new KeyEventArgs(((Keys)((int)((long)m.WParam))) | Control.ModifierKeys);
+				var args1 = new KeyEventArgs(((Keys)((int)((long)m.WParam))) | ModifierKeys);
 				switch (args1.KeyCode)
 				{
 					case Keys.Space:
@@ -600,13 +619,11 @@ namespace GroupControls
 					case Keys.Down:
 					case Keys.Return:
 						return ProcessKey(args1);
-					default:
-						break;
 				}
 			}
 			else if (m.Msg == 0x101)
 			{
-				KeyEventArgs args2 = new KeyEventArgs(((Keys)((int)((long)m.WParam))) | Control.ModifierKeys);
+				var args2 = new KeyEventArgs(((Keys)((int)((long)m.WParam))) | ModifierKeys);
 				if (args2.KeyCode == Keys.Tab)
 				{
 					return ProcessKey(args2);
@@ -623,7 +640,7 @@ namespace GroupControls
 		/// <returns><c>true</c> if the mnemonic was processed by the control; otherwise, <c>false</c>.</returns>
 		protected override bool ProcessMnemonic(char charCode)
 		{
-			if (Enabled && Visible && (Focused || base.ContainsFocus))
+			if (Enabled && Visible && (Focused || ContainsFocus))
 				return ListHasMnemonic(charCode);
 			return false;
 		}
@@ -644,7 +661,7 @@ namespace GroupControls
 		/// <returns></returns>
 		protected int GetItemAtLocation(Point pt)
 		{
-			for (int i = 0; i < MyLayoutEngine.ItemBounds.Count; i++)
+			for (var i = 0; i < MyLayoutEngine.ItemBounds.Count; i++)
 			{
 				if (MyLayoutEngine.ItemBounds[i].Contains(pt))
 					return i;
@@ -673,12 +690,12 @@ namespace GroupControls
 				System.Diagnostics.Debug.WriteLine($"SetHover: old={HoverItem}, new={itemIndex}");
 				hoverTimer.Stop();
 				UpdateToolTip(null);
-				int oldHover = HoverItem;
+				var oldHover = HoverItem;
 				HoverItem = itemIndex;
 				// If no new item, invalidate everything
 				if (HoverItem == -1)
 				{
-					base.Invalidate();
+					Invalidate();
 				}
 				// Set hover item
 				else
@@ -695,7 +712,7 @@ namespace GroupControls
 						hoverTimer.Start();
 					}
 				}
-				base.Update();
+				Update();
 			}
 		}
 
@@ -709,9 +726,9 @@ namespace GroupControls
 				{
 					toolTip.Active = true;
 
-					Point position = Microsoft.Win32.NativeMethods.MapPointToClient(this, Cursor.Position);
+					var position = this.MapPointToClient(Cursor.Position);
 					position.Offset(0, Cursor.Current.Bounds().Bottom);
-					if (RightToLeft == System.Windows.Forms.RightToLeft.Yes)
+					if (RightToLeft == RightToLeft.Yes)
 						position.X = Width - position.X;
 					toolTip.Show(tiptext, this, position, toolTip.AutoPopDelay);
 				}

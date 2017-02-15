@@ -1,36 +1,35 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace System.Collections.Generic
 {
 	/// <summary>
-	/// A generic list that provides event for changes to the list.
+	///     A generic list that provides event for changes to the list.
 	/// </summary>
 	/// <typeparam name="T">Type for the list.</typeparam>
 	[Serializable]
 	public class EventedList<T> : IList<T>, IList where T : INotifyPropertyChanged
 	{
-		// Fields
-		private const int _defaultCapacity = 4;
+		private const int defaultCapacity = 4;
 
-		private static T[] _emptyArray = new T[0];
+		private static readonly T[] emptyArray = new T[0];
 
-		private T[] _items;
-		private int _size;
-		[NonSerialized]
-		private object _syncRoot;
-		private int _version;
+		private T[] internalItems;
+		[NonSerialized] private object syncRoot;
+		private int version;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="EventedList&lt;T&gt;"/> class.
+		///     Initializes a new instance of the <see cref="EventedList{T}" /> class.
 		/// </summary>
 		public EventedList()
 		{
-			_items = EventedList<T>._emptyArray;
+			internalItems = emptyArray;
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="EventedList&lt;T&gt;"/> class.
+		///     Initializes a new instance of the <see cref="EventedList{T}" /> class.
 		/// </summary>
 		/// <param name="collection">The collection.</param>
 		public EventedList(IEnumerable<T> collection)
@@ -39,19 +38,19 @@ namespace System.Collections.Generic
 			{
 				throw new ArgumentNullException(nameof(collection));
 			}
-			ICollection<T> is2 = collection as ICollection<T>;
+			var is2 = collection as ICollection<T>;
 			if (is2 != null)
 			{
-				int count = is2.Count;
-				_items = new T[count];
-				is2.CopyTo(_items, 0);
-				_size = count;
+				var count = is2.Count;
+				internalItems = new T[count];
+				is2.CopyTo(internalItems, 0);
+				Count = count;
 			}
 			else
 			{
-				_size = 0;
-				_items = new T[4];
-				using (IEnumerator<T> enumerator = collection.GetEnumerator())
+				Count = 0;
+				internalItems = new T[4];
+				using (var enumerator = collection.GetEnumerator())
 				{
 					while (enumerator.MoveNext())
 					{
@@ -62,7 +61,7 @@ namespace System.Collections.Generic
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="EventedList&lt;T&gt;"/> class.
+		///     Initializes a new instance of the <see cref="EventedList{T}" /> class.
 		/// </summary>
 		/// <param name="capacity">The capacity.</param>
 		public EventedList(int capacity)
@@ -71,139 +70,191 @@ namespace System.Collections.Generic
 			{
 				throw new ArgumentOutOfRangeException(nameof(capacity));
 			}
-			_items = new T[capacity];
+			internalItems = new T[capacity];
 		}
 
 		/// <summary>
-		/// Occurs when an item has been added.
-		/// </summary>
-		public event EventHandler<ListChangedEventArgs<T>> ItemAdded;
-
-		/// <summary>
-		/// Occurs when an item has changed.
-		/// </summary>
-		public event EventHandler<ListChangedEventArgs<T>> ItemChanged;
-
-		/// <summary>
-		/// Occurs when an item has been deleted.
-		/// </summary>
-		public event EventHandler<ListChangedEventArgs<T>> ItemDeleted;
-
-		/// <summary>
-		/// Occurs when an item's property value has been changed.
-		/// </summary>
-		public event PropertyChangedEventHandler ItemPropertyChanged;
-
-		/// <summary>
-		/// Occurs when the list has been reset.
-		/// </summary>
-		public event EventHandler<ListChangedEventArgs<T>> Reset;
-
-		/// <summary>
-		/// Gets or sets the capacity.
+		///     Gets or sets the capacity.
 		/// </summary>
 		/// <value>The capacity.</value>
 		public int Capacity
 		{
-			get
-			{
-				return _items.Length;
-			}
+			get { return internalItems.Length; }
 			set
 			{
-				if (value != _items.Length)
+				if (value != internalItems.Length)
 				{
-					if (value < _size)
+					if (value < Count)
 					{
-						throw new ArgumentOutOfRangeException("value");
+						throw new ArgumentOutOfRangeException(nameof(value));
 					}
 					if (value > 0)
 					{
-						T[] destinationArray = new T[value];
-						if (_size > 0)
+						var destinationArray = new T[value];
+						if (Count > 0)
 						{
-							Array.Copy(_items, 0, destinationArray, 0, _size);
+							Array.Copy(internalItems, 0, destinationArray, 0, Count);
 						}
-						_items = destinationArray;
+						internalItems = destinationArray;
 					}
 					else
 					{
-						_items = EventedList<T>._emptyArray;
+						internalItems = emptyArray;
 					}
 				}
 			}
 		}
 
 		/// <summary>
-		/// Gets the number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1"/>.
-		/// </summary>
-		/// <value>The number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1"/>.</value>
-		public int Count => _size;
-
-		/// <summary>
-		/// Gets a value indicating whether access to the <see cref="T:System.Collections.ICollection"/> is synchronized (thread safe).
+		///     Gets a value indicating whether access to the <see cref="T:System.Collections.ICollection" /> is synchronized
+		///     (thread safe).
 		/// </summary>
 		/// <value></value>
-		/// <returns>true if access to the <see cref="T:System.Collections.ICollection"/> is synchronized (thread safe); otherwise, false.</returns>
+		/// <returns>
+		///     true if access to the <see cref="T:System.Collections.ICollection" /> is synchronized (thread safe);
+		///     otherwise, false.
+		/// </returns>
 		bool ICollection.IsSynchronized => false;
 
 		/// <summary>
-		/// Gets an object that can be used to synchronize access to the <see cref="T:System.Collections.ICollection"/>.
+		///     Gets an object that can be used to synchronize access to the <see cref="T:System.Collections.ICollection" />.
 		/// </summary>
 		/// <value></value>
-		/// <returns>An object that can be used to synchronize access to the <see cref="T:System.Collections.ICollection"/>.</returns>
+		/// <returns>An object that can be used to synchronize access to the <see cref="T:System.Collections.ICollection" />.</returns>
 		object ICollection.SyncRoot
 		{
 			get
 			{
-				if (_syncRoot == null)
+				if (syncRoot == null)
 				{
-					System.Threading.Interlocked.CompareExchange(ref _syncRoot, new object(), null);
+					Interlocked.CompareExchange(ref syncRoot, new object(), null);
 				}
-				return _syncRoot;
+				return syncRoot;
 			}
 		}
 
 		/// <summary>
-		/// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.
+		///     Gets a value indicating whether the <see cref="T:System.Collections.IList" /> has a fixed size.
 		/// </summary>
 		/// <value></value>
-		/// <returns>true if the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only; otherwise, false.</returns>
-		bool ICollection<T>.IsReadOnly => false;
-
-		/// <summary>
-		/// Gets a value indicating whether the <see cref="T:System.Collections.IList"/> has a fixed size.
-		/// </summary>
-		/// <value></value>
-		/// <returns>true if the <see cref="T:System.Collections.IList"/> has a fixed size; otherwise, false.</returns>
+		/// <returns>true if the <see cref="T:System.Collections.IList" /> has a fixed size; otherwise, false.</returns>
 		bool IList.IsFixedSize => false;
 
 		/// <summary>
-		/// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.
+		///     Gets a value indicating whether the <see cref="ICollection{T}" /> is read-only.
 		/// </summary>
 		/// <value></value>
-		/// <returns>true if the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only; otherwise, false.</returns>
+		/// <returns>true if the <see cref="ICollection{T}" /> is read-only; otherwise, false.</returns>
 		bool IList.IsReadOnly => false;
 
 		/// <summary>
-		/// Gets or sets the <see cref="System.Object"/> at the specified index.
+		///     Gets or sets the <see cref="System.Object" /> at the specified index.
 		/// </summary>
 		/// <value></value>
 		object IList.this[int index]
 		{
-			get
-			{
-				return this[index];
-			}
+			get { return this[index]; }
 			set
 			{
-				EventedList<T>.VerifyValueType(value);
+				VerifyValueType(value);
 				this[index] = (T)value;
 			}
 		}
 
 		/// <summary>
-		/// Gets or sets the element at the specified index.
+		///     Copies to.
+		/// </summary>
+		/// <param name="array">The array.</param>
+		/// <param name="arrayIndex">Index of the array.</param>
+		void ICollection.CopyTo(Array array, int arrayIndex)
+		{
+			if ((array != null) && (array.Rank != 1))
+			{
+				throw new ArgumentException();
+			}
+			try
+			{
+				Array.Copy(internalItems, 0, array, arrayIndex, Count);
+			}
+			catch (ArrayTypeMismatchException)
+			{
+				throw new ArgumentException();
+			}
+		}
+
+		/// <summary>
+		///     Adds the specified item.
+		/// </summary>
+		/// <param name="item">The item.</param>
+		/// <returns></returns>
+		int IList.Add(object item)
+		{
+			VerifyValueType(item);
+			Add((T)item);
+			return Count - 1;
+		}
+
+		/// <summary>
+		///     Determines whether [contains] [the specified item].
+		/// </summary>
+		/// <param name="item">The item.</param>
+		/// <returns>
+		///     <c>true</c> if [contains] [the specified item]; otherwise, <c>false</c>.
+		/// </returns>
+		bool IList.Contains(object item) => IsCompatibleObject(item) && Contains((T)item);
+
+		/// <summary>
+		///     Indexes the of.
+		/// </summary>
+		/// <param name="item">The item.</param>
+		/// <returns></returns>
+		int IList.IndexOf(object item)
+		{
+			if (IsCompatibleObject(item))
+			{
+				return IndexOf((T)item);
+			}
+			return -1;
+		}
+
+		/// <summary>
+		///     Inserts the specified index.
+		/// </summary>
+		/// <param name="index">The index.</param>
+		/// <param name="item">The item.</param>
+		void IList.Insert(int index, object item)
+		{
+			VerifyValueType(item);
+			Insert(index, (T)item);
+		}
+
+		/// <summary>
+		///     Removes the specified item.
+		/// </summary>
+		/// <param name="item">The item.</param>
+		void IList.Remove(object item)
+		{
+			if (IsCompatibleObject(item))
+			{
+				Remove((T)item);
+			}
+		}
+
+		/// <summary>
+		///     Gets the number of elements contained in the <see cref="ICollection{T}" />.
+		/// </summary>
+		/// <value>The number of elements contained in the <see cref="ICollection{T}" />.</value>
+		public int Count { get; private set; }
+
+		/// <summary>
+		///     Gets a value indicating whether the <see cref="ICollection{T}" /> is read-only.
+		/// </summary>
+		/// <value></value>
+		/// <returns>true if the <see cref="ICollection{T}" /> is read-only; otherwise, false.</returns>
+		bool ICollection<T>.IsReadOnly => false;
+
+		/// <summary>
+		///     Gets or sets the element at the specified index.
 		/// </summary>
 		/// <param name="index">The zero-based index of the element to get or set.</param>
 		/// <value>The element at the specified index.</value>
@@ -212,123 +263,70 @@ namespace System.Collections.Generic
 			get
 			{
 				CheckIndex(index);
-				return _items[index];
+				return internalItems[index];
 			}
 			set
 			{
 				CheckIndex(index);
-				T oldValue = _items[index];
-				_items[index] = value;
-				_version++;
+				var oldValue = internalItems[index];
+				internalItems[index] = value;
+				version++;
 				OnItemChanged(index, oldValue, value);
 			}
 		}
 
 		/// <summary>
-		/// Adds an item to the <see cref="T:System.Collections.Generic.ICollection`1"/>.
+		///     Adds an item to the <see cref="ICollection{T}" />.
 		/// </summary>
-		/// <param name="item">The object to add to the <see cref="T:System.Collections.Generic.ICollection`1"/>.</param>
-		/// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.</exception>
+		/// <param name="item">The object to add to the <see cref="ICollection{T}" />.</param>
+		/// <exception cref="T:System.NotSupportedException">The <see cref="ICollection{T}" /> is read-only.</exception>
 		public void Add(T item)
 		{
-			if (_size == _items.Length)
+			if (Count == internalItems.Length)
 			{
-				EnsureCapacity(_size + 1);
+				EnsureCapacity(Count + 1);
 			}
-			_items[_size++] = item;
-			_version++;
-			OnItemAdded(_size, item);
+			internalItems[Count++] = item;
+			version++;
+			OnItemAdded(Count, item);
 		}
 
 		/// <summary>
-		/// Adds the range of items to the list.
+		///     Removes all items from the <see cref="ICollection{T}" />.
 		/// </summary>
-		/// <param name="collection">The collection of items to add.</param>
-		public void AddRange(IEnumerable<T> collection)
-		{
-			InsertRange(_size, collection);
-		}
-
-		/// <summary>
-		/// Adds the range of items to the list.
-		/// </summary>
-		/// <param name="items">The items to add.</param>
-		public void AddRange(T[] items)
-		{
-			InsertRange(_size, items);
-		}
-
-		/// <summary>
-		/// Determines if the collection is read-only.
-		/// </summary>
-		/// <returns></returns>
-		public ReadOnlyCollection<T> AsReadOnly() => new ReadOnlyCollection<T>(this);
-
-		/// <summary>
-		/// Binaries the search.
-		/// </summary>
-		/// <param name="item">The item.</param>
-		/// <returns></returns>
-		public int BinarySearch(T item) => BinarySearch(0, _size, item, null);
-
-		/// <summary>
-		/// Binaries the search.
-		/// </summary>
-		/// <param name="item">The item.</param>
-		/// <param name="comparer">The comparer.</param>
-		/// <returns></returns>
-		public int BinarySearch(T item, IComparer<T> comparer) => BinarySearch(0, _size, item, comparer);
-
-		/// <summary>
-		/// Binaries the search.
-		/// </summary>
-		/// <param name="index">The index.</param>
-		/// <param name="count">The count.</param>
-		/// <param name="item">The item.</param>
-		/// <param name="comparer">The comparer.</param>
-		/// <returns></returns>
-		public int BinarySearch(int index, int count, T item, IComparer<T> comparer)
-		{
-			CheckRange(index, count);
-			return Array.BinarySearch<T>(_items, index, count, item, comparer);
-		}
-
-		/// <summary>
-		/// Removes all items from the <see cref="T:System.Collections.Generic.ICollection`1"/>.
-		/// </summary>
-		/// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only. </exception>
+		/// <exception cref="T:System.NotSupportedException">The <see cref="ICollection{T}" /> is read-only. </exception>
 		public void Clear()
 		{
-			Array.Clear(_items, 0, _size);
-			_size = 0;
-			_version++;
+			Array.Clear(internalItems, 0, Count);
+			Count = 0;
+			version++;
 			OnReset();
 		}
 
 		/// <summary>
-		/// Determines whether the <see cref="T:System.Collections.Generic.ICollection`1"/> contains a specific value.
+		///     Determines whether the <see cref="ICollection{T}" /> contains a specific value.
 		/// </summary>
-		/// <param name="item">The object to locate in the <see cref="T:System.Collections.Generic.ICollection`1"/>.</param>
+		/// <param name="item">The object to locate in the <see cref="ICollection{T}" />.</param>
 		/// <returns>
-		/// true if <paramref name="item"/> is found in the <see cref="T:System.Collections.Generic.ICollection`1"/>; otherwise, false.
+		///     true if <paramref name="item" /> is found in the <see cref="ICollection{T}" />; otherwise, false.
 		/// </returns>
 		public bool Contains(T item)
 		{
 			if (item == null)
 			{
-				for (int j = 0; j < _size; j++)
+				for (var j = 0; j < Count; j++)
 				{
-					if (_items[j] == null)
+					if (internalItems[j] == null)
 					{
 						return true;
 					}
 				}
 				return false;
 			}
-			EqualityComparer<T> comparer = EqualityComparer<T>.Default;
-			for (int i = 0; i < _size; i++)
+			var comparer = EqualityComparer<T>.Default;
+			for (var i = 0; i < Count; i++)
 			{
-				if (comparer.Equals(_items[i], item))
+				if (comparer.Equals(internalItems[i], item))
 				{
 					return true;
 				}
@@ -337,53 +335,229 @@ namespace System.Collections.Generic
 		}
 
 		/// <summary>
-		/// Converts all.
+		///     Copies the elements of the <see cref="ICollection{T}" /> to an <see cref="T:System.Array" />, starting at a
+		///     particular <see cref="T:System.Array" /> index.
+		/// </summary>
+		/// <param name="array">
+		///     The one-dimensional <see cref="T:System.Array" /> that is the destination of the elements copied
+		///     from <see cref="ICollection{T}" />. The <see cref="T:System.Array" /> must have zero-based indexing.
+		/// </param>
+		/// <param name="arrayIndex">The zero-based index in <paramref name="array" /> at which copying begins.</param>
+		/// <exception cref="T:System.ArgumentNullException">
+		///     <paramref name="array" /> is null.
+		/// </exception>
+		/// <exception cref="T:System.ArgumentOutOfRangeException">
+		///     <paramref name="arrayIndex" /> is less than 0.
+		/// </exception>
+		/// <exception cref="T:System.ArgumentException">
+		///     <paramref name="array" /> is multidimensional.-or-<paramref name="arrayIndex" /> is equal to or greater than the
+		///     length of <paramref name="array" />.-or-The number of elements in the source <see cref="ICollection{T}" /> is
+		///     greater than the available space from <paramref name="arrayIndex" /> to the end of the destination
+		///     <paramref name="array" />.-or-Type <c>T</c> cannot be cast automatically to the type of the destination
+		///     <paramref name="array" />.
+		/// </exception>
+		public void CopyTo(T[] array, int arrayIndex = 0)
+		{
+			Array.Copy(internalItems, 0, array, arrayIndex, Count);
+		}
+
+		/// <summary>
+		///     Returns an enumerator that iterates through a collection.
+		/// </summary>
+		/// <returns>
+		///     An <see cref="T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.
+		/// </returns>
+		IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this);
+
+		/// <summary>
+		///     Returns an enumerator that iterates through the collection.
+		/// </summary>
+		/// <returns>
+		///     A <see cref="IEnumerator{T}" /> that can be used to iterate through the collection.
+		/// </returns>
+		IEnumerator<T> IEnumerable<T>.GetEnumerator() => new Enumerator(this);
+
+		/// <summary>
+		///     Determines the index of a specific item in the <see cref="IList{T}" />.
+		/// </summary>
+		/// <param name="item">The object to locate in the <see cref="IList{T}" />.</param>
+		/// <returns>
+		///     The index of <paramref name="item" /> if found in the list; otherwise, -1.
+		/// </returns>
+		public int IndexOf(T item) => Array.IndexOf(internalItems, item, 0, Count);
+
+		/// <summary>
+		///     Inserts an item to the <see cref="IList{T}" /> at the specified index.
+		/// </summary>
+		/// <param name="index">The zero-based index at which <paramref name="item" /> should be inserted.</param>
+		/// <param name="item">The object to insert into the <see cref="IList{T}" />.</param>
+		/// <exception cref="T:System.ArgumentOutOfRangeException">
+		///     <paramref name="index" /> is not a valid index in the <see cref="IList{T}" />.
+		/// </exception>
+		/// <exception cref="T:System.NotSupportedException">The <see cref="IList{T}" /> is read-only.</exception>
+		public void Insert(int index, T item)
+		{
+			if (index != Count)
+				CheckIndex(index);
+			if (Count == internalItems.Length)
+			{
+				EnsureCapacity(Count + 1);
+			}
+			if (index < Count)
+			{
+				Array.Copy(internalItems, index, internalItems, index + 1, Count - index);
+			}
+			internalItems[index] = item;
+			Count++;
+			version++;
+			OnItemAdded(index, item);
+		}
+
+		/// <summary>
+		///     Removes the first occurrence of a specific object from the <see cref="ICollection{T}" />.
+		/// </summary>
+		/// <param name="item">The object to remove from the <see cref="ICollection{T}" />.</param>
+		/// <returns>
+		///     true if <paramref name="item" /> was successfully removed from the <see cref="ICollection{T}" />; otherwise, false.
+		///     This method also returns false if <paramref name="item" /> is not found in the original
+		///     <see cref="ICollection{T}" />.
+		/// </returns>
+		/// <exception cref="T:System.NotSupportedException">The <see cref="ICollection{T}" /> is read-only.</exception>
+		public bool Remove(T item)
+		{
+			var index = IndexOf(item);
+			if (index >= 0)
+			{
+				RemoveAt(index);
+				return true;
+			}
+			return false;
+		}
+
+		/// <summary>
+		///     Removes the <see cref="IList{T}" /> item at the specified index.
+		/// </summary>
+		/// <param name="index">The zero-based index of the item to remove.</param>
+		/// <exception cref="T:System.ArgumentOutOfRangeException">
+		///     <paramref name="index" /> is not a valid index in the <see cref="IList{T}" />.
+		/// </exception>
+		/// <exception cref="T:System.NotSupportedException">The <see cref="IList{T}" /> is read-only.</exception>
+		public void RemoveAt(int index)
+		{
+			CheckIndex(index);
+			Count--;
+			var oldVal = internalItems[index];
+			if (index < Count)
+			{
+				Array.Copy(internalItems, index + 1, internalItems, index, Count - index);
+			}
+			internalItems[Count] = default(T);
+			version++;
+			OnItemDeleted(index, oldVal);
+		}
+
+		/// <summary>
+		///     Occurs when an item has been added.
+		/// </summary>
+		public event EventHandler<ListChangedEventArgs<T>> ItemAdded;
+
+		/// <summary>
+		///     Occurs when an item has changed.
+		/// </summary>
+		public event EventHandler<ListChangedEventArgs<T>> ItemChanged;
+
+		/// <summary>
+		///     Occurs when an item has been deleted.
+		/// </summary>
+		public event EventHandler<ListChangedEventArgs<T>> ItemDeleted;
+
+		/// <summary>
+		///     Occurs when an item's property value has been changed.
+		/// </summary>
+		public event PropertyChangedEventHandler ItemPropertyChanged;
+
+		/// <summary>
+		///     Occurs when the list has been reset.
+		/// </summary>
+		public event EventHandler<ListChangedEventArgs<T>> Reset;
+
+		/// <summary>
+		///     Adds the range of items to the list.
+		/// </summary>
+		/// <param name="collection">The collection of items to add.</param>
+		public void AddRange(IEnumerable<T> collection)
+		{
+			InsertRange(Count, collection);
+		}
+
+		/// <summary>
+		///     Adds the range of items to the list.
+		/// </summary>
+		/// <param name="items">The items to add.</param>
+		public void AddRange(T[] items)
+		{
+			InsertRange(Count, items);
+		}
+
+		/// <summary>
+		///     Determines if the collection is read-only.
+		/// </summary>
+		/// <returns></returns>
+		public ReadOnlyCollection<T> AsReadOnly() => new ReadOnlyCollection<T>(this);
+
+		/// <summary>
+		/// Searches the entire sorted <see cref="EventedList{T}"/> for an element using the default comparer and returns the zero-based index of the element.
+		/// </summary>
+		/// <param name="item">The object to locate. The value can be null for reference types.</param>
+		/// <returns>The zero-based index of item in the sorted <see cref="EventedList{T}"/>, if item is found; otherwise, a negative number that is the bitwise complement of the index of the next element that is larger than item or, if there is no larger element, the bitwise complement of <see cref="Count"/>.</returns>
+		public int BinarySearch(T item) => BinarySearch(0, Count, item, null);
+
+		/// <summary>
+		/// Searches the entire sorted <see cref="EventedList{T}"/> for an element using the specified comparer and returns the zero-based index of the element.
+		/// </summary>
+		/// <param name="item">The object to locate. The value can be null for reference types.</param>
+		/// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or null to use the default comparer <see cref="Comparer{T}.Default"/>.</param>
+		/// <returns>The zero-based index of item in the sorted <see cref="EventedList{T}"/>, if item is found; otherwise, a negative number that is the bitwise complement of the index of the next element that is larger than item or, if there is no larger element, the bitwise complement of <see cref="Count"/>.</returns>
+		public int BinarySearch(T item, IComparer<T> comparer) => BinarySearch(0, Count, item, comparer);
+
+		/// <summary>
+		/// Searches a range of elements in the sorted <see cref="EventedList{T}"/> for an element using the specified comparer and returns the zero-based index of the element.
+		/// </summary>
+		/// <param name="index">The zero-based starting index of the range to search.</param>
+		/// <param name="count">The length of the range to search.</param>
+		/// <param name="item">The object to locate. The value can be null for reference types.</param>
+		/// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or null to use the default comparer <see cref="Comparer{T}.Default"/>.</param>
+		/// <returns>The zero-based index of item in the sorted <see cref="EventedList{T}"/>, if item is found; otherwise, a negative number that is the bitwise complement of the index of the next element that is larger than item or, if there is no larger element, the bitwise complement of <see cref="Count"/>.</returns>
+		public int BinarySearch(int index, int count, T item, IComparer<T> comparer)
+		{
+			CheckRange(index, count);
+			return Array.BinarySearch(internalItems, index, count, item, comparer);
+		}
+
+		/// <summary>
+		///     Converts all.
 		/// </summary>
 		/// <typeparam name="TOutput">The type of the output.</typeparam>
 		/// <param name="converter">The converter.</param>
 		/// <returns></returns>
-		public EventedList<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter) where TOutput : INotifyPropertyChanged
+		public EventedList<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter)
+			where TOutput : INotifyPropertyChanged
 		{
 			if (converter == null)
 			{
 				throw new ArgumentNullException(nameof(converter));
 			}
-			EventedList<TOutput> list = new EventedList<TOutput>(_size);
-			for (int i = 0; i < _size; i++)
+			var list = new EventedList<TOutput>(Count);
+			for (var i = 0; i < Count; i++)
 			{
-				list._items[i] = converter(_items[i]);
+				list.internalItems[i] = converter(internalItems[i]);
 			}
-			list._size = _size;
+			list.Count = Count;
 			return list;
 		}
 
 		/// <summary>
-		/// Copies to.
-		/// </summary>
-		/// <param name="array">The array.</param>
-		public void CopyTo(T[] array)
-		{
-			CopyTo(array, 0);
-		}
-
-		/// <summary>
-		/// Copies the elements of the <see cref="T:System.Collections.Generic.ICollection`1"/> to an <see cref="T:System.Array"/>, starting at a particular <see cref="T:System.Array"/> index.
-		/// </summary>
-		/// <param name="array">The one-dimensional <see cref="T:System.Array"/> that is the destination of the elements copied from <see cref="T:System.Collections.Generic.ICollection`1"/>. The <see cref="T:System.Array"/> must have zero-based indexing.</param>
-		/// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
-		/// <exception cref="T:System.ArgumentNullException">
-		/// 	<paramref name="array"/> is null.</exception>
-		/// <exception cref="T:System.ArgumentOutOfRangeException">
-		/// 	<paramref name="arrayIndex"/> is less than 0.</exception>
-		/// <exception cref="T:System.ArgumentException">
-		/// 	<paramref name="array"/> is multidimensional.-or-<paramref name="arrayIndex"/> is equal to or greater than the length of <paramref name="array"/>.-or-The number of elements in the source <see cref="T:System.Collections.Generic.ICollection`1"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.-or-Type <c>T</c> cannot be cast automatically to the type of the destination <paramref name="array"/>.</exception>
-		public void CopyTo(T[] array, int arrayIndex)
-		{
-			Array.Copy(_items, 0, array, arrayIndex, _size);
-		}
-
-		/// <summary>
-		/// Copies to.
+		///     Copies to.
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="array">The array.</param>
@@ -391,20 +565,20 @@ namespace System.Collections.Generic
 		/// <param name="count">The count.</param>
 		public void CopyTo(int index, T[] array, int arrayIndex, int count)
 		{
-			if ((_size - index) < count)
+			if (Count - index < count)
 				throw new ArgumentOutOfRangeException(nameof(index));
-			Array.Copy(_items, index, array, arrayIndex, count);
+			Array.Copy(internalItems, index, array, arrayIndex, count);
 		}
 
 		/// <summary>
-		/// Determines if an item matches the specified predicate.
+		///     Determines if an item matches the specified predicate.
 		/// </summary>
 		/// <param name="match">The match.</param>
 		/// <returns></returns>
-		public bool Exists(Predicate<T> match) => (FindIndex(match) != -1);
+		public bool Exists(Predicate<T> match) => FindIndex(match) != -1;
 
 		/// <summary>
-		/// Finds the specified match.
+		///     Finds the specified match.
 		/// </summary>
 		/// <param name="match">The match.</param>
 		/// <returns></returns>
@@ -414,18 +588,18 @@ namespace System.Collections.Generic
 			{
 				throw new ArgumentNullException(nameof(match));
 			}
-			for (int i = 0; i < _size; i++)
+			for (var i = 0; i < Count; i++)
 			{
-				if (match(_items[i]))
+				if (match(internalItems[i]))
 				{
-					return _items[i];
+					return internalItems[i];
 				}
 			}
 			return default(T);
 		}
 
 		/// <summary>
-		/// Finds all.
+		///     Finds all.
 		/// </summary>
 		/// <param name="match">The match.</param>
 		/// <returns></returns>
@@ -435,34 +609,34 @@ namespace System.Collections.Generic
 			{
 				throw new ArgumentNullException(nameof(match));
 			}
-			EventedList<T> list = new EventedList<T>();
-			for (int i = 0; i < _size; i++)
+			var list = new EventedList<T>();
+			for (var i = 0; i < Count; i++)
 			{
-				if (match(_items[i]))
+				if (match(internalItems[i]))
 				{
-					list.Add(_items[i]);
+					list.Add(internalItems[i]);
 				}
 			}
 			return list;
 		}
 
 		/// <summary>
-		/// Finds the index.
+		///     Finds the index.
 		/// </summary>
 		/// <param name="match">The match.</param>
 		/// <returns></returns>
-		public int FindIndex(Predicate<T> match) => FindIndex(0, _size, match);
+		public int FindIndex(Predicate<T> match) => FindIndex(0, Count, match);
 
 		/// <summary>
-		/// Finds the index.
+		///     Finds the index.
 		/// </summary>
 		/// <param name="startIndex">The start index.</param>
 		/// <param name="match">The match.</param>
 		/// <returns></returns>
-		public int FindIndex(int startIndex, Predicate<T> match) => FindIndex(startIndex, _size - startIndex, match);
+		public int FindIndex(int startIndex, Predicate<T> match) => FindIndex(startIndex, Count - startIndex, match);
 
 		/// <summary>
-		/// Finds the index.
+		///     Finds the index.
 		/// </summary>
 		/// <param name="startIndex">The start index.</param>
 		/// <param name="count">The count.</param>
@@ -475,10 +649,10 @@ namespace System.Collections.Generic
 			{
 				throw new ArgumentNullException(nameof(match));
 			}
-			int num = startIndex + count;
-			for (int i = startIndex; i < num; i++)
+			var num = startIndex + count;
+			for (var i = startIndex; i < num; i++)
 			{
-				if (match(_items[i]))
+				if (match(internalItems[i]))
 				{
 					return i;
 				}
@@ -487,7 +661,7 @@ namespace System.Collections.Generic
 		}
 
 		/// <summary>
-		/// Finds the last.
+		///     Finds the last.
 		/// </summary>
 		/// <param name="match">The match.</param>
 		/// <returns></returns>
@@ -497,25 +671,25 @@ namespace System.Collections.Generic
 			{
 				throw new ArgumentNullException(nameof(match));
 			}
-			for (int i = _size - 1; i >= 0; i--)
+			for (var i = Count - 1; i >= 0; i--)
 			{
-				if (match(_items[i]))
+				if (match(internalItems[i]))
 				{
-					return _items[i];
+					return internalItems[i];
 				}
 			}
 			return default(T);
 		}
 
 		/// <summary>
-		/// Finds the last index.
+		///     Finds the last index.
 		/// </summary>
 		/// <param name="match">The match.</param>
 		/// <returns></returns>
-		public int FindLastIndex(Predicate<T> match) => FindLastIndex(_size - 1, _size, match);
+		public int FindLastIndex(Predicate<T> match) => FindLastIndex(Count - 1, Count, match);
 
 		/// <summary>
-		/// Finds the last index.
+		///     Finds the last index.
 		/// </summary>
 		/// <param name="startIndex">The start index.</param>
 		/// <param name="match">The match.</param>
@@ -523,7 +697,7 @@ namespace System.Collections.Generic
 		public int FindLastIndex(int startIndex, Predicate<T> match) => FindLastIndex(startIndex, startIndex + 1, match);
 
 		/// <summary>
-		/// Finds the last index.
+		///     Finds the last index.
 		/// </summary>
 		/// <param name="startIndex">The start index.</param>
 		/// <param name="count">The count.</param>
@@ -535,7 +709,7 @@ namespace System.Collections.Generic
 			{
 				throw new ArgumentNullException(nameof(match));
 			}
-			if (_size == 0)
+			if (Count == 0)
 			{
 				if (startIndex != -1)
 				{
@@ -543,14 +717,14 @@ namespace System.Collections.Generic
 				}
 			}
 			CheckIndex(startIndex, "startIndex");
-			if ((count < 0) || (((startIndex - count) + 1) < 0))
+			if ((count < 0) || (startIndex - count + 1 < 0))
 			{
 				throw new ArgumentOutOfRangeException(nameof(count));
 			}
-			int num = startIndex - count;
-			for (int i = startIndex; i > num; i--)
+			var num = startIndex - count;
+			for (var i = startIndex; i > num; i--)
 			{
-				if (match(_items[i]))
+				if (match(internalItems[i]))
 				{
 					return i;
 				}
@@ -559,144 +733,40 @@ namespace System.Collections.Generic
 		}
 
 		/// <summary>
-		/// Performs an action on each item in the collection.
+		///     Performs an action on each item in the collection.
 		/// </summary>
 		/// <param name="action">The action.</param>
 		public void ForEach(Action<T> action)
 		{
 			if (action == null)
 				throw new ArgumentNullException(nameof(action));
-			for (int i = 0; i < _size; i++)
-				action(_items[i]);
+			for (var i = 0; i < Count; i++)
+				action(internalItems[i]);
 		}
 
 		/// <summary>
-		/// Gets the enumerator.
+		///     Gets the enumerator.
 		/// </summary>
 		/// <returns></returns>
-		public EventedList<T>.Enumerator GetEnumerator() => new EventedList<T>.Enumerator((EventedList<T>)this);
+		public Enumerator GetEnumerator() => new Enumerator(this);
 
 		/// <summary>
-		/// Gets the range of items and returns then in another list.
+		///     Gets the range of items and returns then in another list.
 		/// </summary>
 		/// <param name="index">The starting index.</param>
 		/// <param name="count">The count of items to place in the list.</param>
-		/// <returns>An <see cref="EventedList&lt;T&gt;"/> with the requested items.</returns>
+		/// <returns>An <see cref="EventedList{T}" /> with the requested items.</returns>
 		public EventedList<T> GetRange(int index, int count)
 		{
 			CheckRange(index, count);
-			EventedList<T> list = new EventedList<T>(count);
-			Array.Copy(_items, index, list._items, 0, count);
-			list._size = count;
+			var list = new EventedList<T>(count);
+			Array.Copy(internalItems, index, list.internalItems, 0, count);
+			list.Count = count;
 			return list;
 		}
 
 		/// <summary>
-		/// Copies to.
-		/// </summary>
-		/// <param name="array">The array.</param>
-		/// <param name="arrayIndex">Index of the array.</param>
-		void ICollection.CopyTo(Array array, int arrayIndex)
-		{
-			if ((array != null) && (array.Rank != 1))
-			{
-				throw new ArgumentException();
-			}
-			try
-			{
-				Array.Copy(_items, 0, array, arrayIndex, _size);
-			}
-			catch (ArrayTypeMismatchException)
-			{
-				throw new ArgumentException();
-			}
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
-		/// </summary>
-		/// <returns>
-		/// An <see cref="T:System.Collections.IEnumerator"/> object that can be used to iterate through the collection.
-		/// </returns>
-		IEnumerator IEnumerable.GetEnumerator() => new EventedList<T>.Enumerator((EventedList<T>)this);
-
-		/// <summary>
-		/// Returns an enumerator that iterates through the collection.
-		/// </summary>
-		/// <returns>
-		/// A <see cref="T:System.Collections.Generic.IEnumerator`1"/> that can be used to iterate through the collection.
-		/// </returns>
-		IEnumerator<T> IEnumerable<T>.GetEnumerator() => new EventedList<T>.Enumerator((EventedList<T>)this);
-
-		/// <summary>
-		/// Adds the specified item.
-		/// </summary>
-		/// <param name="item">The item.</param>
-		/// <returns></returns>
-		int IList.Add(object item)
-		{
-			EventedList<T>.VerifyValueType(item);
-			Add((T)item);
-			return (_size - 1);
-		}
-
-		/// <summary>
-		/// Determines whether [contains] [the specified item].
-		/// </summary>
-		/// <param name="item">The item.</param>
-		/// <returns>
-		/// 	<c>true</c> if [contains] [the specified item]; otherwise, <c>false</c>.
-		/// </returns>
-		bool IList.Contains(object item) => (EventedList<T>.IsCompatibleObject(item) && Contains((T)item));
-
-		/// <summary>
-		/// Indexes the of.
-		/// </summary>
-		/// <param name="item">The item.</param>
-		/// <returns></returns>
-		int IList.IndexOf(object item)
-		{
-			if (EventedList<T>.IsCompatibleObject(item))
-			{
-				return IndexOf((T)item);
-			}
-			return -1;
-		}
-
-		/// <summary>
-		/// Inserts the specified index.
-		/// </summary>
-		/// <param name="index">The index.</param>
-		/// <param name="item">The item.</param>
-		void IList.Insert(int index, object item)
-		{
-			EventedList<T>.VerifyValueType(item);
-			Insert(index, (T)item);
-		}
-
-		/// <summary>
-		/// Removes the specified item.
-		/// </summary>
-		/// <param name="item">The item.</param>
-		void IList.Remove(object item)
-		{
-			if (EventedList<T>.IsCompatibleObject(item))
-			{
-				Remove((T)item);
-			}
-		}
-
-		/// <summary>
-		/// Determines the index of a specific item in the <see cref="T:System.Collections.Generic.IList`1"/>.
-		/// </summary>
-		/// <param name="item">The object to locate in the <see cref="T:System.Collections.Generic.IList`1"/>.</param>
-		/// <returns>
-		/// The index of <paramref name="item"/> if found in the list; otherwise, -1.
-		/// </returns>
-		public int IndexOf(T item) => Array.IndexOf<T>(_items, item, 0, _size);
-
-		/// <summary>
-		/// Indexes the of.
+		///     Indexes the of.
 		/// </summary>
 		/// <param name="item">The item.</param>
 		/// <param name="index">The index.</param>
@@ -704,11 +774,11 @@ namespace System.Collections.Generic
 		public int IndexOf(T item, int index)
 		{
 			CheckIndex(index);
-			return Array.IndexOf<T>(_items, item, index, _size - index);
+			return Array.IndexOf(internalItems, item, index, Count - index);
 		}
 
 		/// <summary>
-		/// Indexes the of.
+		///     Indexes the of.
 		/// </summary>
 		/// <param name="item">The item.</param>
 		/// <param name="index">The index.</param>
@@ -717,37 +787,11 @@ namespace System.Collections.Generic
 		public int IndexOf(T item, int index, int count)
 		{
 			CheckRange(index, count);
-			return Array.IndexOf<T>(_items, item, index, count);
+			return Array.IndexOf(internalItems, item, index, count);
 		}
 
 		/// <summary>
-		/// Inserts an item to the <see cref="T:System.Collections.Generic.IList`1"/> at the specified index.
-		/// </summary>
-		/// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
-		/// <param name="item">The object to insert into the <see cref="T:System.Collections.Generic.IList`1"/>.</param>
-		/// <exception cref="T:System.ArgumentOutOfRangeException">
-		/// 	<paramref name="index"/> is not a valid index in the <see cref="T:System.Collections.Generic.IList`1"/>.</exception>
-		/// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.IList`1"/> is read-only.</exception>
-		public void Insert(int index, T item)
-		{
-			if (index != _size)
-				CheckIndex(index);
-			if (_size == _items.Length)
-			{
-				EnsureCapacity(_size + 1);
-			}
-			if (index < _size)
-			{
-				Array.Copy(_items, index, _items, index + 1, _size - index);
-			}
-			_items[index] = item;
-			_size++;
-			_version++;
-			OnItemAdded(index, item);
-		}
-
-		/// <summary>
-		/// Inserts the range.
+		///     Inserts the range.
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="collection">The collection.</param>
@@ -757,38 +801,38 @@ namespace System.Collections.Generic
 			{
 				throw new ArgumentNullException(nameof(collection));
 			}
-			if (index != _size)
+			if (index != Count)
 				CheckIndex(index);
-			ICollection<T> is2 = collection as ICollection<T>;
+			var is2 = collection as ICollection<T>;
 			if (is2 != null)
 			{
-				int count = is2.Count;
+				var count = is2.Count;
 				if (count > 0)
 				{
-					EnsureCapacity(_size + count);
-					if (index < _size)
+					EnsureCapacity(Count + count);
+					if (index < Count)
 					{
-						Array.Copy(_items, index, _items, index + count, _size - index);
+						Array.Copy(internalItems, index, internalItems, index + count, Count - index);
 					}
 					if (this == is2)
 					{
-						Array.Copy(_items, 0, _items, index, index);
-						Array.Copy(_items, (int)(index + count), _items, (int)(index * 2), (int)(_size - index));
+						Array.Copy(internalItems, 0, internalItems, index, index);
+						Array.Copy(internalItems, index + count, internalItems, index*2, Count - index);
 					}
 					else
 					{
-						T[] array = new T[count];
+						var array = new T[count];
 						is2.CopyTo(array, 0);
-						array.CopyTo(_items, index);
+						array.CopyTo(internalItems, index);
 					}
-					_size += count;
-					for (int i = index; i < index + count; i++)
-						OnItemAdded(i, _items[i]);
+					Count += count;
+					for (var i = index; i < index + count; i++)
+						OnItemAdded(i, internalItems[i]);
 				}
 			}
 			else
 			{
-				using (IEnumerator<T> enumerator = collection.GetEnumerator())
+				using (var enumerator = collection.GetEnumerator())
 				{
 					while (enumerator.MoveNext())
 					{
@@ -796,18 +840,18 @@ namespace System.Collections.Generic
 					}
 				}
 			}
-			_version++;
+			version++;
 		}
 
 		/// <summary>
-		/// Lasts the index of.
+		///     Lasts the index of.
 		/// </summary>
 		/// <param name="item">The item.</param>
 		/// <returns></returns>
-		public int LastIndexOf(T item) => LastIndexOf(item, _size - 1, _size);
+		public int LastIndexOf(T item) => LastIndexOf(item, Count - 1, Count);
 
 		/// <summary>
-		/// Lasts the index of.
+		///     Lasts the index of.
 		/// </summary>
 		/// <param name="item">The item.</param>
 		/// <param name="index">The index.</param>
@@ -819,7 +863,7 @@ namespace System.Collections.Generic
 		}
 
 		/// <summary>
-		/// Lasts the index of.
+		///     Lasts the index of.
 		/// </summary>
 		/// <param name="item">The item.</param>
 		/// <param name="index">The index.</param>
@@ -827,39 +871,20 @@ namespace System.Collections.Generic
 		/// <returns></returns>
 		public int LastIndexOf(T item, int index, int count)
 		{
-			if (_size == 0)
+			if (Count == 0)
 			{
 				return -1;
 			}
 			CheckIndex(index);
-			if (count < 0 || count > (index + 1))
+			if (count < 0 || count > index + 1)
 			{
 				throw new ArgumentOutOfRangeException(nameof(count));
 			}
-			return Array.LastIndexOf<T>(_items, item, index, count);
+			return Array.LastIndexOf(internalItems, item, index, count);
 		}
 
 		/// <summary>
-		/// Removes the first occurrence of a specific object from the <see cref="T:System.Collections.Generic.ICollection`1"/>.
-		/// </summary>
-		/// <param name="item">The object to remove from the <see cref="T:System.Collections.Generic.ICollection`1"/>.</param>
-		/// <returns>
-		/// true if <paramref name="item"/> was successfully removed from the <see cref="T:System.Collections.Generic.ICollection`1"/>; otherwise, false. This method also returns false if <paramref name="item"/> is not found in the original <see cref="T:System.Collections.Generic.ICollection`1"/>.
-		/// </returns>
-		/// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.</exception>
-		public bool Remove(T item)
-		{
-			int index = IndexOf(item);
-			if (index >= 0)
-			{
-				RemoveAt(index);
-				return true;
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// Removes all.
+		///     Removes all.
 		/// </summary>
 		/// <param name="match">The match.</param>
 		/// <returns></returns>
@@ -869,59 +894,38 @@ namespace System.Collections.Generic
 			{
 				throw new ArgumentNullException(nameof(match));
 			}
-			int index = 0;
-			while ((index < _size) && !match(_items[index]))
+			var index = 0;
+			while ((index < Count) && !match(internalItems[index]))
 			{
 				index++;
 			}
-			if (index >= _size)
+			if (index >= Count)
 			{
 				return 0;
 			}
-			int num2 = index + 1;
-			while (num2 < _size)
+			var num2 = index + 1;
+			while (num2 < Count)
 			{
-				while ((num2 < _size) && match(_items[num2]))
+				while ((num2 < Count) && match(internalItems[num2]))
 				{
 					num2++;
 				}
-				if (num2 < _size)
+				if (num2 < Count)
 				{
-					T oldVal = _items[index + 1];
-					_items[index++] = _items[num2++];
+					var oldVal = internalItems[index + 1];
+					internalItems[index++] = internalItems[num2++];
 					OnItemDeleted(index, oldVal);
 				}
 			}
-			Array.Clear(_items, index, _size - index);
-			int num3 = _size - index;
-			_size = index;
-			_version++;
+			Array.Clear(internalItems, index, Count - index);
+			var num3 = Count - index;
+			Count = index;
+			version++;
 			return num3;
 		}
 
 		/// <summary>
-		/// Removes the <see cref="T:System.Collections.Generic.IList`1"/> item at the specified index.
-		/// </summary>
-		/// <param name="index">The zero-based index of the item to remove.</param>
-		/// <exception cref="T:System.ArgumentOutOfRangeException">
-		/// 	<paramref name="index"/> is not a valid index in the <see cref="T:System.Collections.Generic.IList`1"/>.</exception>
-		/// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.IList`1"/> is read-only.</exception>
-		public void RemoveAt(int index)
-		{
-			CheckIndex(index);
-			_size--;
-			T oldVal = _items[index];
-			if (index < _size)
-			{
-				Array.Copy(_items, index + 1, _items, index, _size - index);
-			}
-			_items[_size] = default(T);
-			_version++;
-			OnItemDeleted(index, oldVal);
-		}
-
-		/// <summary>
-		/// Removes the range.
+		///     Removes the range.
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="count">The count.</param>
@@ -930,59 +934,59 @@ namespace System.Collections.Generic
 			CheckRange(index, count);
 			if (count > 0)
 			{
-				_size -= count;
-				T[] array = new T[count];
-				Array.Copy(_items, index, array, 0, count);
-				if (index < _size)
+				Count -= count;
+				var array = new T[count];
+				Array.Copy(internalItems, index, array, 0, count);
+				if (index < Count)
 				{
-					Array.Copy(_items, index + count, _items, index, _size - index);
+					Array.Copy(internalItems, index + count, internalItems, index, Count - index);
 				}
-				Array.Clear(_items, _size, count);
-				_version++;
-				for (int i = index; i < index + count; i++)
+				Array.Clear(internalItems, Count, count);
+				version++;
+				for (var i = index; i < index + count; i++)
 					OnItemDeleted(i, array[i - index]);
 			}
 		}
 
 		/// <summary>
-		/// Reverses this instance.
+		///     Reverses this instance.
 		/// </summary>
 		public void Reverse()
 		{
-			Reverse(0, _size);
+			Reverse(0, Count);
 		}
 
 		/// <summary>
-		/// Reverses the specified index.
+		///     Reverses the specified index.
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="count">The count.</param>
 		public void Reverse(int index, int count)
 		{
 			CheckRange(index, count);
-			Array.Reverse(_items, index, count);
-			_version++;
+			Array.Reverse(internalItems, index, count);
+			version++;
 		}
 
 		/// <summary>
-		/// Sorts this instance.
+		///     Sorts this instance.
 		/// </summary>
 		public void Sort()
 		{
-			Sort(0, _size, null);
+			Sort(0, Count, null);
 		}
 
 		/// <summary>
-		/// Sorts the specified comparer.
+		///     Sorts the specified comparer.
 		/// </summary>
 		/// <param name="comparer">The comparer.</param>
 		public void Sort(IComparer<T> comparer)
 		{
-			Sort(0, _size, comparer);
+			Sort(0, Count, comparer);
 		}
 
 		/// <summary>
-		/// Sorts the specified index.
+		///     Sorts the specified index.
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="count">The count.</param>
@@ -990,35 +994,35 @@ namespace System.Collections.Generic
 		public void Sort(int index, int count, IComparer<T> comparer)
 		{
 			CheckRange(index, count);
-			Array.Sort<T>(_items, index, count, comparer);
-			_version++;
+			Array.Sort(internalItems, index, count, comparer);
+			version++;
 		}
 
 		/// <summary>
-		/// Toes the array.
+		///     Toes the array.
 		/// </summary>
 		/// <returns></returns>
 		public T[] ToArray()
 		{
-			T[] destinationArray = new T[_size];
-			Array.Copy(_items, 0, destinationArray, 0, _size);
+			var destinationArray = new T[Count];
+			Array.Copy(internalItems, 0, destinationArray, 0, Count);
 			return destinationArray;
 		}
 
 		/// <summary>
-		/// Trims the excess.
+		///     Trims the excess.
 		/// </summary>
 		public void TrimExcess()
 		{
-			int num = (int)(_items.Length * 0.9);
-			if (_size < num)
+			var num = (int)(internalItems.Length*0.9);
+			if (Count < num)
 			{
-				Capacity = _size;
+				Capacity = Count;
 			}
 		}
 
 		/// <summary>
-		/// Trues for all.
+		///     Trues for all.
 		/// </summary>
 		/// <param name="match">The match.</param>
 		/// <returns></returns>
@@ -1028,9 +1032,9 @@ namespace System.Collections.Generic
 			{
 				throw new ArgumentNullException(nameof(match));
 			}
-			for (int i = 0; i < _size; i++)
+			for (var i = 0; i < Count; i++)
 			{
-				if (!match(_items[i]))
+				if (!match(internalItems[i]))
 				{
 					return false;
 				}
@@ -1039,7 +1043,7 @@ namespace System.Collections.Generic
 		}
 
 		/// <summary>
-		/// Called when [insert].
+		///     Called when [insert].
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="value">The value.</param>
@@ -1048,22 +1052,22 @@ namespace System.Collections.Generic
 			if (value != null)
 			{
 				value.PropertyChanged += OnItemPropertyChanged;
-				ItemAdded?.Invoke(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.ItemAdded, value, index));
+				ItemAdded?.Invoke(this, new ListChangedEventArgs<T>(ListChangedType.ItemAdded, value, index));
 			}
 		}
 
 		/// <summary>
-		/// Called when [item property changed].
+		///     Called when [item property changed].
 		/// </summary>
 		/// <param name="sender">The sender.</param>
-		/// <param name="e">The <see cref="PropertyChangedEventArgs"/> instance containing the event data.</param>
+		/// <param name="e">The <see cref="PropertyChangedEventArgs" /> instance containing the event data.</param>
 		protected virtual void OnItemPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			ItemPropertyChanged?.Invoke(sender, e);
 		}
 
 		/// <summary>
-		/// Called when [set].
+		///     Called when [set].
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="oldValue">The old value.</param>
@@ -1076,11 +1080,11 @@ namespace System.Collections.Generic
 				if (newValue != null)
 					newValue.PropertyChanged += OnItemPropertyChanged;
 			}
-			ItemChanged?.Invoke(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.ItemChanged, newValue, index, oldValue));
+			ItemChanged?.Invoke(this, new ListChangedEventArgs<T>(ListChangedType.ItemChanged, newValue, index, oldValue));
 		}
 
 		/// <summary>
-		/// Called when [remove].
+		///     Called when [remove].
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="value">The value.</param>
@@ -1089,74 +1093,74 @@ namespace System.Collections.Generic
 			if (value != null)
 			{
 				value.PropertyChanged -= OnItemPropertyChanged;
-				ItemDeleted?.Invoke(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.ItemDeleted, value, index));
+				ItemDeleted?.Invoke(this, new ListChangedEventArgs<T>(ListChangedType.ItemDeleted, value, index));
 			}
 		}
 
 		/// <summary>
-		/// Called when [clear].
+		///     Called when [clear].
 		/// </summary>
 		protected virtual void OnReset()
 		{
 			ForEach(delegate(T item) { item.PropertyChanged -= OnItemPropertyChanged; });
-			Reset?.Invoke(this, new EventedList<T>.ListChangedEventArgs<T>(ListChangedType.Reset));
+			Reset?.Invoke(this, new ListChangedEventArgs<T>(ListChangedType.Reset));
 		}
 
 		/// <summary>
-		/// Determines whether [is compatible object] [the specified value].
+		///     Determines whether [is compatible object] [the specified value].
 		/// </summary>
 		/// <param name="value">The value.</param>
 		/// <returns>
-		/// 	<c>true</c> if [is compatible object] [the specified value]; otherwise, <c>false</c>.
+		///     <c>true</c> if [is compatible object] [the specified value]; otherwise, <c>false</c>.
 		/// </returns>
-		private static bool IsCompatibleObject(object value) => (value is T || (value == null && !typeof(T).IsValueType));
+		private static bool IsCompatibleObject(object value) => value is T || (value == null && !typeof(T).IsValueType);
 
 		/// <summary>
-		/// Verifies the type of the value.
+		///     Verifies the type of the value.
 		/// </summary>
 		/// <param name="value">The value.</param>
 		private static void VerifyValueType(object value)
 		{
-			if (!EventedList<T>.IsCompatibleObject(value))
+			if (!IsCompatibleObject(value))
 			{
-				throw new ArgumentException("Incompatible object", nameof(value));
+				throw new ArgumentException(@"Incompatible object", nameof(value));
 			}
 		}
 
 		/// <summary>
-		/// Checks the index to ensure it is valid and in the list.
+		///     Checks the index to ensure it is valid and in the list.
 		/// </summary>
 		/// <param name="idx">The index to validate.</param>
 		/// <param name="varName">Name of the variable this is being checked.</param>
 		/// <exception cref="ArgumentOutOfRangeException">Called with the index is out of range.</exception>
 		private void CheckIndex(int idx, string varName = "index")
 		{
-			if (idx >= _size || idx < 0)
+			if (idx >= Count || idx < 0)
 				throw new ArgumentOutOfRangeException(varName);
 		}
 
 		/// <summary>
-		/// Checks the range.
+		///     Checks the range.
 		/// </summary>
 		/// <param name="index">The index.</param>
 		/// <param name="count">The count.</param>
 		private void CheckRange(int index, int count)
 		{
-			if (index >= _size || index < 0)
+			if (index >= Count || index < 0)
 				throw new ArgumentOutOfRangeException(nameof(index));
-			if (count < 0 || (_size - index) < count)
+			if (count < 0 || Count - index < count)
 				throw new ArgumentOutOfRangeException(nameof(count));
 		}
 
 		/// <summary>
-		/// Ensures the capacity.
+		///     Ensures the capacity.
 		/// </summary>
 		/// <param name="min">The min.</param>
 		private void EnsureCapacity(int min)
 		{
-			if (_items.Length < min)
+			if (internalItems.Length < min)
 			{
-				int num = (_items.Length == 0) ? 4 : (_items.Length * 2);
+				var num = internalItems.Length == 0 ? 4 : internalItems.Length*2;
 				if (num < min)
 				{
 					num = min;
@@ -1166,44 +1170,43 @@ namespace System.Collections.Generic
 		}
 
 		/// <summary>
-		/// Enumerates over the <see cref="EventedList&lt;T&gt;"/>.
+		///     Enumerates over the <see cref="EventedList{T}" />.
 		/// </summary>
 		[Serializable,
-		System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
-		public struct Enumerator : IEnumerator<T>, IDisposable, IEnumerator
+		 StructLayout(LayoutKind.Sequential)]
+		public struct Enumerator : IEnumerator<T>
 		{
-			private EventedList<T> list;
+			private readonly EventedList<T> list;
 			private int index;
-			private int version;
-			private T current;
+			private readonly int version;
 
 			/// <summary>
-			/// Initializes a new instance of the <see cref="EventedList&lt;T&gt;.Enumerator"/> struct.
+			///     Initializes a new instance of the <see cref="EventedList{T}.Enumerator" /> struct.
 			/// </summary>
 			/// <param name="list">The list.</param>
 			internal Enumerator(EventedList<T> list)
 			{
 				this.list = list;
 				index = 0;
-				version = list._version;
-				current = default(T);
+				version = list.version;
+				Current = default(T);
 			}
 
 			/// <summary>
-			/// Gets the current.
+			///     Gets the current.
 			/// </summary>
 			/// <value>The current.</value>
-			public T Current => current;
+			public T Current { get; private set; }
 
 			/// <summary>
-			/// Gets the current.
+			///     Gets the current.
 			/// </summary>
 			/// <value>The current.</value>
 			object IEnumerator.Current
 			{
 				get
 				{
-					if ((index == 0) || (index == (list._size + 1)))
+					if ((index == 0) || (index == list.Count + 1))
 					{
 						throw new InvalidOperationException();
 					}
@@ -1212,60 +1215,59 @@ namespace System.Collections.Generic
 			}
 
 			/// <summary>
-			/// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+			///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
 			/// </summary>
-			public void Dispose()
-			{
-			}
+			public void Dispose() { }
 
 			/// <summary>
-			/// Sets the enumerator to its initial position, which is before the first element in the collection.
+			///     Sets the enumerator to its initial position, which is before the first element in the collection.
 			/// </summary>
 			/// <exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created. </exception>
 			void IEnumerator.Reset()
 			{
-				if (version != list._version)
+				if (version != list.version)
 				{
 					throw new InvalidOperationException();
 				}
 				index = 0;
-				current = default(T);
+				Current = default(T);
 			}
 
 			/// <summary>
-			/// Advances the enumerator to the next element of the collection.
+			///     Advances the enumerator to the next element of the collection.
 			/// </summary>
 			/// <returns>
-			/// true if the enumerator was successfully advanced to the next element; false if the enumerator has passed the end of the collection.
+			///     true if the enumerator was successfully advanced to the next element; false if the enumerator has passed the end of
+			///     the collection.
 			/// </returns>
 			/// <exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created. </exception>
 			public bool MoveNext()
 			{
-				if (version != list._version)
+				if (version != list.version)
 				{
 					throw new InvalidOperationException();
 				}
-				if (index < list._size)
+				if (index < list.Count)
 				{
-					current = list._items[index];
+					Current = list.internalItems[index];
 					index++;
 					return true;
 				}
-				index = list._size + 1;
-				current = default(T);
+				index = list.Count + 1;
+				Current = default(T);
 				return false;
 			}
 		}
 
 		/// <summary>
-		/// An <see cref="EventArgs"/> structure passed to events generated by an <see cref="EventedList{T}"/>.
+		///     An <see cref="EventArgs" /> structure passed to events generated by an <see cref="EventedList{T}" />.
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 #pragma warning disable 693
 		public class ListChangedEventArgs<T> : EventArgs
 		{
 			/// <summary>
-			/// Initializes a new instance of the <see cref="EventedList&lt;T&gt;.ListChangedEventArgs&lt;T&gt;"/> class.
+			///     Initializes a new instance of the <see cref="EventedList{T}.ListChangedEventArgs{T}" /> class.
 			/// </summary>
 			/// <param name="type">The type of change.</param>
 			public ListChangedEventArgs(ListChangedType type)
@@ -1275,7 +1277,7 @@ namespace System.Collections.Generic
 			}
 
 			/// <summary>
-			/// Initializes a new instance of the <see cref="EventedList&lt;T&gt;.ListChangedEventArgs&lt;T&gt;"/> class.
+			///     Initializes a new instance of the <see cref="EventedList{T}.ListChangedEventArgs{T}" /> class.
 			/// </summary>
 			/// <param name="type">The type of change.</param>
 			/// <param name="item">The item that has changed.</param>
@@ -1288,7 +1290,7 @@ namespace System.Collections.Generic
 			}
 
 			/// <summary>
-			/// Initializes a new instance of the <see cref="EventedList&lt;T&gt;.ListChangedEventArgs&lt;T&gt;"/> class.
+			///     Initializes a new instance of the <see cref="EventedList{T}.ListChangedEventArgs{T}" /> class.
 			/// </summary>
 			/// <param name="type">The type of change.</param>
 			/// <param name="item">The item that has changed.</param>
@@ -1301,31 +1303,28 @@ namespace System.Collections.Generic
 			}
 
 			/// <summary>
-			/// Gets the item that has changed.
+			///     Gets the item that has changed.
 			/// </summary>
 			/// <value>The item.</value>
 			public T Item { get; }
 
 			/// <summary>
-			/// Gets the index of the item.
+			///     Gets the index of the item.
 			/// </summary>
 			/// <value>The index of the item.</value>
 			public int ItemIndex { get; }
 
 			/// <summary>
-			/// Gets the type of change for the list.
+			///     Gets the type of change for the list.
 			/// </summary>
 			/// <value>The type of change for the list.</value>
 			public ListChangedType ListChangedType { get; }
 
 			/// <summary>
-			/// Gets the item's previous value.
+			///     Gets the item's previous value.
 			/// </summary>
 			/// <value>The old item.</value>
-			public T OldItem
-			{
-				get;
-			}
+			public T OldItem { get; }
 		}
 #pragma warning restore 693
 	}

@@ -2,7 +2,7 @@
 <package>
   <metadata>
 	<id>GroupControls</id>
-	<version>1.5.2</version>
+	<version>1.6.0</version>
 	<title>WinForms Group Controls</title>
 	<authors>David Hall</authors>
 	<description>RadioButtonList and CheckBoxList for WinForms</description>
@@ -22,9 +22,9 @@
 	<file src="bin\Release\v4.0\GroupControls.dll" target="lib\net40" />
 	<file src="bin\Release\v4.0\GroupControls.pdb" target="lib\net40" />
 	<file src="bin\Release\v4.0\GroupControls.xml" target="lib\net40" />
-	<file src="bin\Release\v4.5.2\GroupControls.dll" target="lib\net45" />
-	<file src="bin\Release\v4.5.2\GroupControls.pdb" target="lib\net45" />
-	<file src="bin\Release\v4.5.2\GroupControls.xml" target="lib\net45" />
+	<file src="bin\Release\v4.5.2\GroupControls.dll" target="lib\net452" />
+	<file src="bin\Release\v4.5.2\GroupControls.pdb" target="lib\net452" />
+	<file src="bin\Release\v4.5.2\GroupControls.xml" target="lib\net452" />
 	<file src="*.cs" target="src" />
 	<file src="Native\*.cs" target="src\Native" />
 	<file src="Properties\*.cs" target="src\Properties" />

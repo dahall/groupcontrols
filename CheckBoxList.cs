@@ -12,23 +12,22 @@ namespace GroupControls
 	/// </summary>
 	[ToolboxItem(true), ToolboxBitmap(typeof(CheckBoxList)), DefaultProperty("Items"), DefaultEvent("ItemCheckStateChanged")]
 	[Description("Displays a list of checkbox items with optional subtext.")]
-	public class CheckBoxList : ButtonListBase
+	public class CheckBoxList : ButtonListBase<CheckBoxState>
 	{
-		private CheckBoxListItemCollection items;
-		private CheckBoxState lastState = CheckBoxState.UncheckedNormal;
+		private readonly CheckBoxListItemCollection items;
 		private VisualStyleRenderer renderer;
 
 		/// <summary>
 		/// Creates a new instance of a <see cref="CheckBoxList"/>.
 		/// </summary>
-		public CheckBoxList() : base()
+		public CheckBoxList()
 		{
 			items = new CheckBoxListItemCollection(this);
-			items.ItemAdded += itemsChanged;
-			items.ItemDeleted += itemsChanged;
-			items.ItemChanged += itemsChanged;
-			items.Reset += itemsChanged;
-			items.ItemPropertyChanged += itemPropertyChanged;
+			items.ItemAdded += ItemsChanged;
+			items.ItemDeleted += ItemsChanged;
+			items.ItemChanged += ItemsChanged;
+			items.Reset += ItemsChanged;
+			items.ItemPropertyChanged += ItemPropertyChanged;
 
 			try { renderer = new VisualStyleRenderer("BUTTON", 3, 0); } catch { }
 		}
@@ -49,26 +48,25 @@ namespace GroupControls
 		/// <summary>
 		/// Gets or sets the selected items in the list based on bits. Limited to lists of 64 items or less.
 		/// </summary>
-		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Indicies")]
 		[Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public long SelectedIndicies
 		{
 			get
 			{
 				if (items.Count > sizeof(long) * 8)
-					throw new ArgumentOutOfRangeException(nameof(SelectedIndicies), "Too many items to retrieve");
+					throw new ArgumentOutOfRangeException(nameof(SelectedIndicies), @"Too many items to retrieve");
 				long ret = 0;
-				for (int i = 0; i < items.Count; i++)
+				for (var i = 0; i < items.Count; i++)
 					if (items[i].Checked)
-						ret |= (1L << i);
+						ret |= 1L << i;
 				return ret;
 			}
 			set
 			{
 				if (items.Count > sizeof(long) * 8)
-					throw new ArgumentOutOfRangeException(nameof(SelectedIndicies), "Too many items to set");
-				for (int i = 0; i < items.Count; i++)
-					items[i].Checked = ((value & (1L << i)) > 0L);
+					throw new ArgumentOutOfRangeException(nameof(SelectedIndicies), @"Too many items to set");
+				for (var i = 0; i < items.Count; i++)
+					items[i].Checked = (value & (1L << i)) > 0L;
 				Refresh();
 			}
 		}
@@ -98,95 +96,11 @@ namespace GroupControls
 		protected internal override System.Collections.IList BaseItems => items;
 
 		/// <summary>
-		/// If each items <c>Tag</c> property has been assigned a value of <c>T</c>, this method retrieved the OR value of all items.
-		/// </summary>
-		/// <typeparam name="T">An enumerated type with a FlagsAttribute assigned to all item's <c>Tag</c> properties.</typeparam>
-		/// <param name="defaultValue">The default value.</param>
-		/// <returns>The OR value of all items</returns>
-		public T GetFlagsValue<T>(T defaultValue) where T : struct, IConvertible
-		{
-			IsValidEnum<T>();
-			long ret = Convert.ToInt64(defaultValue, System.Globalization.CultureInfo.InvariantCulture);
-			foreach (var item in items)
-			{
-				if (item.Tag != null && item.Tag is T && item.Checked)
-					ret |= Convert.ToInt64(item.Tag, System.Globalization.CultureInfo.InvariantCulture);
-			}
-			return (T)Enum.ToObject(typeof(T), ret);
-		}
-
-		private static void IsValidEnum<T>() where T : struct, IConvertible
-		{
-			if (!typeof(T).IsEnum)
-				throw new ArgumentException($"Type '{typeof(T).FullName}' is not an enum");
-			if (!Attribute.IsDefined(typeof(T), typeof(FlagsAttribute)))
-				throw new ArgumentException($"Type '{typeof(T).FullName}' doesn't have the 'Flags' attribute");
-		}
-
-		/// <summary>
-		/// If each items <c>Tag</c> property has been assigned a value of <c>T</c>, this method with set the item's Checked property appropriately.
-		/// </summary>
-		/// <typeparam name="T">An enumerated type with a FlagsAttribute assigned to all item's <c>Tag</c> properties.</typeparam>
-		/// <param name="value">The composite flag value.</param>
-		public void SetFlagsValue<T>(T value) where T : struct, IConvertible
-		{
-			IsValidEnum<T>();
-			long lv = Convert.ToInt64(value, System.Globalization.CultureInfo.InvariantCulture);
-			foreach (var item in items)
-			{
-				if (item.Tag != null && item.Tag is T)
-				{
-					long tlv = Convert.ToInt64(item.Tag, System.Globalization.CultureInfo.InvariantCulture);
-					item.Checked = (lv & tlv) == tlv;
-				}
-			}
-		}
-
-		private static bool EnumHasValue<T>(object enumValue, object value) where T : struct, IConvertible
-		{
-			if (enumValue == null || value == null || !(enumValue is T) || !(value is T))
-				return false;
-			long val = Convert.ToInt64(value, System.Globalization.CultureInfo.InvariantCulture);
-			return (Convert.ToInt64(enumValue, System.Globalization.CultureInfo.InvariantCulture) & val) == val;
-		}
-
-		/// <summary>
-		/// Processes the flags on check state changed. Include this method in the event handler for ItemCheckStateChanged.
-		/// </summary>
-		/// <param name="item">The item that was changed.</param>
-		public void ProcessFlagsOnCheckStateChanged<T>(CheckBoxListItem item) where T : struct, IConvertible
-		{
-			IsValidEnum<T>();
-			if (item == null)
-				throw new ArgumentNullException(nameof(item));
-
-			bool set = item.Checked;
-			T newVal = GetFlagsValue<T>(Activator.CreateInstance<T>());
-			for (int i = 0; i < items.Count; i++)
-			{
-				CheckBoxListItem curItem = items[i];
-				bool changed = false;
-				if (set && (EnumHasValue<T>(newVal, curItem.Tag) || EnumHasValue<T>(curItem.Tag, item.Tag)) && !curItem.Checked)
-				{
-					curItem.Checked = true;
-					changed = true;
-				}
-				if (!set && EnumHasValue<T>(curItem.Tag, item.Tag) && curItem.Checked)
-				{
-					curItem.Checked = false;
-					changed = true;
-				}
-				if (changed)
-					InvalidateItem(i);
-			}
-		}
-
-		/// <summary>
 		/// Gets the size of the image used to display the button.
 		/// </summary>
 		/// <param name="g">Current <see cref="Graphics"/> context.</param>
 		/// <returns>The size of the image.</returns>
-		protected override Size GetButtonSize(Graphics g) => CheckBoxRenderer.GetGlyphSize(g, System.Windows.Forms.VisualStyles.CheckBoxState.CheckedNormal);
+		protected override Size GetButtonSize(Graphics g) => CheckBoxRenderer.GetGlyphSize(g, CheckBoxState.CheckedNormal);
 
 		/// <summary>
 		/// Determines whether this list has the specified mnemonic in its members.
@@ -197,11 +111,11 @@ namespace GroupControls
 		/// </returns>
 		protected override bool ListHasMnemonic(char charCode)
 		{
-			foreach (CheckBoxListItem item in items)
+			foreach (var item in items)
 			{
-				if (Control.IsMnemonic(charCode, item.Text))
+				if (IsMnemonic(charCode, item.Text))
 				{
-					int idx = items.IndexOf(item);
+					var idx = items.IndexOf(item);
 					SetFocused(idx);
 					ToggleItem(idx);
 					return true;
@@ -229,7 +143,7 @@ namespace GroupControls
 			{
 				PressingItem = FocusedIndex;
 				InvalidateItem(PressingItem);
-				base.Update();
+				Update();
 				e.Handled = true;
 			}
 			base.OnKeyDown(e);
@@ -255,34 +169,24 @@ namespace GroupControls
 		/// <param name="g">A <see cref="Graphics" /> reference.</param>
 		/// <param name="index">The index of the item.</param>
 		/// <param name="bounds">The bounds in which to paint the item.</param>
-		protected override void PaintButton(Graphics g, int index, Rectangle bounds)
+		/// <param name="newState"></param>
+		protected override void PaintButton(Graphics g, int index, Rectangle bounds, bool newState)
 		{
-			CheckBoxListItem li = BaseItems[index] as CheckBoxListItem;
+			var li = BaseItems[index] as CheckBoxListItem;
+			if (li == null) throw new ArgumentOutOfRangeException(nameof(index));
 			// Get current state
-			CheckBoxState curState = (CheckBoxState)(((int)li.CheckState * 4) + 1);
+			var curState = (CheckBoxState)((int)li.CheckState*4 + 1);
 			if (!Enabled || !li.Enabled)
 				curState += 3;
 			else if (index == PressingItem)
 				curState += 2;
 			else if (index == HoverItem)
 				curState++;
+			li.State = curState;
 			// Draw glyph
-			Microsoft.Win32.NativeMethods.BufferedPaint.Paint<CheckBoxState, CheckBoxListItem>(g, this, bounds, PaintAnimatedButton, lastState, curState, GetTransition(curState, lastState), li);
-			lastState = curState;
-		}
-
-		private void PaintAnimatedButton(Graphics g, Rectangle bounds, CheckBoxState curState, CheckBoxListItem li)
-		{
-			Point gp = li.GlyphPosition;
+			var gp = li.GlyphPosition;
 			gp.Offset(bounds.Location);
-			CheckBoxRenderer.DrawCheckBox(g, gp, curState);
-		}
-
-		private uint GetTransition(CheckBoxState curState, CheckBoxState priorState)
-		{
-			if (renderer != null && Environment.OSVersion.Version.Major >= 6)
-				return renderer.GetTransitionDuration((int)curState, (int)priorState);
-			return 0;
+			CheckBoxRenderer.DrawCheckBox(g, gp, newState ? li.State : li.PrevState);
 		}
 
 		/// <summary>
@@ -292,7 +196,7 @@ namespace GroupControls
 		/// <returns><c>true</c> if the key was processed by the control; otherwise, <c>false</c>.</returns>
 		protected override bool ProcessKey(KeyEventArgs ke)
 		{
-			bool ret = false;
+			var ret = false;
 			switch (ke.KeyCode)
 			{
 				case Keys.Down:
@@ -325,19 +229,17 @@ namespace GroupControls
 						ret = true;
 					}
 					break;
-				default:
-					break;
 			}
 			if (ret) ke.SuppressKeyPress = true;
 			return ret;
 		}
 
-		private void itemPropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void ItemPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			OnListChanged();
 		}
 
-		private void itemsChanged(object sender, EventedList<CheckBoxListItem>.ListChangedEventArgs<CheckBoxListItem> e)
+		private void ItemsChanged(object sender, EventedList<CheckBoxListItem>.ListChangedEventArgs<CheckBoxListItem> e)
 		{
 			if (e.ListChangedType != ListChangedType.ItemChanged || !e.Item.Equals(e.OldItem))
 				OnListChanged();
@@ -386,20 +288,12 @@ namespace GroupControls
 			ItemIndex = index;
 		}
 
-		/// <summary>
-		/// Gets the <see cref="CheckBoxListItem"/> whose checked state is changing.
-		/// </summary>
-		/// <value>
-		/// The <see cref="CheckBoxListItem"/> whose checked state is changing.
-		/// </value>
+		/// <summary>Gets the <see cref="CheckBoxListItem"/> whose checked state is changing.</summary>
+		/// <value>The <see cref="CheckBoxListItem"/> whose checked state is changing.</value>
 		public CheckBoxListItem Item { get; }
 
-		/// <summary>
-		/// Gets the index of the item.
-		/// </summary>
-		/// <value>
-		/// The index of the item.
-		/// </value>
+		/// <summary>Gets the index of the item.</summary>
+		/// <value>The index of the item.</value>
 		public int ItemIndex { get; }
 	}
 
@@ -407,26 +301,12 @@ namespace GroupControls
 	/// An item associated with a <see cref="CheckBoxList"/>.
 	/// </summary>
 	[DefaultProperty("Text")]
-	public class CheckBoxListItem : ButtonListItem
+	public class CheckBoxListItem : ButtonListItem<CheckBoxState>
 	{
-		private CheckState checkState = CheckState.Unchecked;
-
 		/// <summary>
 		/// Creates a new instance of a <c>CheckBoxListItem</c>.
 		/// </summary>
-		public CheckBoxListItem()
-		{
-		}
-
-		/// <summary>
-		/// Creates a new instance of a <c>CheckBoxListItem</c>.
-		/// </summary>
-		/// <param name="text">Text displayed next to checkbox.</param>
-		/// <param name="subtext">Subtext displayed under text.</param>
-		public CheckBoxListItem(string text, string subtext)
-			: this(text, subtext, null)
-		{
-		}
+		public CheckBoxListItem() { State = PrevState = CheckBoxState.UncheckedNormal; }
 
 		/// <summary>
 		/// Creates a new instance of a <c>CheckBoxListItem</c>.
@@ -434,9 +314,10 @@ namespace GroupControls
 		/// <param name="text">Text displayed next to checkbox.</param>
 		/// <param name="subtext">Subtext displayed under text.</param>
 		/// <param name="tooltipText">Tooltip displayed for the item.</param>
-		public CheckBoxListItem(string text, string subtext, string tooltipText)
+		public CheckBoxListItem(string text, string subtext, string tooltipText = null)
 			: base(text, subtext, tooltipText)
 		{
+			State = PrevState = CheckBoxState.UncheckedNormal;
 		}
 
 		/// <summary>
@@ -452,24 +333,9 @@ namespace GroupControls
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public override bool Checked
 		{
-			get
-			{
-				return CheckState == CheckState.Checked;
-			}
-			set
-			{
-				CheckState = value ? CheckState.Checked : CheckState.Unchecked;
-				base.Checked = value;
-			}
+			get { return CheckState == CheckState.Checked; }
+			set { if (Checked != value) CheckState = value ? CheckState.Checked : CheckState.Unchecked; }
 		}
-
-		/*/// <summary>
-		/// Gets or sets the value.
-		/// </summary>
-		/// <value>
-		/// The value.
-		/// </value>
-		public virtual T Value { get; set; }*/
 
 		/// <summary>
 		/// Gets or sets the state of the checkbox.
@@ -477,19 +343,35 @@ namespace GroupControls
 		[DefaultValue(typeof(CheckState), "Unchecked"),
 		Description("State of the checkbox for the item."),
 		Category("Appearance")]
-		public System.Windows.Forms.CheckState CheckState
+		public CheckState CheckState
 		{
-			get { return checkState; }
+			get { var disp = ((int)state - 1) / 4; return disp == 0 ? CheckState.Unchecked : (disp == 1 ? CheckState.Checked : CheckState.Indeterminate);}
 			set
 			{
-				if (value != CheckState)
-				{
-					checkState = value;
-					OnCheckStateChanged(EventArgs.Empty);
-					OnNotifyPropertyChanged("CheckState");
-				}
+				if (value == CheckState) return;
+				var wasChecked = Checked;
+				State = (CheckBoxState)(((int)state - 1) % 4 + 1 + (value == CheckState.Unchecked ? 0 : (value == CheckState.Checked ? 4 : 8)));
+				if (Checked != wasChecked)
+					OnNotifyPropertyChanged(nameof(Checked));
+				OnCheckStateChanged(EventArgs.Empty);
+				OnNotifyPropertyChanged(nameof(CheckState));
 			}
 		}
+
+		/// <summary>Gets or sets a value indicating whether this <see cref="CheckBoxListItem"/> is enabled.</summary>
+		/// <value><c>true</c> if checked; otherwise, <c>false</c>.</value>
+		public override bool Enabled
+		{
+			get { return (int)state % 4 != 0; }
+			set
+			{
+				if (Enabled == value) return;
+				State = (CheckBoxState)(((int)state - 1) % 4) + (value ? 1 : 4);
+				OnNotifyPropertyChanged(nameof(Enabled));
+			}
+		}
+
+		internal override bool Focused { get; set; }
 
 		/// <summary>
 		/// Determines whether the specified <see cref="CheckBoxListItem"/> is equal to the current <see cref="CheckBoxListItem"/>.
@@ -498,7 +380,7 @@ namespace GroupControls
 		/// <returns>
 		/// true if the specified <see cref="CheckBoxListItem"/> is equal to the current <see cref="CheckBoxListItem"/>; otherwise, false.
 		/// </returns>
-		public bool Equals(CheckBoxListItem other) => base.Equals((ButtonListItem)other) && CheckState == other.CheckState;
+		public bool Equals(CheckBoxListItem other) => base.Equals(other) && CheckState == other.CheckState;
 
 		/// <summary>
 		/// Raises the <see cref="E:CheckStateChanged"/> event.
@@ -506,9 +388,7 @@ namespace GroupControls
 		/// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
 		protected virtual void OnCheckStateChanged(EventArgs e)
 		{
-			EventHandler handler1 = CheckStateChanged;
-			if (handler1 != null)
-				handler1(this, e);
+			CheckStateChanged?.Invoke(this, e);
 		}
 	}
 
@@ -518,7 +398,7 @@ namespace GroupControls
 	[Editor(typeof(System.ComponentModel.Design.CollectionEditor), typeof(System.Drawing.Design.UITypeEditor))]
 	public class CheckBoxListItemCollection : EventedList<CheckBoxListItem>
 	{
-		private CheckBoxList parent;
+		private readonly CheckBoxList parent;
 
 		internal CheckBoxListItemCollection(CheckBoxList list)
 		{
@@ -543,9 +423,9 @@ namespace GroupControls
 		public void Add(params string[] textValues)
 		{
 			if (textValues.Length % 2 != 0)
-				throw new ArgumentException("List of values must contain matching text/subtext entries for an even count of strings.", nameof(textValues));
+				throw new ArgumentException(@"List of values must contain matching text/subtext entries for an even count of strings.", nameof(textValues));
 			parent.SuspendLayout();
-			for (int i = 0; i < textValues.Length; i += 2)
+			for (var i = 0; i < textValues.Length; i += 2)
 				Add(textValues[i], textValues[i + 1]);
 			parent.ResumeLayout();
 		}
@@ -559,7 +439,7 @@ namespace GroupControls
 		{
 			base.OnItemAdded(index, value);
 			if (value != null && string.IsNullOrEmpty(value.Text) && parent != null && parent.IsDesignerHosted)
-				value.Text = "checkBoxItem" + Count.ToString();
+				value.Text = $"checkBoxItem{Count}";
 		}
 	}
 }

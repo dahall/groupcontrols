@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+﻿using Vanara.Interop;
 using System.Drawing;
 
 namespace System.Windows.Forms

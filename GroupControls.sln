@@ -1,35 +1,26 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupControls", "GroupControls.csproj", "{BDF6FC07-1F46-407A-9BCC-C61BF42F99E8}"
-EndProject
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.14
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "TestApp\TestApp.csproj", "{AAC2B11F-A20C-48F7-A4FE-A402D6C235AE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupControls", "GroupControls\GroupControls.csproj", "{BDF6FC07-1F46-407A-9BCC-C61BF42F99E8}"
+EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 3
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs03
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = GroupControls.csproj
-		SccLocalPath1 = .
-		SccProjectUniqueName2 = TestApp\\TestApp.csproj
-		SccProjectName2 = TestApp
-		SccLocalPath2 = TestApp
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{BDF6FC07-1F46-407A-9BCC-C61BF42F99E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BDF6FC07-1F46-407A-9BCC-C61BF42F99E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BDF6FC07-1F46-407A-9BCC-C61BF42F99E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BDF6FC07-1F46-407A-9BCC-C61BF42F99E8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AAC2B11F-A20C-48F7-A4FE-A402D6C235AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AAC2B11F-A20C-48F7-A4FE-A402D6C235AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AAC2B11F-A20C-48F7-A4FE-A402D6C235AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AAC2B11F-A20C-48F7-A4FE-A402D6C235AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDF6FC07-1F46-407A-9BCC-C61BF42F99E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDF6FC07-1F46-407A-9BCC-C61BF42F99E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDF6FC07-1F46-407A-9BCC-C61BF42F99E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDF6FC07-1F46-407A-9BCC-C61BF42F99E8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

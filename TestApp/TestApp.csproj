@@ -85,8 +85,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\GroupControls.csproj">
-      <Project>{BDF6FC07-1F46-407A-9BCC-C61BF42F99E8}</Project>
+    <ProjectReference Include="..\GroupControls\GroupControls.csproj">
+      <Project>{bdf6fc07-1f46-407a-9bcc-c61bf42f99e8}</Project>
       <Name>GroupControls</Name>
     </ProjectReference>
   </ItemGroup>

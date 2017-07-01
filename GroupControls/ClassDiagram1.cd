@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="GroupControls.RadioButtonList" Collapsed="true">
+    <Position X="2.75" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IADAAAAAAACACUQAAggAAAAAAAIAiAAAwpBAAAAAAAA=</HashCode>
+      <FileName>RadioButtonList.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GroupControls.RadioButtonListItemCollection" Collapsed="true">
+    <Position X="7.25" Y="3" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAIEAAAAAAQAAABAAAEAAAAAAAAAAAAAAAQAAAAAAAA=</HashCode>
+      <FileName>RadioButtonList.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GroupControls.CheckBoxList" Collapsed="true">
+    <Position X="5" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAACACQQAAggAAAAQAAJAAAAAwgAAAAAAAAA=</HashCode>
+      <FileName>CheckBoxList.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GroupControls.CheckBoxListItemCollection" Collapsed="true">
+    <Position X="10.25" Y="3" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAIEAAAAAAQAAABAAAEAAAAAAAAAAAAAAAQAAAAAAAA=</HashCode>
+      <FileName>CheckBoxList.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GroupControls.CheckBoxListItem" Collapsed="true">
+    <Position X="5" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAA=</HashCode>
+      <FileName>CheckBoxList.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GroupControls.RadioButtonListItem" Collapsed="true">
+    <Position X="2.75" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>RadioButtonList.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="System.Collections.Generic.EventedList&lt;T&gt;" Collapsed="true">
+    <Position X="9.25" Y="1.75" Width="1.5" />
+    <NestedTypes>
+      <Struct Name="System.Collections.Generic.EventedList&lt;T&gt;.Enumerator" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>EventedList.cs</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AmIUGEgwDIREIBABCAEUFCQSQJ0KAAAEKA0CAINUIQI=</HashCode>
+      <FileName>EventedList.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="System.Collections.Generic.SparseArray&lt;T&gt;" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="6.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEIIAEAAAAAAABAQCAAABAQAAAAAAAAECAAAAABQIAA=</HashCode>
+      <FileName>SparseArray.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="GroupControls.ButtonListBase" Collapsed="true">
+    <Position X="4" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IAhAACgAAICBIQEAAgwQABAEMAAAMAAAIIAASCAAAQg=</HashCode>
+      <FileName>ButtonListBase.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GroupControls.ControlListBase" Collapsed="true">
+    <Position X="4" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ogCKAQBMAQCAgQEAGUBAIBArABUAGgAE+AgAAAACGQA=</HashCode>
+      <FileName>ControlListBase.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Tahoma" Size="8.25" />
+</ClassDiagram>

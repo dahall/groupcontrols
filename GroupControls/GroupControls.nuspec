@@ -1,32 +1,32 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <package>
   <metadata>
-	<id>GroupControls</id>
-	<version>1.6.0</version>
-	<title>WinForms Group Controls</title>
-	<authors>David Hall</authors>
-	<description>RadioButtonList and CheckBoxList for WinForms</description>
-	<summary>WinForms controls that display multiple sub-controls without creating a unique window handle for each child. Instead each child is drawn using the default renderers and its space and status are managed by the parent. Currently provided is a RadioButtonList (similar the ASP.NET control) and a CheckBoxList.</summary>
-	<language>en-US</language>
-	<licenseUrl>http://groupcontrols.codeplex.com/license</licenseUrl>
-	<projectUrl>http://groupcontrols.codeplex.com/</projectUrl>
-	<tags>control radiobutton checkbox list</tags>
+    <id>GroupControls</id>
+    <version>1.8.0</version>
+    <title>WinForms Group Controls</title>
+    <authors>David Hall</authors>
+    <description>RadioButtonList and CheckBoxList for WinForms</description>
+    <summary>WinForms controls that display multiple sub-controls without creating a unique window handle for each child. Instead each child is drawn using the default renderers and its space and status are managed by the parent. Currently provided is a RadioButtonList (similar the ASP.NET control) and a CheckBoxList.</summary>
+    <language>en-US</language>
+    <licenseUrl>http://groupcontrols.codeplex.com/license</licenseUrl>
+    <projectUrl>http://groupcontrols.codeplex.com/</projectUrl>
+    <tags>control radiobutton checkbox list</tags>
   </metadata>
   <files>
-	<file src="bin\Release\v2.0\GroupControls.dll" target="lib\net20" />
-	<file src="bin\Release\v2.0\GroupControls.pdb" target="lib\net20" />
-	<file src="bin\Release\v2.0\GroupControls.xml" target="lib\net20" />
-	<file src="bin\Release\v3.5\GroupControls.dll" target="lib\net35" />
-	<file src="bin\Release\v3.5\GroupControls.pdb" target="lib\net35" />
-	<file src="bin\Release\v3.5\GroupControls.xml" target="lib\net35" />
-	<file src="bin\Release\v4.0\GroupControls.dll" target="lib\net40" />
-	<file src="bin\Release\v4.0\GroupControls.pdb" target="lib\net40" />
-	<file src="bin\Release\v4.0\GroupControls.xml" target="lib\net40" />
-	<file src="bin\Release\v4.5.2\GroupControls.dll" target="lib\net452" />
-	<file src="bin\Release\v4.5.2\GroupControls.pdb" target="lib\net452" />
-	<file src="bin\Release\v4.5.2\GroupControls.xml" target="lib\net452" />
-	<file src="*.cs" target="src" />
-	<file src="Native\*.cs" target="src\Native" />
-	<file src="Properties\*.cs" target="src\Properties" />
+    <file src="bin\Release\v2.0\GroupControls.dll" target="lib\net20" />
+    <file src="bin\Release\v2.0\GroupControls.pdb" target="lib\net20" />
+    <file src="bin\Release\v2.0\GroupControls.xml" target="lib\net20" />
+    <file src="bin\Release\v3.5\GroupControls.dll" target="lib\net35" />
+    <file src="bin\Release\v3.5\GroupControls.pdb" target="lib\net35" />
+    <file src="bin\Release\v3.5\GroupControls.xml" target="lib\net35" />
+    <file src="bin\Release\v4.0\GroupControls.dll" target="lib\net40" />
+    <file src="bin\Release\v4.0\GroupControls.pdb" target="lib\net40" />
+    <file src="bin\Release\v4.0\GroupControls.xml" target="lib\net40" />
+    <file src="bin\Release\v4.5\GroupControls.dll" target="lib\net45" />
+    <file src="bin\Release\v4.5\GroupControls.pdb" target="lib\net45" />
+    <file src="bin\Release\v4.5\GroupControls.xml" target="lib\net45" />
+    <file src="*.cs" target="src" />
+    <file src="Native\*.cs" target="src\Native" />
+    <file src="Properties\*.cs" target="src\Properties" />
   </files>
 </package>

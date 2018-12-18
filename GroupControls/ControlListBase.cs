@@ -7,37 +7,45 @@ using Vanara.Interop;
 
 namespace GroupControls
 {
-	/// <summary>
-	/// Abstract class that handles the display of numerous control items.
-	/// </summary>
+	/// <summary>Specifies the direction in which items of a list control are displayed.</summary>
+	public enum RepeatDirection
+	{
+		/// <summary>
+		/// Items of a list are displayed vertically in columns from top to bottom, and then left to right, until all items are rendered.
+		/// </summary>
+		Vertical,
+
+		/// <summary>Items of a list are displayed horizontally in rows from left to right, then top to bottom, until all items are rendered.</summary>
+		Horizontal
+	}
+
+	/// <summary>Abstract class that handles the display of numerous control items.</summary>
 	[System.ComponentModel.Design.Serialization.DesignerSerializer(typeof(Design.DesignerLayoutCodeDomSerializer), typeof(System.ComponentModel.Design.Serialization.CodeDomSerializer))]
 	[Designer(typeof(ControlListBaseDesigner))]
 	public abstract class ControlListBase : ScrollableControl
 	{
-		internal const ContentAlignment anyRightAlignment = (ContentAlignment)((int)ContentAlignment.TopRight | (int)ContentAlignment.MiddleRight | (int)ContentAlignment.BottomRight);
-		internal const ContentAlignment anyCenterAlignment = (ContentAlignment)((int)ContentAlignment.TopCenter | (int)ContentAlignment.MiddleCenter | (int)ContentAlignment.BottomCenter);
 		internal const ContentAlignment anyBottomAlignment = (ContentAlignment)((int)ContentAlignment.BottomLeft | (int)ContentAlignment.BottomCenter | (int)ContentAlignment.BottomRight);
+		internal const ContentAlignment anyCenterAlignment = (ContentAlignment)((int)ContentAlignment.TopCenter | (int)ContentAlignment.MiddleCenter | (int)ContentAlignment.BottomCenter);
 		internal const ContentAlignment anyMiddleAlignment = (ContentAlignment)((int)ContentAlignment.MiddleLeft | (int)ContentAlignment.MiddleCenter | (int)ContentAlignment.MiddleRight);
+		internal const ContentAlignment anyRightAlignment = (ContentAlignment)((int)ContentAlignment.TopRight | (int)ContentAlignment.MiddleRight | (int)ContentAlignment.BottomRight);
 		internal static readonly ToolTip toolTip = new ToolTip();
 
+		private readonly Timer hoverTimer;
 		private BorderStyle borderStyle;
 		private int columns = 1;
-		private readonly Timer hoverTimer;
+		private int hoverItem = -1;
+		private int hoverItemOld = -1;
 		private ColumnLayoutEngine layoutEngine;
 		private bool mouseTracking;
+		private int pressingItem = -1;
+		private int pressingItemOld = -1;
 		private RepeatDirection repeatDirection = RepeatDirection.Vertical;
 		private bool spaceEvenly;
 		private Size spacing = new Size(0, 6);
 		private int timedHoverItem = -1;
 		private bool variableColWidth;
-		private int hoverItem = -1;
-		private int hoverItemOld = -1;
-		private int pressingItem = -1;
-		private int pressingItemOld = -1;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ControlListBase"/> class.
-		/// </summary>
+		/// <summary>Initializes a new instance of the <see cref="ControlListBase"/> class.</summary>
 		protected ControlListBase()
 		{
 			ResizeRedraw = true;
@@ -55,41 +63,41 @@ namespace GroupControls
 			SizeChanged += OnLayoutPropertyChanged;
 		}
 
+		/// <summary>Method that will draw a control's background in a specified area.</summary>
+		/// <param name="g">The Graphics object used to draw.</param>
+		/// <param name="bounds">The bounds.</param>
+		/// <param name="childControl">The child control.</param>
+		protected delegate void PaintBackgroundMethod(Graphics g, Rectangle bounds, Control childControl);
+
 		/// <summary>
 		/// Gets or sets a value indicating whether the container enables the user to scroll to any controls placed outside of its visible boundaries.
 		/// </summary>
-		/// <returns>true if the container enables auto-scrolling; otherwise, false. The default value is false. </returns>
-		[DefaultValue(true), Category("Layout"), Browsable(true), 
+		/// <returns>true if the container enables auto-scrolling; otherwise, false. The default value is false.</returns>
+		[DefaultValue(true), Category("Layout"), Browsable(true),
 		Description("Indicates whether scroll bars automatically appear when the control contents are larger than its visible area."),
 		DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
 		public override bool AutoScroll
 		{
-			get { return base.AutoScroll; }
-			set { base.AutoScroll = value; }
+			get => base.AutoScroll;
+			set => base.AutoScroll = value;
 		}
 
-		/// <summary>
-		/// Gets or sets a value that determines whether the control resizes based on its content.
-		/// </summary>
+		/// <summary>Gets or sets a value that determines whether the control resizes based on its content.</summary>
 		/// <value>true if enabled; otherwise, false.</value>
 		[DefaultValue(true), Category("Layout"), Browsable(true), Description("Autosizes the control to fit the contents"),
 		DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
 		public override bool AutoSize
 		{
-			get { return base.AutoSize; }
-			set { base.AutoSize = value; }
+			get => base.AutoSize;
+			set => base.AutoSize = value;
 		}
 
-		/// <summary>
-		/// Gets or sets the border style of the list control.
-		/// </summary>
-		/// <value>
-		/// One of the <see cref="BorderStyle"/> values. The default is <c>BorderStyle:None</c>.
-		/// </value>
+		/// <summary>Gets or sets the border style of the list control.</summary>
+		/// <value>One of the <see cref="BorderStyle"/> values. The default is <c>BorderStyle:None</c>.</value>
 		[DefaultValue(0), Description("Border style of the list control."), Category("Appearance")]
 		public BorderStyle BorderStyle
 		{
-			get { return borderStyle; }
+			get => borderStyle;
 			set
 			{
 				if (borderStyle != value)
@@ -100,85 +108,61 @@ namespace GroupControls
 			}
 		}
 
-		/// <summary>
-		/// Gets the spacing in between items.
-		/// </summary>
+		/// <summary>Gets the spacing in between items.</summary>
 		/// <value>The <see cref="Size"/> representing the horizontal and vertical spacing between items.</value>
 		[DefaultValue(typeof(Size), "0,6"), Category("Layout"), Description("Spacing between items")]
 		public virtual Size ItemSpacing
 		{
-			get { return spacing; }
+			get => spacing;
 			set { spacing = value; ResetListLayout(nameof(ItemSpacing)); Refresh(); }
 		}
 
-		/// <summary>
-		/// Gets or sets the layout engine.
-		/// </summary>
-		/// <value>
-		/// The layout engine.
-		/// </value>
+		/// <summary>Gets or sets the layout engine.</summary>
+		/// <value>The layout engine.</value>
 		public override LayoutEngine LayoutEngine => MyLayoutEngine;
 
-		/// <summary>
-		/// Gets or sets the number of columns to display in the control.
-		/// </summary>
+		/// <summary>Gets or sets the number of columns to display in the control.</summary>
 		/// <value>The repeat columns.</value>
 		[DefaultValue(1), Category("Layout"), Description("Number of columns to display")]
 		public virtual int RepeatColumns
 		{
-			get { return columns; }
+			get => columns;
 			set { columns = value; ResetListLayout(nameof(RepeatColumns)); Refresh(); }
 		}
 
-		/// <summary>
-		/// Gets or sets the direction in which the items within the group are displayed.
-		/// </summary>
+		/// <summary>Gets or sets the direction in which the items within the group are displayed.</summary>
 		/// <value>One of the <see cref="RepeatDirection"/> values. The default is <c>Vertical</c>.</value>
 		[DefaultValue(typeof(RepeatDirection), "Vertical"), Category("Layout"), Description("Direction items are displayed")]
 		public virtual RepeatDirection RepeatDirection
 		{
-			get { return repeatDirection; }
+			get => repeatDirection;
 			set { repeatDirection = value; ResetListLayout(nameof(RepeatDirection)); Refresh(); }
 		}
 
-		/// <summary>
-		/// Gets or sets a value that determines whether a tooltip is displayed for each item in the list.
-		/// </summary>
+		/// <summary>Gets or sets a value that determines whether a tooltip is displayed for each item in the list.</summary>
 		/// <value><c>true</c> if tooltips are shown; otherwise, <c>false</c>.</value>
 		[DefaultValue(true), Category("Appearance"), Description("Indicates whether to show the tooltip for each item.")]
 		public bool ShowItemToolTip { get; set; } = true;
 
 		/// <summary>
-		/// Gets or sets a value that determines if the items are spaced evenly based on the height of the largest item or if they are spaced according to the height of each item.
+		/// Gets or sets a value that determines if the items are spaced evenly based on the height of the largest item or if they are spaced
+		/// according to the height of each item.
 		/// </summary>
 		/// <value><c>true</c> if items are spaced evenly; otherwise, <c>false</c>.</value>
 		[DefaultValue(false), Description("Spaces items evenly."), Category("Appearance")]
 		public bool SpaceEvenly
 		{
-			get { return spaceEvenly; }
+			get => spaceEvenly;
 			set { spaceEvenly = value; ResetListLayout(nameof(SpaceEvenly)); Refresh(); }
 		}
 
-		/// <summary>
-		/// Gets or sets the text associated with this control.
-		/// </summary>
+		/// <summary>Gets or sets the text associated with this control.</summary>
 		/// <returns>The text associated with this control.</returns>
 		[Browsable(false), EditorBrowsable(EditorBrowsableState.Never), Bindable(false)]
 		public override string Text
 		{
-			get { return base.Text; }
-			set { base.Text = value; }
-		}
-
-		/// <summary>
-		/// Gets or sets a value that determines if the columns are allowed to be a variable width or if they are to be all the same width.
-		/// </summary>
-		/// <value><c>true</c> if the columns can be a variable width; otherwise, <c>false</c>.</value>
-		[DefaultValue(false), Description("Make columns variable width."), Category("Appearance")]
-		internal bool VariableColumnWidths
-		{
-			get { return variableColWidth; }
-			set { variableColWidth = value; ResetListLayout(nameof(VariableColumnWidths)); Refresh(); }
+			get => base.Text;
+			set => base.Text = value;
 		}
 
 		internal bool IsDesignerHosted
@@ -196,18 +180,32 @@ namespace GroupControls
 			}
 		}
 
-		/// <summary>
-		/// Gets the base list of items.
-		/// </summary>
-		/// <value>Any list supporting and <see cref="System.Collections.IList"/> interface.</value>
-		protected internal abstract System.Collections.IList BaseItems { get; }
-
 		internal ColumnLayoutEngine MyLayoutEngine => layoutEngine ?? (layoutEngine = new ColumnLayoutEngine());
 
 		/// <summary>
-		/// Gets the required creation parameters when the control handle is created.
+		/// Gets or sets a value that determines if the columns are allowed to be a variable width or if they are to be all the same width.
 		/// </summary>
-		/// <returns>A <see cref="T:System.Windows.Forms.CreateParams"/> that contains the required creation parameters when the handle to the control is created.</returns>
+		/// <value><c>true</c> if the columns can be a variable width; otherwise, <c>false</c>.</value>
+		[DefaultValue(false), Description("Make columns variable width."), Category("Appearance")]
+		internal bool VariableColumnWidths
+		{
+			get => variableColWidth;
+			set { variableColWidth = value; ResetListLayout(nameof(VariableColumnWidths)); Refresh(); }
+		}
+
+		/// <summary>Gets the base list of items.</summary>
+		/// <value>Any list supporting and <see cref="System.Collections.IList"/> interface.</value>
+		protected internal abstract System.Collections.IList BaseItems { get; }
+
+		/// <summary>Gets the background renderer for this type of control.</summary>
+		/// <value>The background renderer.</value>
+		protected virtual PaintBackgroundMethod BackgroundRenderer => ButtonRenderer.DrawParentBackground;
+
+		/// <summary>Gets the required creation parameters when the control handle is created.</summary>
+		/// <returns>
+		/// A <see cref="T:System.Windows.Forms.CreateParams"/> that contains the required creation parameters when the handle to the control
+		/// is created.
+		/// </returns>
 		protected override CreateParams CreateParams
 		{
 			get
@@ -234,6 +232,7 @@ namespace GroupControls
 					case BorderStyle.FixedSingle:
 						createParams.Style |= WS_BORDER;
 						break;
+
 					case BorderStyle.Fixed3D:
 						createParams.ExStyle |= WS_EX_CLIENTEDGE;
 						break;
@@ -252,13 +251,11 @@ namespace GroupControls
 			}
 		}
 
-		/// <summary>
-		/// Gets the hover item's index.
-		/// </summary>
+		/// <summary>Gets the hover item's index.</summary>
 		/// <value>The hover item index.</value>
 		protected virtual int HoverItem
 		{
-			get { return hoverItem; }
+			get => hoverItem;
 			set
 			{
 				if (hoverItem == value) return;
@@ -269,13 +266,11 @@ namespace GroupControls
 
 		protected int HoverItemOld => hoverItemOld;
 
-		/// <summary>
-		/// Gets or sets the index of the item being pressing.
-		/// </summary>
+		/// <summary>Gets or sets the index of the item being pressing.</summary>
 		/// <value>The pressed item index.</value>
 		protected virtual int PressingItem
 		{
-			get { return pressingItem; }
+			get => pressingItem;
 			set
 			{
 				if (pressingItem == value) return;
@@ -286,43 +281,7 @@ namespace GroupControls
 
 		protected int PressingItemOld => pressingItemOld;
 
-		/// <summary>
-		/// Method that will draw a control's background in a specified area.
-		/// </summary>
-		/// <param name="g">The Graphics object used to draw.</param>
-		/// <param name="bounds">The bounds.</param>
-		/// <param name="childControl">The child control.</param>
-		protected delegate void PaintBackgroundMethod(Graphics g, Rectangle bounds, Control childControl);
-
-		/// <summary>
-		/// Gets the background renderer for this type of control.
-		/// </summary>
-		/// <value>
-		/// The background renderer.
-		/// </value>
-		protected virtual PaintBackgroundMethod BackgroundRenderer => ButtonRenderer.DrawParentBackground;
-
-		internal void OnListChanged()
-		{
-			ResetListLayout("Items");
-			Refresh();
-		}
-
-		/// <summary>
-		/// Releases unmanaged and - optionally - managed resources.
-		/// </summary>
-		/// <param name="disposing">
-		///   <c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-		protected override void Dispose(bool disposing)
-		{
-			hoverTimer.Tick -= hoverTimer_Tick;
-			hoverTimer.Dispose();
-			base.Dispose(disposing);
-		}
-
-		/// <summary>
-		/// Retrieves the bounding rectangle for a specific item within the list control.
-		/// </summary>
+		/// <summary>Retrieves the bounding rectangle for a specific item within the list control.</summary>
 		/// <param name="index">The zero-based index of the item whose bounding rectangle you want to return.</param>
 		/// <returns>A <see cref="Rectangle"/> that represents the bounding rectangle of the specified item.</returns>
 		public Rectangle GetItemRect(int index)
@@ -332,56 +291,68 @@ namespace GroupControls
 			return MyLayoutEngine.ItemBounds[index];
 		}
 
-		/// <summary>
-		/// Gets the specified item's tooltip text.
-		/// </summary>
-		/// <param name="index">The index of the item.</param>
-		/// <returns>Tooltip text to display. <c>null</c> or <see cref="String.Empty"/> to display no tooltip.</returns>
-		protected virtual string GetItemToolTipText(int index) => null;
-
-		/// <summary>
-		/// Retrieves the size of a rectangular area into which a control can be fitted.
-		/// </summary>
+		/// <summary>Retrieves the size of a rectangular area into which a control can be fitted.</summary>
 		/// <param name="proposedSize">The custom-sized area for a control.</param>
 		/// <returns>An ordered pair of type <see cref="Size"/> representing the width and height of a rectangle.</returns>
 		public override Size GetPreferredSize(Size proposedSize) => MyLayoutEngine.GetPreferredSize(this, proposedSize);
 
-		/// <summary>
-		/// Invalidates the specified item.
-		/// </summary>
-		/// <param name="index">The item index.</param>
-		protected virtual void InvalidateItem(int index)
+		internal void OnListChanged()
 		{
-			Invalidate(OffsetForScroll(MyLayoutEngine.ItemBounds[index]));
-			//base.Invalidate();
+			ResetListLayout("Items");
+			Refresh();
 		}
 
-		/// <summary>
-		/// Determines whether the specified item is enabled.
-		/// </summary>
-		/// <param name="index">The item index.</param>
-		/// <returns><c>true</c> if item is enabled; otherwise, <c>false</c>.</returns>
-		protected virtual bool IsItemEnabled(int index) => true;
-
-		/// <summary>
-		/// Determines whether this list has the specified mnemonic in its members.
-		/// </summary>
-		/// <param name="charCode">The mnemonic character.</param>
-		/// <returns><c>true</c> if list has the mnemonic; otherwise, <c>false</c>.</returns>
-		protected virtual bool ListHasMnemonic(char charCode) => false;
-
-		/// <summary>
-		/// Measures the specified item.
-		/// </summary>
+		/// <summary>Measures the specified item.</summary>
 		/// <param name="g">A <see cref="Graphics"/> reference.</param>
 		/// <param name="index">The index of the item.</param>
 		/// <param name="maxSize">Maximum size of the item. Usually only constrains the width.</param>
 		/// <returns>Minimum size for the item.</returns>
 		protected internal abstract Size MeasureItem(Graphics g, int index, Size maxSize);
 
-		/// <summary>
-		/// Offsets the client point for scrolling.
-		/// </summary>
+		/// <summary>Releases unmanaged and - optionally - managed resources.</summary>
+		/// <param name="disposing">
+		/// <c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.
+		/// </param>
+		protected override void Dispose(bool disposing)
+		{
+			hoverTimer.Tick -= hoverTimer_Tick;
+			hoverTimer.Dispose();
+			base.Dispose(disposing);
+		}
+
+		/// <summary>Gets the item at location within the control.</summary>
+		/// <param name="pt">The location.</param>
+		/// <returns></returns>
+		protected int GetItemAtLocation(Point pt)
+		{
+			for (var i = 0; i < MyLayoutEngine.ItemBounds.Count; i++)
+			{
+				if (MyLayoutEngine.ItemBounds[i].Contains(pt))
+					return i;
+			}
+			return -1;
+		}
+
+		/// <summary>Gets the specified item's tooltip text.</summary>
+		/// <param name="index">The index of the item.</param>
+		/// <returns>Tooltip text to display. <c>null</c> or <see cref="string.Empty"/> to display no tooltip.</returns>
+		protected virtual string GetItemToolTipText(int index) => null;
+
+		/// <summary>Invalidates the specified item.</summary>
+		/// <param name="index">The item index.</param>
+		protected virtual void InvalidateItem(int index) => Invalidate(OffsetForScroll(MyLayoutEngine.ItemBounds[index]));//base.Invalidate();
+
+		/// <summary>Determines whether the specified item is enabled.</summary>
+		/// <param name="index">The item index.</param>
+		/// <returns><c>true</c> if item is enabled; otherwise, <c>false</c>.</returns>
+		protected virtual bool IsItemEnabled(int index) => true;
+
+		/// <summary>Determines whether this list has the specified mnemonic in its members.</summary>
+		/// <param name="charCode">The mnemonic character.</param>
+		/// <returns><c>true</c> if list has the mnemonic; otherwise, <c>false</c>.</returns>
+		protected virtual bool ListHasMnemonic(char charCode) => false;
+
+		/// <summary>Offsets the client point for scrolling.</summary>
 		/// <returns>Offset point</returns>
 		protected Point OffsetForScroll(Point pt)
 		{
@@ -404,9 +375,7 @@ namespace GroupControls
 			return pt;
 		}
 
-		/// <summary>
-		/// Offsets the client rectangle for scrolling.
-		/// </summary>
+		/// <summary>Offsets the client rectangle for scrolling.</summary>
 		/// <returns>Offset rectangle</returns>
 		protected Rectangle OffsetForScroll(Rectangle rect)
 		{
@@ -417,9 +386,7 @@ namespace GroupControls
 			return outRect;
 		}
 
-		/// <summary>
-		/// Raises the <see cref="Control.KeyUp"/> event.
-		/// </summary>
+		/// <summary>Raises the <see cref="Control.KeyUp"/> event.</summary>
 		/// <param name="e">An <see cref="KeyEventArgs"/> that contains the event data.</param>
 		protected override void OnKeyUp(KeyEventArgs e)
 		{
@@ -433,9 +400,7 @@ namespace GroupControls
 			base.OnKeyUp(e);
 		}
 
-		/// <summary>
-		/// Raises the <see cref="Control.MouseDown"/> event.
-		/// </summary>
+		/// <summary>Raises the <see cref="Control.MouseDown"/> event.</summary>
 		/// <param name="e">An <see cref="MouseEventArgs"/> that contains the event data.</param>
 		protected override void OnMouseDown(MouseEventArgs e)
 		{
@@ -449,9 +414,7 @@ namespace GroupControls
 			Update();
 		}
 
-		/// <summary>
-		/// Raises the <see cref="Control.MouseEnter"/> event.
-		/// </summary>
+		/// <summary>Raises the <see cref="Control.MouseEnter"/> event.</summary>
 		/// <param name="e">An <see cref="EventArgs"/> that contains the event data.</param>
 		protected override void OnMouseEnter(EventArgs e)
 		{
@@ -459,9 +422,7 @@ namespace GroupControls
 			mouseTracking = true;
 		}
 
-		/// <summary>
-		/// Raises the <see cref="Control.MouseLeave"/> event.
-		/// </summary>
+		/// <summary>Raises the <see cref="Control.MouseLeave"/> event.</summary>
 		/// <param name="e">An <see cref="EventArgs"/> that contains the event data.</param>
 		protected override void OnMouseLeave(EventArgs e)
 		{
@@ -470,9 +431,7 @@ namespace GroupControls
 			SetHover(-1);
 		}
 
-		/// <summary>
-		/// Raises the <see cref="Control.MouseMove"/> event.
-		/// </summary>
+		/// <summary>Raises the <see cref="Control.MouseMove"/> event.</summary>
 		/// <param name="e">An <see cref="MouseEventArgs"/> that contains the event data.</param>
 		protected override void OnMouseMove(MouseEventArgs e)
 		{
@@ -481,9 +440,7 @@ namespace GroupControls
 				SetHover(GetItemAtLocation(OffsetForScroll(e.Location)));
 		}
 
-		/// <summary>
-		/// Raises the <see cref="Control.MouseUp"/> event.
-		/// </summary>
+		/// <summary>Raises the <see cref="Control.MouseUp"/> event.</summary>
 		/// <param name="e">An <see cref="MouseEventArgs"/> that contains the event data.</param>
 		protected override void OnMouseUp(MouseEventArgs e)
 		{
@@ -496,19 +453,15 @@ namespace GroupControls
 			base.OnMouseUp(e);
 		}
 
-		/// <summary>
-		/// Raises the <see cref="E:PaddingChanged" /> event.
-		/// </summary>
-		/// <param name="e">The <see cref="System.EventArgs" /> instance containing the event data.</param>
+		/// <summary>Raises the <see cref="E:PaddingChanged"/> event.</summary>
+		/// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
 		protected override void OnPaddingChanged(EventArgs e)
 		{
 			base.OnPaddingChanged(e);
 			ResetListLayout("Padding");
 		}
 
-		/// <summary>
-		/// Raises the <see cref="Control.Paint"/> event.
-		/// </summary>
+		/// <summary>Raises the <see cref="Control.Paint"/> event.</summary>
 		/// <param name="pe">An <see cref="PaintEventArgs"/> that contains the event data.</param>
 		protected override void OnPaint(PaintEventArgs pe)
 		{
@@ -519,22 +472,7 @@ namespace GroupControls
 			PaintControl(pe.Graphics, ClientRectangle, true, pe.ClipRectangle);
 		}
 
-		private void PaintControl(Graphics graphics, Rectangle bounds, bool newState, Rectangle clip)
-		{
-			graphics.Clear(BackColor);
-			if (Application.RenderWithVisualStyles)
-				BackgroundRenderer(graphics, clip, this);
-
-			for (var i = 0; i < BaseItems.Count; i++)
-			{
-				if (clip.IntersectsWith(OffsetForScroll(MyLayoutEngine.ItemBounds[i])))
-					PaintItem(graphics, i, MyLayoutEngine.ItemBounds[i], newState);
-			}
-		}
-
-		/// <summary>
-		/// Raises the <see cref="E:System.Windows.Forms.ScrollableControl.Scroll"/> event.
-		/// </summary>
+		/// <summary>Raises the <see cref="E:System.Windows.Forms.ScrollableControl.Scroll"/> event.</summary>
 		/// <param name="se">A <see cref="T:System.Windows.Forms.ScrollEventArgs"/> that contains the event data.</param>
 		protected override void OnScroll(ScrollEventArgs se)
 		{
@@ -542,9 +480,7 @@ namespace GroupControls
 			Invalidate();
 		}
 
-		/// <summary>
-		/// Raises the <see cref="Control.StyleChanged"/> event.
-		/// </summary>
+		/// <summary>Raises the <see cref="Control.StyleChanged"/> event.</summary>
 		/// <param name="e">An <see cref="EventArgs"/> that contains the event data.</param>
 		protected override void OnStyleChanged(EventArgs e)
 		{
@@ -552,18 +488,14 @@ namespace GroupControls
 			base.OnStyleChanged(e);
 		}
 
-		/// <summary>
-		/// Paints the specified item.
-		/// </summary>
-		/// <param name="g">A <see cref="Graphics" /> reference.</param>
+		/// <summary>Paints the specified item.</summary>
+		/// <param name="g">A <see cref="Graphics"/> reference.</param>
 		/// <param name="index">The index of the item.</param>
 		/// <param name="bounds">The bounds in which to paint the item.</param>
 		/// <param name="newState">if set to <c>true</c> [new state].</param>
 		protected abstract void PaintItem(Graphics g, int index, Rectangle bounds, bool newState);
 
-		/// <summary>
-		/// Processes a dialog key.
-		/// </summary>
+		/// <summary>Processes a dialog key.</summary>
 		/// <param name="keyData">One of the <see cref="Keys"/> values that represents the key to process.</param>
 		/// <returns><c>true</c> if the key was processed by the control; otherwise, <c>false</c>.</returns>
 		protected override bool ProcessDialogKey(Keys keyData)
@@ -589,16 +521,12 @@ namespace GroupControls
 			return base.ProcessDialogKey(keyData);
 		}
 
-		/// <summary>
-		/// Processes a keyboard event.
-		/// </summary>
+		/// <summary>Processes a keyboard event.</summary>
 		/// <param name="ke">The <see cref="KeyEventArgs"/> associated with the key press.</param>
 		/// <returns><c>true</c> if the key was processed by the control; otherwise, <c>false</c>.</returns>
 		protected virtual bool ProcessKey(KeyEventArgs ke) => false;
 
-		/// <summary>
-		/// Previews a keyboard message.
-		/// </summary>
+		/// <summary>Previews a keyboard message.</summary>
 		/// <param name="m">A <see cref="Message"/>, passed by reference, that represents the window message to process.</param>
 		/// <returns><c>true</c> if the key was processed by the control; otherwise, <c>false</c>.</returns>
 		protected override bool ProcessKeyPreview(ref Message m)
@@ -633,9 +561,7 @@ namespace GroupControls
 			return base.ProcessKeyPreview(ref m);
 		}
 
-		/// <summary>
-		/// Processes a mnemonic.
-		/// </summary>
+		/// <summary>Processes a mnemonic.</summary>
 		/// <param name="charCode">The character code.</param>
 		/// <returns><c>true</c> if the mnemonic was processed by the control; otherwise, <c>false</c>.</returns>
 		protected override bool ProcessMnemonic(char charCode)
@@ -645,29 +571,9 @@ namespace GroupControls
 			return false;
 		}
 
-		/// <summary>
-		/// Resets the list's layout.
-		/// </summary>
+		/// <summary>Resets the list's layout.</summary>
 		/// <param name="propertyName">Name of the property forcing the layout.</param>
-		protected virtual void ResetListLayout(string propertyName)
-		{
-			PerformLayout(this, propertyName);
-		}
-
-		/// <summary>
-		/// Gets the item at location within the control.
-		/// </summary>
-		/// <param name="pt">The location.</param>
-		/// <returns></returns>
-		protected int GetItemAtLocation(Point pt)
-		{
-			for (var i = 0; i < MyLayoutEngine.ItemBounds.Count; i++)
-			{
-				if (MyLayoutEngine.ItemBounds[i].Contains(pt))
-					return i;
-			}
-			return -1;
-		}
+		protected virtual void ResetListLayout(string propertyName) => PerformLayout(this, propertyName);
 
 		private void hoverTimer_Tick(object sender, EventArgs e)
 		{
@@ -678,9 +584,19 @@ namespace GroupControls
 			}
 		}
 
-		private void OnLayoutPropertyChanged(object sender, EventArgs e)
+		private void OnLayoutPropertyChanged(object sender, EventArgs e) => ResetListLayout("Layout");
+
+		private void PaintControl(Graphics graphics, Rectangle bounds, bool newState, Rectangle clip)
 		{
-			ResetListLayout("Layout");
+			graphics.Clear(BackColor);
+			if (Application.RenderWithVisualStyles)
+				BackgroundRenderer(graphics, clip, this);
+
+			for (var i = 0; i < BaseItems.Count; i++)
+			{
+				if (clip.IntersectsWith(OffsetForScroll(MyLayoutEngine.ItemBounds[i])))
+					PaintItem(graphics, i, MyLayoutEngine.ItemBounds[i], newState);
+			}
 		}
 
 		private void SetHover(int itemIndex)
@@ -734,16 +650,5 @@ namespace GroupControls
 				}
 			}
 		}
-	}
-
-	/// <summary>
-	/// Specifies the direction in which items of a list control are displayed.
-	/// </summary>
-	public enum RepeatDirection
-	{
-		/// <summary>Items of a list are displayed vertically in columns from top to bottom, and then left to right, until all items are rendered.</summary>
-		Vertical,
-		/// <summary>Items of a list are displayed horizontally in rows from left to right, then top to bottom, until all items are rendered.</summary>
-		Horizontal
 	}
 }

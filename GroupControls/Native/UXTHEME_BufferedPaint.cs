@@ -61,7 +61,8 @@ namespace Vanara.Interop
 		[StructLayout(LayoutKind.Sequential)]
 		public struct BufferedPaintAnimationParams
 		{
-			private int cbSize, dwFlags;
+			private int cbSize;
+			private readonly int dwFlags;
 			private BufferedPaintAnimationStyle style;
 			private int dwDuration;
 
@@ -75,14 +76,14 @@ namespace Vanara.Interop
 
 			public BufferedPaintAnimationStyle AnimationStyle
 			{
-				get { return style; }
-				set { style = value; }
+				get => style;
+				set => style = value;
 			}
 
 			public int Duration
 			{
-				get { return dwDuration; }
-				set { dwDuration = value; }
+				get => dwDuration;
+				set => dwDuration = value;
 			}
 
 			public static BufferedPaintAnimationParams Empty => new BufferedPaintAnimationParams { cbSize = Marshal.SizeOf(typeof(BufferedPaintAnimationParams)) };
@@ -91,7 +92,7 @@ namespace Vanara.Interop
 		[StructLayout(LayoutKind.Sequential)]
 		public class BufferedPaintParams : IDisposable
 		{
-			private int cbSize;
+			private readonly int cbSize;
 			public BufferedPaintParamsFlags Flags;
 			private IntPtr prcExclude;
 			private IntPtr pBlendFunction;
@@ -105,14 +106,14 @@ namespace Vanara.Interop
 
 			public Rectangle? Exclude
 			{
-				get { return prcExclude.PtrToStructure<Rectangle>(); }
-				set { InteropUtil.StructureToPtr(value, ref prcExclude, t => t.IsEmpty); }
+				get => prcExclude.PtrToStructure<Rectangle>();
+				set => InteropUtil.StructureToPtr(value, ref prcExclude, t => t.IsEmpty);
 			}
 
 			public BLENDFUNCTION? BlendFunction
 			{
-				get { return pBlendFunction.PtrToStructure<BLENDFUNCTION>(); }
-				set { InteropUtil.StructureToPtr(value, ref pBlendFunction, t => t.IsEmpty); }
+				get => pBlendFunction.PtrToStructure<BLENDFUNCTION>();
+				set => InteropUtil.StructureToPtr(value, ref pBlendFunction, t => t.IsEmpty);
 			}
 
 			public void Dispose()

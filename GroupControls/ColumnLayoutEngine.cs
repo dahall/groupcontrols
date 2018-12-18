@@ -9,16 +9,13 @@ namespace GroupControls
 	internal class ColumnLayoutEngine : LayoutEngine
 	{
 		public static readonly Size DefaultSize = new Size(100, 100);
-		private Size idealSize = DefaultSize;
 		private readonly Size lastLayout = Size.Empty;
-
+		private Size idealSize = DefaultSize;
 		public Size IdealSize => idealSize;
 
 		public SparseArray<Rectangle> ItemBounds { get; } = new SparseArray<Rectangle>();
 
-		/// <summary>
-		/// Retrieves the size of a rectangular area into which a control can be fitted.
-		/// </summary>
+		/// <summary>Retrieves the size of a rectangular area into which a control can be fitted.</summary>
 		/// <param name="container">The container.</param>
 		/// <param name="proposedSize">The custom-sized area for a control.</param>
 		/// <returns>An ordered pair of type <see cref="Size"/> representing the width and height of a rectangle.</returns>
@@ -29,11 +26,9 @@ namespace GroupControls
 			return idealSize;
 		}
 
-		/// <summary>
-		/// Layouts the specified container.
-		/// </summary>
+		/// <summary>Layouts the specified container.</summary>
 		/// <param name="container">The container.</param>
-		/// <param name="layoutEventArgs">The <see cref="System.Windows.Forms.LayoutEventArgs" /> instance containing the event data.</param>
+		/// <param name="layoutEventArgs">The <see cref="System.Windows.Forms.LayoutEventArgs"/> instance containing the event data.</param>
 		/// <returns></returns>
 		public override bool Layout(object container, LayoutEventArgs layoutEventArgs) => Layout(container as ControlListBase, layoutEventArgs, Size.Empty);
 
@@ -183,9 +178,8 @@ namespace GroupControls
 					// If not spaced evenly, then balance the columns based on height
 					if (!parent.SpaceEvenly)
 					{
-						// Determine total height of all items
-						// Determine max height of each column
-						// Working backwards, fit each item into columns with spillover on Column 1
+						// Determine total height of all items Determine max height of each column Working backwards, fit each item into
+						// columns with spillover on Column 1
 					}
 
 					// Get the min width of each column

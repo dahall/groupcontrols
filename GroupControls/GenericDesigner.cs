@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Windows.Forms;
 using System.Windows.Forms.Design;
 using System.Windows.Forms.Design.Behavior;
+
 // ReSharper disable VirtualMemberNeverOverridden.Global
 
 namespace System.ComponentModel.Design
@@ -169,7 +170,7 @@ namespace System.ComponentModel.Design
 	[AttributeUsage(AttributeTargets.Property)]
 	internal sealed class RedirectedDesignerPropertyAttribute : Attribute
 	{
-		public RedirectedDesignerPropertyAttribute() { ApplyOtherAttributes = true; }
+		public RedirectedDesignerPropertyAttribute() => ApplyOtherAttributes = true;
 
 		public bool ApplyOtherAttributes { get; set; }
 	}
@@ -182,6 +183,46 @@ namespace System.Windows.Forms.Design
 		string Category { get; }
 
 		DesignerActionItem GetItem(DesignerActionList actions, MemberInfo mbr);
+	}
+
+	internal abstract class BaseDesignerActionList : DesignerActionList
+	{
+		private List<DesignerActionItem> fullAIList;
+
+		protected BaseDesignerActionList(ComponentDesigner designer, IComponent component)
+			: base(component)
+		{
+			AutoShow = true;
+			ParentDesigner = designer;
+		}
+
+		public ComponentDesigner ParentDesigner { get; }
+
+		public override DesignerActionItemCollection GetSortedActionItems()
+		{
+			// Retrieve all attributed methods and properties
+			if (fullAIList == null)
+				fullAIList = this.GetAllAttributedActionItems();
+
+			// Filter for conditions and load
+			return this.GetFilteredActionItems(fullAIList);
+		}
+
+		protected T GetComponentProperty<T>(string propName)
+		{
+			var p = ComponentProp(propName, typeof(T));
+			if (p != null)
+				return (T)p.GetValue(Component, null);
+			return default(T);
+		}
+
+		protected void SetComponentProperty<T>(string propName, T value)
+		{
+			var p = ComponentProp(propName, typeof(T));
+			p?.SetValue(Component, value, null);
+		}
+
+		private PropertyInfo ComponentProp(string propName, Type retType) => Component.GetType().GetProperty(propName, ComponentDesignerExtension.allInstBind, null, retType, Type.EmptyTypes, null);
 	}
 
 	[AttributeUsage(AttributeTargets.Method)]
@@ -210,7 +251,7 @@ namespace System.Windows.Forms.Design
 		DesignerActionItem IActionGetItem.GetItem(DesignerActionList actions, MemberInfo mbr)
 		{
 			var ret = new DesignerActionMethodItem(actions, mbr.Name, DisplayName, Category, Description, IncludeAsDesignerVerb)
-				{ AllowAssociate = AllowAssociate };
+			{ AllowAssociate = AllowAssociate };
 			if (!string.IsNullOrEmpty(Condition))
 				ret.Properties.Add("Condition", Condition);
 			ret.Properties.Add("Order", DisplayOrder);
@@ -242,7 +283,7 @@ namespace System.Windows.Forms.Design
 		DesignerActionItem IActionGetItem.GetItem(DesignerActionList actions, MemberInfo mbr)
 		{
 			var ret = new DesignerActionPropertyItem(mbr.Name, DisplayName, Category, Description)
-				{ AllowAssociate = AllowAssociate };
+			{ AllowAssociate = AllowAssociate };
 			if (!string.IsNullOrEmpty(Condition))
 				ret.Properties.Add("Condition", Condition);
 			ret.Properties.Add("Order", DisplayOrder);
@@ -256,10 +297,7 @@ namespace System.Windows.Forms.Design
 		private readonly CommandID cmdId;
 		private readonly string menuText;
 
-		public DesignerVerbAttribute(string menuText)
-		{
-			this.menuText = menuText;
-		}
+		public DesignerVerbAttribute(string menuText) => this.menuText = menuText;
 
 		public DesignerVerbAttribute(string menuText, Guid commandMenuGroup, int commandId)
 		{
@@ -278,14 +316,11 @@ namespace System.Windows.Forms.Design
 
 	internal class EditorServiceContext : IWindowsFormsEditorService, ITypeDescriptorContext
 	{
-		private IComponentChangeService componentChangeSvc;
 		private readonly ComponentDesigner designer;
 		private readonly PropertyDescriptor targetProperty;
+		private IComponentChangeService componentChangeSvc;
 
-		internal EditorServiceContext(ComponentDesigner designer)
-		{
-			this.designer = designer;
-		}
+		internal EditorServiceContext(ComponentDesigner designer) => this.designer = designer;
 
 		internal EditorServiceContext(ComponentDesigner designer, PropertyDescriptor prop)
 		{
@@ -300,27 +335,42 @@ namespace System.Windows.Forms.Design
 		}
 
 		internal EditorServiceContext(ComponentDesigner designer, PropertyDescriptor prop, string newVerbText)
-			: this(designer, prop)
+			: this(designer, prop) => this.designer.Verbs.Add(new DesignerVerb(newVerbText, OnEditItems));
+
+		IContainer ITypeDescriptorContext.Container => designer.Component.Site?.Container;
+
+		object ITypeDescriptorContext.Instance => designer.Component;
+
+		PropertyDescriptor ITypeDescriptorContext.PropertyDescriptor => targetProperty;
+
+		private IComponentChangeService ChangeService => componentChangeSvc ?? (componentChangeSvc = GetService<IComponentChangeService>());
+
+		public DialogResult ShowDialog(Form dialog)
 		{
-			this.designer.Verbs.Add(new DesignerVerb(newVerbText, OnEditItems));
+			if (dialog == null)
+				throw new ArgumentNullException(nameof(dialog));
+			var service = GetService<IUIService>();
+			if (service != null)
+				return service.ShowDialog(dialog);
+			return dialog.ShowDialog(designer.Component as IWin32Window);
 		}
 
-		private T GetService<T>() => (T)((IServiceProvider)this).GetService(typeof(T));
-
-		private void OnEditItems(object sender, EventArgs e)
+		void IWindowsFormsEditorService.CloseDropDown()
 		{
-			var component = targetProperty.GetValue(designer.Component);
-			if (component != null)
-			{
-				var editor = TypeDescriptor.GetEditor(component, typeof(UITypeEditor)) as CollectionEditor;
-				editor?.EditValue(this, this, component);
-			}
 		}
 
-		void ITypeDescriptorContext.OnComponentChanged()
+		void IWindowsFormsEditorService.DropDownControl(Control control)
 		{
-			ChangeService.OnComponentChanged(designer.Component, targetProperty, null, null);
 		}
+
+		object IServiceProvider.GetService(Type serviceType)
+		{
+			if (serviceType == typeof(ITypeDescriptorContext) || serviceType == typeof(IWindowsFormsEditorService))
+				return this;
+			return designer.Component?.Site?.GetService(serviceType);
+		}
+
+		void ITypeDescriptorContext.OnComponentChanged() => ChangeService.OnComponentChanged(designer.Component, targetProperty, null, null);
 
 		bool ITypeDescriptorContext.OnComponentChanging()
 		{
@@ -337,46 +387,22 @@ namespace System.Windows.Forms.Design
 			return true;
 		}
 
-		object IServiceProvider.GetService(Type serviceType)
+		private T GetService<T>() => (T)((IServiceProvider)this).GetService(typeof(T));
+
+		private void OnEditItems(object sender, EventArgs e)
 		{
-			if (serviceType == typeof(ITypeDescriptorContext) || serviceType == typeof(IWindowsFormsEditorService))
-				return this;
-			return designer.Component?.Site?.GetService(serviceType);
+			var component = targetProperty.GetValue(designer.Component);
+			if (component != null)
+			{
+				var editor = TypeDescriptor.GetEditor(component, typeof(UITypeEditor)) as CollectionEditor;
+				editor?.EditValue(this, this, component);
+			}
 		}
-
-		void IWindowsFormsEditorService.CloseDropDown()
-		{
-		}
-
-		void IWindowsFormsEditorService.DropDownControl(Control control)
-		{
-		}
-
-		public DialogResult ShowDialog(Form dialog)
-		{
-			if (dialog == null)
-				throw new ArgumentNullException(nameof(dialog));
-			var service = GetService<IUIService>();
-			if (service != null)
-				return service.ShowDialog(dialog);
-			return dialog.ShowDialog(designer.Component as IWin32Window);
-		}
-
-		private IComponentChangeService ChangeService => componentChangeSvc ?? (componentChangeSvc = GetService<IComponentChangeService>());
-
-		IContainer ITypeDescriptorContext.Container => designer.Component.Site?.Container;
-
-		object ITypeDescriptorContext.Instance => designer.Component;
-
-		PropertyDescriptor ITypeDescriptorContext.PropertyDescriptor => targetProperty;
 	}
 
 	internal abstract class RichBehavior<TDesigner> : Behavior.Behavior where TDesigner : ControlDesigner
 	{
-		protected RichBehavior(TDesigner designer)
-		{
-			Designer = designer;
-		}
+		protected RichBehavior(TDesigner designer) => Designer = designer;
 
 		public TDesigner Designer { get; }
 	}
@@ -404,13 +430,11 @@ namespace System.Windows.Forms.Design
 
 		public IComponentChangeService ComponentChangeService { get; private set; }
 
+		public ISelectionService SelectionService { get; private set; }
+		public override DesignerVerbCollection Verbs => verbs ?? (verbs = this.GetAttributedVerbs());
 		public new TComponent Component => (TComponent)base.Component;
 
 		public virtual GlyphCollection Glyphs => Adorner.Glyphs;
-
-		public ISelectionService SelectionService { get; private set; }
-
-		public override DesignerVerbCollection Verbs => verbs ?? (verbs = this.GetAttributedVerbs());
 
 		internal Adorner Adorner
 		{
@@ -498,17 +522,13 @@ namespace System.Windows.Forms.Design
 			}
 		}
 
-		public new BehaviorService BehaviorService => base.BehaviorService;
-
 		public IComponentChangeService ComponentChangeService { get; private set; }
-
+		public ISelectionService SelectionService { get; private set; }
+		public override DesignerVerbCollection Verbs => verbs ?? (verbs = this.GetAttributedVerbs());
+		public new BehaviorService BehaviorService => base.BehaviorService;
 		public new TControl Control => (TControl)base.Control;
 
 		public GlyphCollection Glyphs => Adorner.Glyphs;
-
-		public ISelectionService SelectionService { get; private set; }
-
-		public override DesignerVerbCollection Verbs => verbs ?? (verbs = this.GetAttributedVerbs());
 
 		internal Adorner Adorner
 		{
@@ -576,65 +596,18 @@ namespace System.Windows.Forms.Design
 		}
 	}
 
-	internal abstract class BaseDesignerActionList : DesignerActionList
-	{
-		private List<DesignerActionItem> fullAIList;
-
-		protected BaseDesignerActionList(ComponentDesigner designer, IComponent component)
-			: base(component)
-		{
-			AutoShow = true;
-			ParentDesigner = designer;
-		}
-
-		public ComponentDesigner ParentDesigner { get; }
-
-		public override DesignerActionItemCollection GetSortedActionItems()
-		{
-			// Retrieve all attributed methods and properties
-			if (fullAIList == null)
-				fullAIList = this.GetAllAttributedActionItems();
-
-			// Filter for conditions and load
-			return this.GetFilteredActionItems(fullAIList);
-		}
-
-		protected T GetComponentProperty<T>(string propName)
-		{
-			var p = ComponentProp(propName, typeof(T));
-			if (p != null)
-				return (T)p.GetValue(Component, null);
-			return default(T);
-		}
-
-		protected void SetComponentProperty<T>(string propName, T value)
-		{
-			var p = ComponentProp(propName, typeof(T));
-			p?.SetValue(Component, value, null);
-		}
-
-		private PropertyInfo ComponentProp(string propName, Type retType) => Component.GetType().GetProperty(propName, ComponentDesignerExtension.allInstBind, null, retType, Type.EmptyTypes, null);
-	}
-
 	internal abstract class RichDesignerActionList<TDesigner, TComponent> : BaseDesignerActionList where TDesigner : ComponentDesigner where TComponent : Component
 	{
-		protected RichDesignerActionList(TDesigner designer, TComponent component) : base(designer, component)
-		{
-			ParentDesigner = designer;
-		}
-
-		public new TComponent Component => (TComponent)base.Component;
+		protected RichDesignerActionList(TDesigner designer, TComponent component) : base(designer, component) => ParentDesigner = designer;
 
 		public new TDesigner ParentDesigner { get; }
+		public new TComponent Component => (TComponent)base.Component;
 	}
 
 	internal abstract class RichGlyph<TDesigner> : Glyph, IDisposable where TDesigner : ControlDesigner
 	{
 		protected RichGlyph(TDesigner designer, Behavior.Behavior behavior)
-			: base(behavior)
-		{
-			Designer = designer;
-		}
+			: base(behavior) => Designer = designer;
 
 		public TDesigner Designer { get; }
 
@@ -642,7 +615,7 @@ namespace System.Windows.Forms.Design
 		{
 		}
 
-		public void SetBehavior(RichBehavior<TDesigner> b) { base.SetBehavior(b); }
+		public void SetBehavior(RichBehavior<TDesigner> b) => base.SetBehavior(b);
 	}
 
 	internal class RichParentControlDesigner<TControl, TActions> : ParentControlDesigner
@@ -664,17 +637,13 @@ namespace System.Windows.Forms.Design
 			}
 		}
 
-		public new BehaviorService BehaviorService => base.BehaviorService;
-
 		public IComponentChangeService ComponentChangeService { get; private set; }
-
+		public ISelectionService SelectionService { get; private set; }
+		public override DesignerVerbCollection Verbs => verbs ?? (verbs = this.GetAttributedVerbs());
+		public new BehaviorService BehaviorService => base.BehaviorService;
 		public new TControl Control => (TControl)base.Control;
 
 		public virtual GlyphCollection Glyphs => Adorner.Glyphs;
-
-		public ISelectionService SelectionService { get; private set; }
-
-		public override DesignerVerbCollection Verbs => verbs ?? (verbs = this.GetAttributedVerbs());
 
 		internal Adorner Adorner
 		{

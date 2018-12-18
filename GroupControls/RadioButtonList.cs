@@ -7,20 +7,16 @@ using System.Windows.Forms.VisualStyles;
 
 namespace GroupControls
 {
-	/// <summary>
-	/// Represents a windows control that displays a list of radio button items with optional subtext entries.
-	/// </summary>
+	/// <summary>Represents a windows control that displays a list of radio button items with optional subtext entries.</summary>
 	[ToolboxItem(true), ToolboxBitmap(typeof(RadioButtonList)), DefaultProperty("Items"), DefaultEvent("SelectedIndexChanged")]
 	[Description("Displays a list of radio buttons with optional subtext.")]
 	public class RadioButtonList : ButtonListBase<RadioButtonState>
 	{
 		private readonly RadioButtonListItemCollection items;
-		private VisualStyleRenderer renderer;
+		private readonly VisualStyleRenderer renderer;
 		private int selectedIndex = -1;
 
-		/// <summary>
-		/// Creates a new instance of a <see cref="RadioButtonList"/>.
-		/// </summary>
+		/// <summary>Creates a new instance of a <see cref="RadioButtonList"/>.</summary>
 		public RadioButtonList()
 		{
 			items = new RadioButtonListItemCollection(this);
@@ -33,29 +29,23 @@ namespace GroupControls
 			try { renderer = new VisualStyleRenderer("BUTTON", 2, 0); } catch { }
 		}
 
-		/// <summary>
-		/// Occurs when the selected index has changed.
-		/// </summary>
+		/// <summary>Occurs when the selected index has changed.</summary>
 		[Category("Behavior"), Description("Occurs when the value of the SelectedIndex property changes.")]
 		public event EventHandler SelectedIndexChanged;
 
-		/// <summary>
-		/// Gets the list of <see cref="RadioButtonListItem"/> associated with the control.
-		/// </summary>
+		/// <summary>Gets the list of <see cref="RadioButtonListItem"/> associated with the control.</summary>
 		[MergableProperty(false), Category("Data"),
 		DesignerSerializationVisibility(DesignerSerializationVisibility.Content),
 		Localizable(true), Description("List of radio buttons with optional subtext")]
 		public virtual RadioButtonListItemCollection Items => items;
 
-		/// <summary>
-		/// Gets or sets the index specifying the currently selected item.
-		/// </summary>
+		/// <summary>Gets or sets the index specifying the currently selected item.</summary>
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
 		Bindable(true), DefaultValue(-1), Category("Data"),
 		Description("Gets or sets the index specifying the currently selected item.")]
 		public int SelectedIndex
 		{
-			get { return selectedIndex; }
+			get => selectedIndex;
 			set
 			{
 				if (selectedIndex != value)
@@ -87,48 +77,32 @@ namespace GroupControls
 			}
 		}
 
-		/// <summary>
-		/// Gets or sets currently selected item in the list.
-		/// </summary>
+		/// <summary>Gets or sets currently selected item in the list.</summary>
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
 		Description("Gets or sets currently selected item in the list."),
-		Browsable(false), Bindable(true), DefaultValue((string)null), Category("Data")]
+		Browsable(false), Bindable(true), DefaultValue(null), Category("Data")]
 		public RadioButtonListItem SelectedItem
 		{
-			get { return selectedIndex == -1 ? null : items[selectedIndex]; }
-			set { SelectedIndex = items.IndexOf(value); }
+			get => selectedIndex == -1 ? null : items[selectedIndex];
+			set => SelectedIndex = items.IndexOf(value);
 		}
 
-		/// <summary>
-		/// Gets the background renderer for this type of control.
-		/// </summary>
-		/// <value>
-		/// The background renderer.
-		/// </value>
-		protected override PaintBackgroundMethod BackgroundRenderer => RadioButtonRenderer.DrawParentBackground;
-
-		/// <summary>
-		/// Gets the base list of items.
-		/// </summary>
-		/// <value>
-		/// Any list supporting and <see cref="System.Collections.IList"/> interface.
-		/// </value>
+		/// <summary>Gets the base list of items.</summary>
+		/// <value>Any list supporting and <see cref="System.Collections.IList"/> interface.</value>
 		protected internal override System.Collections.IList BaseItems => items;
 
-		/// <summary>
-		/// Gets the size of the image used to display the button.
-		/// </summary>
+		/// <summary>Gets the background renderer for this type of control.</summary>
+		/// <value>The background renderer.</value>
+		protected override PaintBackgroundMethod BackgroundRenderer => RadioButtonRenderer.DrawParentBackground;
+
+		/// <summary>Gets the size of the image used to display the button.</summary>
 		/// <param name="g">Current <see cref="Graphics"/> context.</param>
 		/// <returns>The size of the image.</returns>
 		protected override Size GetButtonSize(Graphics g) => RadioButtonRenderer.GetGlyphSize(g, RadioButtonState.CheckedNormal);
 
-		/// <summary>
-		/// Determines whether this list has the specified mnemonic in its members.
-		/// </summary>
+		/// <summary>Determines whether this list has the specified mnemonic in its members.</summary>
 		/// <param name="charCode">The mnemonic character.</param>
-		/// <returns>
-		/// 	<c>true</c> if list has the mnemonic; otherwise, <c>false</c>.
-		/// </returns>
+		/// <returns><c>true</c> if list has the mnemonic; otherwise, <c>false</c>.</returns>
 		protected override bool ListHasMnemonic(char charCode)
 		{
 			foreach (var item in items)
@@ -142,9 +116,7 @@ namespace GroupControls
 			return false;
 		}
 
-		/// <summary>
-		/// Raises the <see cref="Control.GotFocus"/> event.
-		/// </summary>
+		/// <summary>Raises the <see cref="Control.GotFocus"/> event.</summary>
 		/// <param name="e">An <see cref="EventArgs"/> that contains the event data.</param>
 		protected override void OnGotFocus(EventArgs e)
 		{
@@ -159,9 +131,7 @@ namespace GroupControls
 			}
 		}
 
-		/// <summary>
-		/// Raises the <see cref="Control.KeyDown"/> event.
-		/// </summary>
+		/// <summary>Raises the <see cref="Control.KeyDown"/> event.</summary>
 		/// <param name="e">An <see cref="KeyEventArgs"/> that contains the event data.</param>
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
@@ -175,9 +145,7 @@ namespace GroupControls
 			base.OnKeyDown(e);
 		}
 
-		/// <summary>
-		/// Raises the <see cref="Control.LostFocus"/> event.
-		/// </summary>
+		/// <summary>Raises the <see cref="Control.LostFocus"/> event.</summary>
 		/// <param name="e">An <see cref="EventArgs"/> that contains the event data.</param>
 		protected override void OnLostFocus(EventArgs e)
 		{
@@ -186,9 +154,7 @@ namespace GroupControls
 				InvalidateItem(selectedIndex);
 		}
 
-		/// <summary>
-		/// Raises the <see cref="Control.MouseClick"/> event.
-		/// </summary>
+		/// <summary>Raises the <see cref="Control.MouseClick"/> event.</summary>
 		/// <param name="e">An <see cref="MouseEventArgs"/> that contains the event data.</param>
 		protected override void OnMouseClick(MouseEventArgs e)
 		{
@@ -197,19 +163,12 @@ namespace GroupControls
 				SetSelected(HoverItem);
 		}
 
-		/// <summary>
-		/// Raises the <see cref="E:SelectedIndexChanged"/> event.
-		/// </summary>
+		/// <summary>Raises the <see cref="E:SelectedIndexChanged"/> event.</summary>
 		/// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-		protected virtual void OnSelectedIndexChanged(EventArgs e)
-		{
-			SelectedIndexChanged?.Invoke(this, e);
-		}
+		protected virtual void OnSelectedIndexChanged(EventArgs e) => SelectedIndexChanged?.Invoke(this, e);
 
-		/// <summary>
-		/// Paints the button.
-		/// </summary>
-		/// <param name="g">A <see cref="Graphics" /> reference.</param>
+		/// <summary>Paints the button.</summary>
+		/// <param name="g">A <see cref="Graphics"/> reference.</param>
 		/// <param name="index">The index of the item.</param>
 		/// <param name="bounds">The bounds in which to paint the item.</param>
 		/// <param name="newState"></param>
@@ -233,9 +192,7 @@ namespace GroupControls
 			System.Diagnostics.Debug.WriteLine($"PaintRadioButton[{index}]: tx='{li.Text}'; r={bounds}; st[{newState}]={(newState ? li.State : li.PrevState)}");
 		}
 
-		/// <summary>
-		/// Processes a keyboard event.
-		/// </summary>
+		/// <summary>Processes a keyboard event.</summary>
 		/// <param name="ke">The <see cref="KeyEventArgs"/> associated with the key press.</param>
 		/// <returns><c>true</c> if the key was processed by the control; otherwise, <c>false</c>.</returns>
 		protected override bool ProcessKey(KeyEventArgs ke)
@@ -250,6 +207,7 @@ namespace GroupControls
 						return true;
 					}
 					break;
+
 				case Keys.Up:
 				case Keys.Left:
 					if (SelectNextItem(FocusedItem as RadioButtonListItem, false))
@@ -258,6 +216,7 @@ namespace GroupControls
 						return true;
 					}
 					break;
+
 				case Keys.Space:
 					if (FocusedItem != null && !FocusedItem.Checked)
 					{
@@ -269,9 +228,7 @@ namespace GroupControls
 			return false;
 		}
 
-		/// <summary>
-		/// Resets the list's layout.
-		/// </summary>
+		/// <summary>Resets the list's layout.</summary>
 		protected override void ResetListLayout(string property)
 		{
 			base.ResetListLayout(property);
@@ -279,10 +236,7 @@ namespace GroupControls
 			SelectedIndex = items.CheckedItemIndex;
 		}
 
-		private void ItemPropertyChanged(object sender, PropertyChangedEventArgs e)
-		{
-			OnListChanged();
-		}
+		private void ItemPropertyChanged(object sender, PropertyChangedEventArgs e) => OnListChanged();
 
 		private void ItemsChanged(object sender, EventedList<RadioButtonListItem>.ListChangedEventArgs<RadioButtonListItem> e)
 		{
@@ -317,34 +271,25 @@ namespace GroupControls
 		}
 	}
 
-	/// <summary>
-	/// An item associated with a <see cref="RadioButtonList"/>.
-	/// </summary>
+	/// <summary>An item associated with a <see cref="RadioButtonList"/>.</summary>
 	[DefaultProperty("Text")]
 	public class RadioButtonListItem : ButtonListItem<RadioButtonState>
 	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="RadioButtonListItem" /> class.
-		/// </summary>
-		public RadioButtonListItem() { State = PrevState = RadioButtonState.UncheckedNormal; }
+		/// <summary>Initializes a new instance of the <see cref="RadioButtonListItem"/> class.</summary>
+		public RadioButtonListItem() => State = PrevState = RadioButtonState.UncheckedNormal;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="RadioButtonListItem"/> class.
-		/// </summary>
+		/// <summary>Initializes a new instance of the <see cref="RadioButtonListItem"/> class.</summary>
 		/// <param name="text">Text displayed next to radio button.</param>
 		/// <param name="subtext">Subtext displayed under text.</param>
 		/// <param name="tooltipText">Tooltip displayed for the item.</param>
 		public RadioButtonListItem(string text, string subtext = null, string tooltipText = null)
-			: base(text, subtext, tooltipText)
-		{
-			State = PrevState = RadioButtonState.UncheckedNormal;
-		}
+			: base(text, subtext, tooltipText) => State = PrevState = RadioButtonState.UncheckedNormal;
 
 		/// <summary>Gets or sets a value indicating whether this <see cref="RadioButtonListItem"/> is checked.</summary>
 		/// <value><c>true</c> if checked; otherwise, <c>false</c>.</value>
 		public override bool Checked
 		{
-			get { return ((int)state - 1) / 4 == 1; }
+			get => ((int)state - 1) / 4 == 1;
 			set
 			{
 				if (value == Checked) return;
@@ -357,7 +302,7 @@ namespace GroupControls
 		/// <value><c>true</c> if checked; otherwise, <c>false</c>.</value>
 		public override bool Enabled
 		{
-			get { return state != RadioButtonState.CheckedDisabled && state != RadioButtonState.UncheckedDisabled; }
+			get => state != RadioButtonState.CheckedDisabled && state != RadioButtonState.UncheckedDisabled;
 			set
 			{
 				if (Enabled == value) return;
@@ -370,36 +315,26 @@ namespace GroupControls
 		}
 	}
 
-	/// <summary>
-	/// Collection of <see cref="RadioButtonListItem"/> items.
-	/// </summary>
+	/// <summary>Collection of <see cref="RadioButtonListItem"/> items.</summary>
 	[Editor(typeof(System.ComponentModel.Design.CollectionEditor), typeof(System.Drawing.Design.UITypeEditor))]
 	public class RadioButtonListItemCollection : EventedList<RadioButtonListItem>
 	{
 		private readonly RadioButtonList parent;
 
-		internal RadioButtonListItemCollection(RadioButtonList list)
-		{
-			parent = list;
-		}
+		internal RadioButtonListItemCollection(RadioButtonList list) => parent = list;
 
 		internal int CheckedItemIndex => Count > 0 ? FindIndex(item => item.Checked) : -1;
 
-		/// <summary>
-		/// Adds a new item to the collection.
-		/// </summary>
+		/// <summary>Adds a new item to the collection.</summary>
 		/// <param name="text">Item text.</param>
 		/// <param name="subtext">Item subtext.</param>
-		public void Add(string text, string subtext)
-		{
-			Add(new RadioButtonListItem(text, subtext));
-		}
+		public void Add(string text, string subtext) => Add(new RadioButtonListItem(text, subtext));
 
-		/// <summary>
-		/// Adds the specified text values to the collection.
-		/// </summary>
+		/// <summary>Adds the specified text values to the collection.</summary>
 		/// <param name="textValues">The text value pairs representing matching text and subtext.</param>
-		/// <exception cref="System.ArgumentException">List of values must contain matching text/subtext entries for an even count of strings.;textValues</exception>
+		/// <exception cref="System.ArgumentException">
+		/// List of values must contain matching text/subtext entries for an even count of strings.;textValues
+		/// </exception>
 		public void Add(params string[] textValues)
 		{
 			if (textValues.Length % 2 != 0)
@@ -410,9 +345,7 @@ namespace GroupControls
 			parent.ResumeLayout();
 		}
 
-		/// <summary>
-		/// Called when an item is added.
-		/// </summary>
+		/// <summary>Called when an item is added.</summary>
 		/// <param name="index">The item index.</param>
 		/// <param name="value">The item value.</param>
 		protected override void OnItemAdded(int index, RadioButtonListItem value)

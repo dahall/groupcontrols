@@ -84,7 +84,7 @@ namespace Vanara.Interop
 
 		public static class BufferedPaint
 		{
-			static BufferedPaint() { BufferedPaintInit(); }
+			static BufferedPaint() => BufferedPaintInit();
 
 			public delegate void PaintAction<in TState, in TParam>(
 				Graphics graphics, Rectangle bounds, TState currentState, TParam data);
@@ -142,8 +142,7 @@ namespace Vanara.Interop
 				BufferedPaintBufferFormat fmt = BufferedPaintBufferFormat.CompatibleBitmap) : base(IntPtr.Zero, true)
 			{
 				RECT target = targetRectangle;
-				IntPtr phdc;
-				var hbp = BeginBufferedPaint(hdc, ref target, fmt, paintParams, out phdc);
+				var hbp = BeginBufferedPaint(hdc, ref target, fmt, paintParams, out var phdc);
 				if (hbp == IntPtr.Zero) throw new Win32Exception();
 				if (phdc != IntPtr.Zero) Graphics = Graphics.FromHdc(phdc);
 				SetHandle(hbp);
@@ -156,9 +155,8 @@ namespace Vanara.Interop
 			{
 				RECT rc = targetRectangle;
 				var ap = animationParams ?? BufferedPaintAnimationParams.Empty;
-				IntPtr hdcFrom, hdcTo;
-				var hbp = BeginBufferedAnimation(new HandleRef(wnd, wnd.Handle), hdc, ref rc, fmt, paintParams, ref ap, out hdcFrom,
-					out hdcTo);
+				var hbp = BeginBufferedAnimation(new HandleRef(wnd, wnd.Handle), hdc, ref rc, fmt, paintParams, ref ap, out var hdcFrom,
+					out var hdcTo);
 				if (hbp == IntPtr.Zero) throw new Win32Exception();
 				if (hdcFrom != IntPtr.Zero) SourceGraphics = Graphics.FromHdc(hdcFrom);
 				if (hdcTo != IntPtr.Zero) Graphics = Graphics.FromHdc(hdcTo);

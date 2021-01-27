@@ -264,6 +264,8 @@ namespace GroupControls
 			}
 		}
 
+		/// <summary>Gets the previous hover item.</summary>
+		/// <value>The previous hover item.</value>
 		protected int HoverItemOld => hoverItemOld;
 
 		/// <summary>Gets or sets the index of the item being pressing.</summary>
@@ -279,6 +281,8 @@ namespace GroupControls
 			}
 		}
 
+		/// <summary>Gets the previous pressing item.</summary>
+		/// <value>The previous pressing item.</value>
 		protected int PressingItemOld => pressingItemOld;
 
 		/// <summary>Retrieves the bounding rectangle for a specific item within the list control.</summary>

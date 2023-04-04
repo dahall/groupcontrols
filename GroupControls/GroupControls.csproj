@@ -1,6 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net20;net35;net40;net45;net5.0-windows;net6.0-windows</TargetFrameworks>
+    <TargetFrameworks>net462;net48;net6.0-windows;net7.0-windows</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>GroupControls</AssemblyName>
@@ -9,8 +10,8 @@
     <Product>GroupControls</Product>
     <NeutralLanguage>en</NeutralLanguage>
     <Description>RadioButtonList and CheckBoxList for WinForms</Description>
-    <Copyright>Copyright © 2017-2021</Copyright>
-    <Version>1.9.0</Version>
+    <Copyright>Copyright © 2017-2023</Copyright>
+    <Version>1.9.1</Version>
     <Authors>David Hall</Authors>
     <PackageId>$(AssemblyName)</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -40,7 +41,7 @@
     <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
   </ItemGroup>
   <!-- END: Source Link configuration. -->
-  <ItemGroup Condition=" '$(TargetFramework)' != 'net5.0-windows' And '$(TargetFramework)' != 'net6.0-windows' ">
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net6.0-windows' And '$(TargetFramework)' != 'net7.0-windows' ">
     <Reference Include="System.Design" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>

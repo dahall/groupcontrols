@@ -1,15 +1,15 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.ComponentModel.Design;
+﻿#if !NETFRAMEWORK
+using Microsoft.DotNet.DesignTools.Designers;
+using Microsoft.DotNet.DesignTools.Designers.Actions;
+using Microsoft.DotNet.DesignTools.Designers.Behaviors;
+using Microsoft.DotNet.DesignTools.Editors;
+#endif
 using System.Drawing.Design;
 using System.Globalization;
-using System.Reflection;
-using System.Windows.Forms;
 using System.Windows.Forms.Design;
+#if NETFRAMEWORK
 using System.Windows.Forms.Design.Behavior;
-
-// ReSharper disable VirtualMemberNeverOverridden.Global
+#endif
 
 namespace System.ComponentModel.Design
 {
@@ -161,9 +161,7 @@ namespace System.ComponentModel.Design
 			if (c != 0)
 				return c;
 			c = (int)a.Properties["Order"] - (int)b.Properties["Order"];
-			if (c != 0)
-				return c;
-			return string.Compare(a.DisplayName, b.DisplayName, true, CultureInfo.CurrentCulture);
+			return c != 0 ? c : string.Compare(a.DisplayName, b.DisplayName, true, CultureInfo.CurrentCulture);
 		}
 	}
 
@@ -201,8 +199,7 @@ namespace System.Windows.Forms.Design
 		public override DesignerActionItemCollection GetSortedActionItems()
 		{
 			// Retrieve all attributed methods and properties
-			if (fullAIList == null)
-				fullAIList = this.GetAllAttributedActionItems();
+			fullAIList ??= this.GetAllAttributedActionItems();
 
 			// Filter for conditions and load
 			return this.GetFilteredActionItems(fullAIList);
@@ -211,9 +208,7 @@ namespace System.Windows.Forms.Design
 		protected T GetComponentProperty<T>(string propName)
 		{
 			var p = ComponentProp(propName, typeof(T));
-			if (p != null)
-				return (T)p.GetValue(Component, null);
-			return default(T);
+			return p != null ? (T)p.GetValue(Component, null) : default(T);
 		}
 
 		protected void SetComponentProperty<T>(string propName, T value)
@@ -308,9 +303,7 @@ namespace System.Windows.Forms.Design
 		internal DesignerVerb GetDesignerVerb(object obj, MethodInfo mi)
 		{
 			var handler = (EventHandler)Delegate.CreateDelegate(typeof(EventHandler), obj, mi);
-			if (cmdId != null)
-				return new DesignerVerb(menuText, handler, cmdId);
-			return new DesignerVerb(menuText, handler);
+			return cmdId != null ? new DesignerVerb(menuText, handler, cmdId) : new DesignerVerb(menuText, handler);
 		}
 	}
 
@@ -343,16 +336,14 @@ namespace System.Windows.Forms.Design
 
 		PropertyDescriptor ITypeDescriptorContext.PropertyDescriptor => targetProperty;
 
-		private IComponentChangeService ChangeService => componentChangeSvc ?? (componentChangeSvc = GetService<IComponentChangeService>());
+		private IComponentChangeService ChangeService => componentChangeSvc ??= GetService<IComponentChangeService>();
 
 		public DialogResult ShowDialog(Form dialog)
 		{
 			if (dialog == null)
 				throw new ArgumentNullException(nameof(dialog));
 			var service = GetService<IUIService>();
-			if (service != null)
-				return service.ShowDialog(dialog);
-			return dialog.ShowDialog(designer.Component as IWin32Window);
+			return service != null ? service.ShowDialog(dialog) : dialog.ShowDialog(designer.Component as IWin32Window);
 		}
 
 		void IWindowsFormsEditorService.CloseDropDown()
@@ -363,12 +354,9 @@ namespace System.Windows.Forms.Design
 		{
 		}
 
-		object IServiceProvider.GetService(Type serviceType)
-		{
-			if (serviceType == typeof(ITypeDescriptorContext) || serviceType == typeof(IWindowsFormsEditorService))
-				return this;
-			return designer.Component?.Site?.GetService(serviceType);
-		}
+		object IServiceProvider.GetService(Type serviceType) => serviceType == typeof(ITypeDescriptorContext) || serviceType == typeof(IWindowsFormsEditorService)
+				? this
+				: (designer.Component?.Site?.GetService(serviceType));
 
 		void ITypeDescriptorContext.OnComponentChanged() => ChangeService.OnComponentChanged(designer.Component, targetProperty, null, null);
 
@@ -394,13 +382,19 @@ namespace System.Windows.Forms.Design
 			var component = targetProperty.GetValue(designer.Component);
 			if (component != null)
 			{
-				var editor = TypeDescriptor.GetEditor(component, typeof(UITypeEditor)) as CollectionEditor;
+				var editor = (UITypeEditor)TypeDescriptor.GetEditor(component, typeof(UITypeEditor));
 				editor?.EditValue(this, this, component);
 			}
 		}
 	}
 
-	internal abstract class RichBehavior<TDesigner> : Behavior.Behavior where TDesigner : ControlDesigner
+	internal abstract class RichBehavior<TDesigner> :
+#if NETFRAMEWORK
+		System.Windows.Forms.Design.Behavior.Behavior
+#else
+		Behavior
+#endif
+		where TDesigner : ControlDesigner
 	{
 		protected RichBehavior(TDesigner designer) => Designer = designer;
 
@@ -420,18 +414,20 @@ namespace System.Windows.Forms.Design
 		{
 			get
 			{
-				if (actions == null)
-					actions = Activator.CreateInstance(typeof(TActions), this, Component) as TActions;
-				return new DesignerActionListCollection(new DesignerActionList[] { actions });
+				actions ??= Activator.CreateInstance(typeof(TActions), this, Component) as TActions;
+				return new DesignerActionListCollection { actions };
 			}
 		}
 
 		public BehaviorService BehaviorService { get; private set; }
 
-		public IComponentChangeService ComponentChangeService { get; private set; }
+#pragma warning disable CS0109 // Member does not hide an inherited member; new keyword is not required
+		public new IComponentChangeService ComponentChangeService { get; private set; }
 
-		public ISelectionService SelectionService { get; private set; }
-		public override DesignerVerbCollection Verbs => verbs ?? (verbs = this.GetAttributedVerbs());
+		public new ISelectionService SelectionService { get; private set; }
+#pragma warning restore CS0109 // Member does not hide an inherited member; new keyword is not required
+
+		public override DesignerVerbCollection Verbs => verbs ??= this.GetAttributedVerbs();
 		public new TComponent Component => (TComponent)base.Component;
 
 		public virtual GlyphCollection Glyphs => Adorner.Glyphs;
@@ -449,7 +445,7 @@ namespace System.Windows.Forms.Design
 			}
 		}
 
-		protected virtual IEnumerable<string> PropertiesToRemove => new string[0];
+		protected virtual IEnumerable<string> PropertiesToRemove => Array.Empty<string>();
 
 		public override void Initialize(IComponent component)
 		{
@@ -479,7 +475,9 @@ namespace System.Windows.Forms.Design
 			base.Dispose(disposing);
 		}
 
+#if NETFRAMEWORK
 		protected virtual TSvc GetService<TSvc>() where TSvc : class => (TSvc)GetService(typeof(TSvc));
+#endif
 
 		protected virtual void OnComponentChanged(object sender, ComponentChangedEventArgs e)
 		{
@@ -494,8 +492,7 @@ namespace System.Windows.Forms.Design
 			base.PreFilterProperties(properties);
 
 			// RedirectRegisteredProperties
-			if (redirectedProps == null)
-				redirectedProps = this.GetRedirectedProperties();
+			redirectedProps ??= this.GetRedirectedProperties();
 			this.RedirectRegisteredProperties(properties, redirectedProps);
 
 			// Remove properties
@@ -516,15 +513,16 @@ namespace System.Windows.Forms.Design
 		{
 			get
 			{
-				if (actions == null)
-					actions = Activator.CreateInstance(typeof(TActions), this, Component) as TActions;
-				return new DesignerActionListCollection(new DesignerActionList[] { actions });
+				actions ??= Activator.CreateInstance(typeof(TActions), this, Component) as TActions;
+				return new DesignerActionListCollection{ actions };
 			}
 		}
 
-		public IComponentChangeService ComponentChangeService { get; private set; }
-		public ISelectionService SelectionService { get; private set; }
-		public override DesignerVerbCollection Verbs => verbs ?? (verbs = this.GetAttributedVerbs());
+#pragma warning disable CS0109 // Member does not hide an inherited member; new keyword is not required
+		public new IComponentChangeService ComponentChangeService { get; private set; }
+		public new ISelectionService SelectionService { get; private set; }
+#pragma warning restore CS0109 // Member does not hide an inherited member; new keyword is not required
+		public override DesignerVerbCollection Verbs => verbs ??= this.GetAttributedVerbs();
 		public new BehaviorService BehaviorService => base.BehaviorService;
 		public new TControl Control => (TControl)base.Control;
 
@@ -543,7 +541,7 @@ namespace System.Windows.Forms.Design
 			}
 		}
 
-		protected virtual IEnumerable<string> PropertiesToRemove => new string[0];
+		protected virtual IEnumerable<string> PropertiesToRemove => Array.Empty<string>();
 
 		public override void Initialize(IComponent component)
 		{
@@ -572,7 +570,9 @@ namespace System.Windows.Forms.Design
 			base.Dispose(disposing);
 		}
 
+#if NETFRAMEWORK
 		protected virtual TSvc GetService<TSvc>() where TSvc : class => (TSvc)GetService(typeof(TSvc));
+#endif
 
 		protected virtual void OnComponentChanged(object sender, ComponentChangedEventArgs e)
 		{
@@ -587,8 +587,7 @@ namespace System.Windows.Forms.Design
 			base.PreFilterProperties(properties);
 
 			// RedirectRegisteredProperties
-			if (redirectedProps == null)
-				redirectedProps = this.GetRedirectedProperties();
+			redirectedProps ??= this.GetRedirectedProperties();
 			this.RedirectRegisteredProperties(properties, redirectedProps);
 
 			// Remove properties
@@ -606,7 +605,13 @@ namespace System.Windows.Forms.Design
 
 	internal abstract class RichGlyph<TDesigner> : Glyph, IDisposable where TDesigner : ControlDesigner
 	{
-		protected RichGlyph(TDesigner designer, Behavior.Behavior behavior)
+		protected RichGlyph(TDesigner designer,
+#if NETFRAMEWORK
+		System.Windows.Forms.Design.Behavior.Behavior
+#else
+		Behavior
+#endif
+			behavior)
 			: base(behavior) => Designer = designer;
 
 		public TDesigner Designer { get; }
@@ -631,15 +636,16 @@ namespace System.Windows.Forms.Design
 		{
 			get
 			{
-				if (actions == null)
-					actions = Activator.CreateInstance(typeof(TActions), this, Component) as TActions;
-				return new DesignerActionListCollection(new DesignerActionList[] { actions });
+				actions ??= Activator.CreateInstance(typeof(TActions), this, Component) as TActions;
+				return new DesignerActionListCollection { actions };
 			}
 		}
 
-		public IComponentChangeService ComponentChangeService { get; private set; }
-		public ISelectionService SelectionService { get; private set; }
-		public override DesignerVerbCollection Verbs => verbs ?? (verbs = this.GetAttributedVerbs());
+#pragma warning disable CS0109 // Member does not hide an inherited member; new keyword is not required
+		public new IComponentChangeService ComponentChangeService { get; private set; }
+		public new ISelectionService SelectionService { get; private set; }
+#pragma warning restore CS0109 // Member does not hide an inherited member; new keyword is not required
+		public override DesignerVerbCollection Verbs => verbs ??= this.GetAttributedVerbs();
 		public new BehaviorService BehaviorService => base.BehaviorService;
 		public new TControl Control => (TControl)base.Control;
 
@@ -656,7 +662,7 @@ namespace System.Windows.Forms.Design
 			}
 		}
 
-		protected virtual IEnumerable<string> PropertiesToRemove => new string[0];
+		protected virtual IEnumerable<string> PropertiesToRemove => Array.Empty<string>();
 
 		public override void Initialize(IComponent component)
 		{
@@ -685,7 +691,9 @@ namespace System.Windows.Forms.Design
 			base.Dispose(disposing);
 		}
 
+#if NETFRAMEWORK
 		protected virtual TSvc GetService<TSvc>() where TSvc : class => (TSvc)GetService(typeof(TSvc));
+#endif
 
 		protected virtual void OnComponentChanged(object sender, ComponentChangedEventArgs e)
 		{
@@ -700,8 +708,7 @@ namespace System.Windows.Forms.Design
 			base.PreFilterProperties(properties);
 
 			// RedirectRegisteredProperties
-			if (redirectedProps == null)
-				redirectedProps = this.GetRedirectedProperties();
+			redirectedProps ??= this.GetRedirectedProperties();
 			this.RedirectRegisteredProperties(properties, redirectedProps);
 
 			// Remove properties

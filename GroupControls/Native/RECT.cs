@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices;
-
-namespace Vanara.Interop;
+﻿namespace Vanara.Interop;
 
 internal static partial class NativeMethods
 {

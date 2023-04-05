@@ -1,5 +1,5 @@
-﻿using System;
-using System.Runtime.InteropServices;
+﻿
+
 
 namespace Vanara.Interop;
 
@@ -366,10 +366,7 @@ internal static partial class NativeMethods
 		{
 			var ptr = hGC.AddrOfPinnedObject();
 			var ret = GetObject(hgdiobj, Marshal.SizeOf(typeof(T)), ptr);
-			if (ret == 0 || ptr == IntPtr.Zero)
-				throw new System.ComponentModel.Win32Exception();
-
-			return (T)Marshal.PtrToStructure(ptr, typeof(T));
+			return ret == 0 || ptr == IntPtr.Zero ? throw new System.ComponentModel.Win32Exception() : (T)Marshal.PtrToStructure(ptr, typeof(T));
 		}
 		finally
 		{

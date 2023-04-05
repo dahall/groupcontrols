@@ -1,7 +1,7 @@
+#pragma warning disable GlobalUsingsAnalyzer // Using should be in global file
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
 using System.Threading;
+#pragma warning restore GlobalUsingsAnalyzer // Using should be in global file
 
 namespace System.Collections.Generic;
 
@@ -12,7 +12,7 @@ public class EventedList<T> : IList<T>, IList where T : INotifyPropertyChanged
 {
 	private const int defaultCapacity = 4;
 
-	private static readonly T[] emptyArray = new T[0];
+	private static readonly T[] emptyArray = Array.Empty<T>();
 
 	private T[] internalItems;
 	[NonSerialized] private object syncRoot;
@@ -173,14 +173,7 @@ public class EventedList<T> : IList<T>, IList where T : INotifyPropertyChanged
 	/// <summary>Indexes the of.</summary>
 	/// <param name="item">The item.</param>
 	/// <returns></returns>
-	int IList.IndexOf(object item)
-	{
-		if (IsCompatibleObject(item))
-		{
-			return IndexOf((T)item);
-		}
-		return -1;
-	}
+	int IList.IndexOf(object item) => IsCompatibleObject(item) ? IndexOf((T)item) : -1;
 
 	/// <summary>Inserts the specified index.</summary>
 	/// <param name="index">The index.</param>
@@ -747,11 +740,9 @@ public class EventedList<T> : IList<T>, IList where T : INotifyPropertyChanged
 			return -1;
 		}
 		CheckIndex(index);
-		if (count < 0 || count > index + 1)
-		{
-			throw new ArgumentOutOfRangeException(nameof(count));
-		}
-		return Array.LastIndexOf(internalItems, item, index, count);
+		return count < 0 || count > index + 1
+			?         throw new ArgumentOutOfRangeException(nameof(count))
+			: Array.LastIndexOf(internalItems, item, index, count);
 	}
 
 	/// <summary>Removes all.</summary>
@@ -1015,11 +1006,7 @@ public class EventedList<T> : IList<T>, IList where T : INotifyPropertyChanged
 		{
 			get
 			{
-				if ((index == 0) || (index == list.Count + 1))
-				{
-					throw new InvalidOperationException();
-				}
-				return Current;
+				return (index == 0) || (index == list.Count + 1) ? throw new InvalidOperationException() : (object)Current;
 			}
 		}
 

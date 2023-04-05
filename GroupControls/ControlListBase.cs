@@ -1,9 +1,6 @@
-﻿using System;
-using System.ComponentModel;
-using System.Drawing;
-using System.Windows.Forms;
-using System.Windows.Forms.Layout;
+﻿#pragma warning disable GlobalUsingsAnalyzer // Using should be in global file
 using Vanara.Interop;
+#pragma warning restore GlobalUsingsAnalyzer // Using should be in global file
 
 namespace GroupControls;
 
@@ -20,7 +17,7 @@ public enum RepeatDirection
 }
 
 /// <summary>Abstract class that handles the display of numerous control items.</summary>
-[System.ComponentModel.Design.Serialization.DesignerSerializer(typeof(Design.DesignerLayoutCodeDomSerializer), typeof(System.ComponentModel.Design.Serialization.CodeDomSerializer))]
+[System.ComponentModel.Design.Serialization.DesignerSerializer(typeof(Design.DesignerLayoutCodeDomSerializer), typeof(CodeDomSerializer))]
 [Designer(typeof(ControlListBaseDesigner))]
 public abstract class ControlListBase : ScrollableControl
 {
@@ -288,12 +285,9 @@ public abstract class ControlListBase : ScrollableControl
 	/// <summary>Retrieves the bounding rectangle for a specific item within the list control.</summary>
 	/// <param name="index">The zero-based index of the item whose bounding rectangle you want to return.</param>
 	/// <returns>A <see cref="Rectangle"/> that represents the bounding rectangle of the specified item.</returns>
-	public Rectangle GetItemRect(int index)
-	{
-		if (index < 0 || index >= BaseItems.Count)
-			throw new ArgumentOutOfRangeException(nameof(index));
-		return MyLayoutEngine.ItemBounds[index];
-	}
+	public Rectangle GetItemRect(int index) => index < 0 || index >= BaseItems.Count
+			? throw new ArgumentOutOfRangeException(nameof(index))
+			: MyLayoutEngine.ItemBounds[index];
 
 	/// <summary>Retrieves the size of a rectangular area into which a control can be fitted.</summary>
 	/// <param name="proposedSize">The custom-sized area for a control.</param>
@@ -568,12 +562,7 @@ public abstract class ControlListBase : ScrollableControl
 	/// <summary>Processes a mnemonic.</summary>
 	/// <param name="charCode">The character code.</param>
 	/// <returns><c>true</c> if the mnemonic was processed by the control; otherwise, <c>false</c>.</returns>
-	protected override bool ProcessMnemonic(char charCode)
-	{
-		if (Enabled && Visible && (Focused || ContainsFocus))
-			return ListHasMnemonic(charCode);
-		return false;
-	}
+	protected override bool ProcessMnemonic(char charCode) => Enabled && Visible && (Focused || ContainsFocus) ? ListHasMnemonic(charCode) : false;
 
 	/// <summary>Resets the list's layout.</summary>
 	/// <param name="propertyName">Name of the property forcing the layout.</param>

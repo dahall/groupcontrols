@@ -1,8 +1,6 @@
-﻿using System;
-using System.CodeDom;
-using System.ComponentModel;
+﻿#pragma warning disable GlobalUsingsAnalyzer // Using should be in global file
 using System.ComponentModel.Design.Serialization;
-using System.Reflection;
+#pragma warning restore GlobalUsingsAnalyzer // Using should be in global file
 
 namespace GroupControls.Design;
 
@@ -25,7 +23,7 @@ internal class DesignerLayoutCodeDomSerializer : CodeDomSerializer
 		// Add layout methods
 		if (statements != null)
 		{
-			SerializeMethodInvocation(manager, statements, value, "SuspendLayout", null, new Type[0], true);
+			SerializeMethodInvocation(manager, statements, value, "SuspendLayout", null, Array.Empty<Type>(), true);
 
 			var parameters = new CodeExpressionCollection { new CodePrimitiveExpression(true) };
 			var paramTypes = new[] { typeof(bool) };

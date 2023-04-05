@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Windows.Forms;
+﻿#pragma warning disable GlobalUsingsAnalyzer // Using should be in global file
 using System.Windows.Forms.VisualStyles;
+#pragma warning restore GlobalUsingsAnalyzer // Using should be in global file
 
 namespace GroupControls;
 
@@ -316,7 +313,8 @@ public class RadioButtonListItem : ButtonListItem<RadioButtonState>
 }
 
 /// <summary>Collection of <see cref="RadioButtonListItem"/> items.</summary>
-[Editor(typeof(System.ComponentModel.Design.CollectionEditor), typeof(System.Drawing.Design.UITypeEditor))]
+[Editor("System.Windows.Forms.Design.CollectionEditor, System.Design, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
+	"System.Drawing.Design.UITypeEditor, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
 public class RadioButtonListItemCollection : EventedList<RadioButtonListItem>
 {
 	private readonly RadioButtonList parent;

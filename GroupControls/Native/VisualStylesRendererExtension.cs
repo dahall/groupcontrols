@@ -1,5 +1,6 @@
-﻿using System.Drawing;
+﻿#pragma warning disable GlobalUsingsAnalyzer // Using should be in global file
 using Vanara.Interop;
+#pragma warning restore GlobalUsingsAnalyzer // Using should be in global file
 
 namespace System.Windows.Forms.VisualStyles;
 

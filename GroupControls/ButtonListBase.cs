@@ -1,9 +1,4 @@
-﻿using System;
-using System.ComponentModel;
-using System.Drawing;
-using System.Windows.Forms;
-
-namespace GroupControls;
+﻿namespace GroupControls;
 
 /// <summary>Abstract base class for lists of owner-drawn buttons.</summary>
 [DefaultProperty("Items")]
@@ -523,9 +518,7 @@ public abstract class ButtonListItem<T> : IEquatable<ButtonListItem<T>>, INotify
 	public override bool Equals(object obj)
 	{
 		var bli = obj as ButtonListItem<T>;
-		if (obj == null || bli == null)
-			return false;
-		return Equals(bli);
+		return obj == null || bli == null ? false : Equals(bli);
 	}
 
 	/// <summary>Determines whether the specified <see cref="ButtonListItem{T}"/> is equal to the current <see cref="ButtonListItem{T}"/>.</summary>
@@ -533,12 +526,10 @@ public abstract class ButtonListItem<T> : IEquatable<ButtonListItem<T>>, INotify
 	/// <returns>
 	/// true if the specified <see cref="ButtonListItem{T}"/> is equal to the current <see cref="ButtonListItem{T}"/>; otherwise, false.
 	/// </returns>
-	public bool Equals(ButtonListItem<T> other)
-	{
-		if (other == null) return false;
-		return (Checked == other.Checked) && (Enabled == other.Enabled) &&
+	public bool Equals(ButtonListItem<T> other) => other == null
+			? false
+			: (Checked == other.Checked) && (Enabled == other.Enabled) &&
 			(Subtext == other.Subtext) && (Text == other.Text) && (ToolTipText == other.ToolTipText);
-	}
 
 	/// <summary>Returns a hash code for this instance.</summary>
 	/// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>

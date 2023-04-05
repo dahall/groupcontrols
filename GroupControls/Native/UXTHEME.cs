@@ -1,9 +1,6 @@
-﻿// Requires Gdi\RECT.cs
-using System;
-using System.Drawing;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
+﻿#pragma warning disable GlobalUsingsAnalyzer // Using should be in global file
 using System.Windows.Forms.VisualStyles;
+#pragma warning restore GlobalUsingsAnalyzer // Using should be in global file
 
 namespace Vanara.Interop;
 

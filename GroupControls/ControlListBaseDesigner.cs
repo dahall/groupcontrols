@@ -1,7 +1,6 @@
-﻿using System.ComponentModel.Design;
-using System.Drawing;
-using System.Windows.Forms;
+﻿#pragma warning disable GlobalUsingsAnalyzer // Using should be in global file
 using System.Windows.Forms.Design;
+#pragma warning restore GlobalUsingsAnalyzer // Using should be in global file
 
 namespace GroupControls;
 

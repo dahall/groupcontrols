@@ -92,9 +92,9 @@ internal static partial class NativeMethods
 		public static void Paint<TState, TParam>(Graphics graphics, Rectangle bounds, PaintAction<TState, TParam> paintAction,
 			TState currentState, TParam data)
 		{
-			using (var g = new SafeDCHandle(graphics))
-			using (var bp = new BufferedPaintHandle(g, bounds))
-				paintAction(bp.Graphics, bounds, currentState, data);
+			using var g = new SafeDCHandle(graphics);
+			using var bp = new BufferedPaintHandle(g, bounds);
+			paintAction(bp.Graphics, bounds, currentState, data);
 		}
 
 		public static void PaintAnimation<TState, TParam>(Graphics graphics, IWin32Window ctrl, Rectangle bounds,

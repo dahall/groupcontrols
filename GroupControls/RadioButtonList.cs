@@ -171,8 +171,7 @@ public class RadioButtonList : ButtonListBase<RadioButtonState>
 	/// <param name="newState"></param>
 	protected override void PaintButton(Graphics g, int index, Rectangle bounds, bool newState)
 	{
-		var li = BaseItems[index] as RadioButtonListItem;
-		if (li == null) throw new ArgumentOutOfRangeException(nameof(index));
+		var li = BaseItems[index] as RadioButtonListItem ?? throw new ArgumentOutOfRangeException(nameof(index));
 		// Get current state
 		var curState = li.Checked ? RadioButtonState.CheckedNormal : RadioButtonState.UncheckedNormal;
 		if (!Enabled || !li.Enabled)

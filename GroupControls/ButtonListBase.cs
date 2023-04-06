@@ -325,8 +325,7 @@ public abstract class ButtonListBase<T> : ControlListBase
 	/// <param name="newState">Then new state of the button.</param>
 	protected override void PaintItem(Graphics g, int index, Rectangle bounds, bool newState)
 	{
-		var li = BaseItems[index] as ButtonListItem<T>;
-		if (li == null) throw new ArgumentOutOfRangeException(nameof(index));
+		var li = BaseItems[index] as ButtonListItem<T> ?? throw new ArgumentOutOfRangeException(nameof(index));
 		System.Diagnostics.Debug.WriteLine($"PaintItem: {Name}[{index}], Bounds=({bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}), " +
 			$"GlPos=({li.GlyphPosition.X},{li.GlyphPosition.Y}), TPos=({li.TextRect.X},{li.TextRect.Y},{li.TextRect.Width},{li.TextRect.Height})");
 

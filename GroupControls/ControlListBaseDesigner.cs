@@ -13,13 +13,11 @@ internal class ControlListBaseDesigner : RichControlDesigner<ControlListBase, Co
 		if (Control != null && Control.Visible && Control.BorderStyle == BorderStyle.None)
 		{
 			var color = (Control.BackColor.GetBrightness() < 0.5) ? ControlPaint.Light(Control.BackColor) : ControlPaint.Dark(Control.BackColor);
-			using (var pen = new Pen(color) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash })
-			{
-				var clientRectangle = Control.ClientRectangle;
-				clientRectangle.Width--;
-				clientRectangle.Height--;
-				pe.Graphics.DrawRectangle(pen, clientRectangle);
-			}
+			using var pen = new Pen(color) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash };
+			var clientRectangle = Control.ClientRectangle;
+			clientRectangle.Width--;
+			clientRectangle.Height--;
+			pe.Graphics.DrawRectangle(pen, clientRectangle);
 		}
 		base.OnPaintAdornments(pe);
 	}
@@ -52,7 +50,9 @@ internal class ControlListBaseDesigner : RichControlDesigner<ControlListBase, Co
 			set { if (Component.RepeatDirection != value) { Component.RepeatDirection = value; } }
 		}
 
+#if NETFRAMEWORK
 		[DesignerActionMethod("Edit Items...", 0, IncludeAsDesignerVerb = true)]
 		public void EditItems() => ParentDesigner.EditValue(Component, "Items");
+#endif
 	}
 }

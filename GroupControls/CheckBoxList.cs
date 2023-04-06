@@ -132,8 +132,7 @@ public class CheckBoxList : ButtonListBase<CheckBoxState>
 	/// <param name="newState"></param>
 	protected override void PaintButton(Graphics g, int index, Rectangle bounds, bool newState)
 	{
-		var li = BaseItems[index] as CheckBoxListItem;
-		if (li == null) throw new ArgumentOutOfRangeException(nameof(index));
+		var li = BaseItems[index] as CheckBoxListItem ?? throw new ArgumentOutOfRangeException(nameof(index));
 		// Get current state
 		var curState = (CheckBoxState)((int)li.CheckState * 4 + 1);
 		if (!Enabled || !li.Enabled)
@@ -211,20 +210,12 @@ public class CheckBoxList : ButtonListBase<CheckBoxState>
 	{
 		if (itemIndex >= 0 && itemIndex < items.Count && items[itemIndex].Enabled)
 		{
-			switch (items[itemIndex].CheckState)
+			items[itemIndex].CheckState = items[itemIndex].CheckState switch
 			{
-				case CheckState.Checked:
-					items[itemIndex].CheckState = ThreeState ? CheckState.Indeterminate : CheckState.Unchecked;
-					break;
-
-				case CheckState.Unchecked:
-					items[itemIndex].CheckState = CheckState.Checked;
-					break;
-
-				default:
-					items[itemIndex].CheckState = CheckState.Unchecked;
-					break;
-			}
+				CheckState.Checked => ThreeState ? CheckState.Indeterminate : CheckState.Unchecked,
+				CheckState.Unchecked => CheckState.Checked,
+				_ => CheckState.Unchecked,
+			};
 			InvalidateItem(itemIndex);
 			OnItemCheckStateChanged(new CheckBoxListItemCheckStateChangedEventArgs(items[itemIndex], itemIndex));
 		}

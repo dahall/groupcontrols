@@ -41,12 +41,10 @@ public class EventedList<T> : IList<T>, IList where T : INotifyPropertyChanged
 		{
 			Count = 0;
 			internalItems = new T[4];
-			using (var enumerator = collection.GetEnumerator())
+			using var enumerator = collection.GetEnumerator();
+			while (enumerator.MoveNext())
 			{
-				while (enumerator.MoveNext())
-				{
-					Add(enumerator.Current);
-				}
+				Add(enumerator.Current);
 			}
 		}
 	}
@@ -702,12 +700,10 @@ public class EventedList<T> : IList<T>, IList where T : INotifyPropertyChanged
 		}
 		else
 		{
-			using (var enumerator = collection.GetEnumerator())
+			using var enumerator = collection.GetEnumerator();
+			while (enumerator.MoveNext())
 			{
-				while (enumerator.MoveNext())
-				{
-					Insert(index++, enumerator.Current);
-				}
+				Insert(index++, enumerator.Current);
 			}
 		}
 		version++;

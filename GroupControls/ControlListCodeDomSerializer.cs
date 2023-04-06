@@ -23,7 +23,7 @@ internal class DesignerLayoutCodeDomSerializer : CodeDomSerializer
 		// Add layout methods
 		if (statements != null)
 		{
-			SerializeMethodInvocation(manager, statements, value, "SuspendLayout", null, Array.Empty<Type>(), true);
+			SerializeMethodInvocation(manager, statements, value, "SuspendLayout", null, new Type[0], true);
 
 			var parameters = new CodeExpressionCollection { new CodePrimitiveExpression(true) };
 			var paramTypes = new[] { typeof(bool) };

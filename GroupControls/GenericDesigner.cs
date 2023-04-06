@@ -445,7 +445,7 @@ namespace System.Windows.Forms.Design
 			}
 		}
 
-		protected virtual IEnumerable<string> PropertiesToRemove => Array.Empty<string>();
+		protected virtual IEnumerable<string> PropertiesToRemove => new string[0];
 
 		public override void Initialize(IComponent component)
 		{
@@ -541,7 +541,7 @@ namespace System.Windows.Forms.Design
 			}
 		}
 
-		protected virtual IEnumerable<string> PropertiesToRemove => Array.Empty<string>();
+		protected virtual IEnumerable<string> PropertiesToRemove => new string[0];
 
 		public override void Initialize(IComponent component)
 		{
@@ -662,7 +662,7 @@ namespace System.Windows.Forms.Design
 			}
 		}
 
-		protected virtual IEnumerable<string> PropertiesToRemove => Array.Empty<string>();
+		protected virtual IEnumerable<string> PropertiesToRemove => new string[0];
 
 		public override void Initialize(IComponent component)
 		{

@@ -12,7 +12,7 @@ public class EventedList<T> : IList<T>, IList where T : INotifyPropertyChanged
 {
 	private const int defaultCapacity = 4;
 
-	private static readonly T[] emptyArray = Array.Empty<T>();
+	private static readonly T[] emptyArray = new T[0];
 
 	private T[] internalItems;
 	[NonSerialized] private object syncRoot;

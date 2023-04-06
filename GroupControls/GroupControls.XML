@@ -1298,55 +1298,6 @@
             <summary>Collapses array into new, condensed array. Does not maintain indexes.</summary>
             <returns>An array of <typeparamref name="T"/></returns>
         </member>
-        <member name="T:System.Runtime.CompilerServices.ExtensionAttribute">
-            <summary>Attribute allowing extenders to be used with .NET Framework 2.0.</summary>
-        </member>
-        <member name="M:System.Runtime.InteropServices.InteropUtil.PtrToStructure``1(System.IntPtr)">
-            <summary>Converts an <see cref="T:System.IntPtr"/> to a structure. If pointer has no value, <c>null</c> is returned.</summary>
-            <typeparam name="T">Type of the structure.</typeparam>
-            <param name="ptr">The <see cref="T:System.IntPtr"/> that points to allocated memory holding a structure or <see cref="F:System.IntPtr.Zero"/>.</param>
-            <returns>The converted structure or <c>null</c>.</returns>
-        </member>
-        <member name="M:System.Runtime.InteropServices.InteropUtil.StructureToPtr``1(System.Nullable{``0},System.IntPtr@,System.Predicate{``0})">
-            <summary>
-            Converts a structure or null value to an <see cref="T:System.IntPtr"/>. If memory has not been allocated for the <paramref name="ptr"/>,
-            it will be via a call to <see cref="M:System.Runtime.InteropServices.Marshal.AllocHGlobal(System.Int32)"/>.
-            </summary>
-            <typeparam name="T">Type of the structure.</typeparam>
-            <param name="value">
-            The structure to convert. If this value is <c>null</c>, <paramref name="ptr"/> will be set to <see cref="F:System.IntPtr.Zero"/> and
-            memory will be released.
-            </param>
-            <param name="ptr">The <see cref="T:System.IntPtr"/> that will point to allocated memory holding the structure or <see cref="F:System.IntPtr.Zero"/>.</param>
-            <param name="isEmpty">
-            An optional predicate check to determine if the structure is non-essential and can be replaced with an empty pointer ( <c>null</c>).
-            </param>
-        </member>
-        <member name="M:System.Runtime.InteropServices.InteropUtil.ToArray``2(System.IntPtr,System.Int32,System.Int32)">
-            <summary>Converts an <see cref="T:System.IntPtr"/> that points to a C-style array into a CLI array.</summary>
-            <typeparam name="TS">Type of native structure used by the C-style array.</typeparam>
-            <typeparam name="T">Output type for the CLI array. <typeparamref name="TS"/> must be able to convert to <typeparamref name="T"/>.</typeparam>
-            <param name="ptr">The <see cref="T:System.IntPtr"/> pointing to the native array.</param>
-            <param name="count">The number of items in the native array.</param>
-            <param name="prefixBytes">Bytes to skip before reading the array.</param>
-            <returns>An array of type <typeparamref name="T"/> containing the converted elements of the native array.</returns>
-        </member>
-        <member name="M:System.Runtime.InteropServices.InteropUtil.ToArray``1(System.IntPtr,System.Int32,System.Int32)">
-            <summary>Converts an <see cref="T:System.IntPtr"/> that points to a C-style array into a CLI array.</summary>
-            <typeparam name="T">Type of native structure used by the C-style array.</typeparam>
-            <param name="ptr">The <see cref="T:System.IntPtr"/> pointing to the native array.</param>
-            <param name="count">The number of items in the native array.</param>
-            <param name="prefixBytes">Bytes to skip before reading the array.</param>
-            <returns>An array of type <typeparamref name="T"/> containing the elements of the native array.</returns>
-        </member>
-        <member name="M:System.Runtime.InteropServices.InteropUtil.ToIEnum``1(System.IntPtr,System.Int32,System.Int32)">
-            <summary>Converts an <see cref="T:System.IntPtr"/> that points to a C-style array into an <see cref="T:System.Collections.Generic.IEnumerable`1"/>.</summary>
-            <typeparam name="T">Type of native structure used by the C-style array.</typeparam>
-            <param name="ptr">The <see cref="T:System.IntPtr"/> pointing to the native array.</param>
-            <param name="count">The number of items in the native array.</param>
-            <param name="prefixBytes">Bytes to skip before reading the array.</param>
-            <returns>An <see cref="T:System.Collections.Generic.IEnumerable`1"/> exposing the elements of the native array.</returns>
-        </member>
         <member name="M:System.Windows.Forms.VisualStyles.VisualStyleRendererExtension.SetState(System.Windows.Forms.VisualStyles.VisualStyleRenderer,System.Int32)">
             <summary>Sets the state of the <see cref="T:System.Windows.Forms.VisualStyles.VisualStyleRenderer"/>.</summary>
             <param name="rnd">The <see cref="T:System.Windows.Forms.VisualStyles.VisualStyleRenderer"/> instance.</param>
@@ -1458,6 +1409,52 @@
             <param name="a">An instance of <see cref="T:System.EnumFlagIndexer`1"/>.</param>
             <param name="b">An instance of the <typeparamref name="E"/> enumerated type.</param>
             <returns>The result of the operator.</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.InteropUtil.PtrToStructure``1(System.IntPtr)">
+            <summary>Converts an <see cref="T:System.IntPtr"/> to a structure. If pointer has no value, <c>null</c> is returned.</summary>
+            <typeparam name="T">Type of the structure.</typeparam>
+            <param name="ptr">The <see cref="T:System.IntPtr"/> that points to allocated memory holding a structure or <see cref="F:System.IntPtr.Zero"/>.</param>
+            <returns>The converted structure or <c>null</c>.</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.InteropUtil.StructureToPtr``1(System.Nullable{``0},System.IntPtr@,System.Predicate{``0})">
+            <summary>
+            Converts a structure or null value to an <see cref="T:System.IntPtr"/>. If memory has not been allocated for the <paramref name="ptr"/>,
+            it will be via a call to <see cref="M:System.Runtime.InteropServices.Marshal.AllocHGlobal(System.Int32)"/>.
+            </summary>
+            <typeparam name="T">Type of the structure.</typeparam>
+            <param name="value">
+            The structure to convert. If this value is <c>null</c>, <paramref name="ptr"/> will be set to <see cref="F:System.IntPtr.Zero"/> and
+            memory will be released.
+            </param>
+            <param name="ptr">The <see cref="T:System.IntPtr"/> that will point to allocated memory holding the structure or <see cref="F:System.IntPtr.Zero"/>.</param>
+            <param name="isEmpty">
+            An optional predicate check to determine if the structure is non-essential and can be replaced with an empty pointer ( <c>null</c>).
+            </param>
+        </member>
+        <member name="M:System.Runtime.InteropServices.InteropUtil.ToArray``2(System.IntPtr,System.Int32,System.Int32)">
+            <summary>Converts an <see cref="T:System.IntPtr"/> that points to a C-style array into a CLI array.</summary>
+            <typeparam name="TS">Type of native structure used by the C-style array.</typeparam>
+            <typeparam name="T">Output type for the CLI array. <typeparamref name="TS"/> must be able to convert to <typeparamref name="T"/>.</typeparam>
+            <param name="ptr">The <see cref="T:System.IntPtr"/> pointing to the native array.</param>
+            <param name="count">The number of items in the native array.</param>
+            <param name="prefixBytes">Bytes to skip before reading the array.</param>
+            <returns>An array of type <typeparamref name="T"/> containing the converted elements of the native array.</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.InteropUtil.ToArray``1(System.IntPtr,System.Int32,System.Int32)">
+            <summary>Converts an <see cref="T:System.IntPtr"/> that points to a C-style array into a CLI array.</summary>
+            <typeparam name="T">Type of native structure used by the C-style array.</typeparam>
+            <param name="ptr">The <see cref="T:System.IntPtr"/> pointing to the native array.</param>
+            <param name="count">The number of items in the native array.</param>
+            <param name="prefixBytes">Bytes to skip before reading the array.</param>
+            <returns>An array of type <typeparamref name="T"/> containing the elements of the native array.</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.InteropUtil.ToIEnum``1(System.IntPtr,System.Int32,System.Int32)">
+            <summary>Converts an <see cref="T:System.IntPtr"/> that points to a C-style array into an <see cref="T:System.Collections.Generic.IEnumerable`1"/>.</summary>
+            <typeparam name="T">Type of native structure used by the C-style array.</typeparam>
+            <param name="ptr">The <see cref="T:System.IntPtr"/> pointing to the native array.</param>
+            <param name="count">The number of items in the native array.</param>
+            <param name="prefixBytes">Bytes to skip before reading the array.</param>
+            <returns>An <see cref="T:System.Collections.Generic.IEnumerable`1"/> exposing the elements of the native array.</returns>
         </member>
         <member name="T:Vanara.Interop.NativeMethods.BackgroundMode">
             <summary>The background mode used by the <see cref="M:Vanara.Interop.NativeMethods.SetBkMode(Vanara.Interop.NativeMethods.SafeDCHandle,Vanara.Interop.NativeMethods.BackgroundMode)"/> function.</summary>
